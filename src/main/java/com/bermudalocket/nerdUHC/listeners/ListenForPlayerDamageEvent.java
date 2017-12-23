@@ -20,8 +20,9 @@ public class ListenForPlayerDamageEvent implements Listener {
 	
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled=true)
 	public void onPlayerDamage(EntityDamageEvent e) {
-		player = (Player) e.getEntity();
-		
+		if (e.getEntity() instanceof Player) {
+			player = (Player) e.getEntity();
+		}
 	}
 	
 	
