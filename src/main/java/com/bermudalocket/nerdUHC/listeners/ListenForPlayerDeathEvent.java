@@ -1,18 +1,12 @@
 package com.bermudalocket.nerdUHC.listeners;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
 
 import com.bermudalocket.nerdUHC.nerdUHC;
-import com.bermudalocket.nerdUHC.ScoreboardHandler;
 
 public class ListenForPlayerDeathEvent implements Listener {
 	
