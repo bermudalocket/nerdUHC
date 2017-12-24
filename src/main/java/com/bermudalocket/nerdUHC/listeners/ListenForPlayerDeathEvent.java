@@ -35,5 +35,6 @@ public class ListenForPlayerDeathEvent implements Listener {
 			
 		}
 		
-	} // onPlayerDeath
-} // class
+	} // end onPlayerDeath
+	
+} // end ListenForPlayerDeathEvent
