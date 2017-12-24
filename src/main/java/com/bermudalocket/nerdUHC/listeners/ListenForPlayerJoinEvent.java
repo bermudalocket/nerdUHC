@@ -4,31 +4,33 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 import com.bermudalocket.nerdUHC.nerdUHC;
 
-public class ListenForPlayerLoginEvent implements Listener {
+public class ListenForPlayerJoinEvent implements Listener {
 	
 	public nerdUHC plugin;
 	public Player player;
 	
-	public ListenForPlayerLoginEvent(nerdUHC plugin) {
+	public ListenForPlayerJoinEvent(nerdUHC plugin) {
 		this.plugin = plugin;
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled=true)
-	public void onPlayerLogin(PlayerLoginEvent e) {
+	public void onPlayerJoin(PlayerJoinEvent e) {
+		System.out.println("Player is joining: " + e.getPlayer().getName());
 		try { 
 			plugin.ScoreboardHandler.SetPlayerBoard(e.getPlayer());
 			// TESTING ONLY:
 			plugin.ScoreboardHandler.SetPlayerTeam(e.getPlayer(), "Alive");
-			e.getPlayer().sendMessage("added to board");
+			System.out.println("Added player to board");
 		} catch (IllegalArgumentException f) {
 			// board doesnt exist, but it should. wtf happened.
-			plugin.reportError("Scoreboard missing during player login event. It shouldn't be missing.");
+			System.out.println("Board doesnt exist");
 		} catch (IllegalStateException g) {
 			// player dropped/quit/didnt fully login
+			System.out.println("Um");
 			return;
 		}
 	}
