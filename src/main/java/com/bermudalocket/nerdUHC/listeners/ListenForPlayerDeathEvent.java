@@ -24,12 +24,15 @@ public class ListenForPlayerDeathEvent implements Listener {
 		player = e.getEntity();
 		
 		if (plugin.gameStarted) {
+			
 			if (plugin.ScoreboardHandler.GetPlayerScore(player, "Deaths") == 0) {
-				System.out.println("Caught death event, score zero");
+				
 				plugin.ScoreboardHandler.SetPlayerScore(player, "Deaths", 1);
 				plugin.ScoreboardHandler.RemovePlayerTeam(player);
 				plugin.ScoreboardHandler.SetPlayerTeam(player, "Dead");
+				
 			}
+			
 		}
 		
 	} // onPlayerDeath

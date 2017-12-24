@@ -38,17 +38,14 @@ public class ScoreboardHandler {
 	
 	public void RemovePlayerTeam(Player player) {
 		board.getEntryTeam(player.getName()).removeEntry(player.getName());
-		System.out.println(player.getName() + " removed from team");
 	}
 	
 	public void SetPlayerTeam(Player player, String team) {
 		board.getTeam(team).addEntry(player.getName());
-		System.out.println(player.getName() + " added to team " + team);
 	}
 	
 	public void SetPlayerBoard(Player player) {
 		player.setScoreboard(board);
-		System.out.println(player.getName() + "'s board set to " + board);
 	}
 	
 	public int GetPlayerScore(Player player, String objective) {
@@ -62,15 +59,12 @@ public class ScoreboardHandler {
 	public void ClearBoards() {
 		if (!board.getEntries().isEmpty()) {
 			board.getEntries().forEach(entry -> board.resetScores(entry));
-			System.out.println("Clearing previous entries");
 		}
 		if (!board.getTeams().isEmpty()) {
 			board.getTeams().forEach(team -> team.unregister());
-			System.out.println("Clearing previous teams");
 		}
 		if (!board.getObjectives().isEmpty()) {
 			board.getObjectives().forEach(objective -> objective.unregister());
-			System.out.println("Clearing previous objectives");
 		}
 	}
 	
@@ -101,8 +95,8 @@ public class ScoreboardHandler {
 				teamPurple = board.registerNewTeam("Purple");
 				break;
 		
-		}
+		} // end switch
 
-	}
+	} // end configureScoreboards()
 
-}
+} //ScoreboardHandler

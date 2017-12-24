@@ -22,14 +22,14 @@ public class nerdUHC extends JavaPlugin {
 		CONFIG = new Configuration(this);
 		CONFIG.reload();
 		
-		getServer().getPluginManager().registerEvents(new ListenForPlayerDeathEvent(this), this);
-		getServer().getPluginManager().registerEvents(new ListenForPlayerDamageEvent(this), this);
-		getServer().getPluginManager().registerEvents(new ListenForPlayerJoinEvent(this), this);
-		
 		new nerdUHCCommandExecutor(this);
 		
 		ScoreboardHandler = new ScoreboardHandler(this);
 		ScoreboardHandler.configureScoreboards(gameMode);
+		
+		getServer().getPluginManager().registerEvents(new ListenForPlayerDeathEvent(this), this);
+		getServer().getPluginManager().registerEvents(new ListenForPlayerDamageEvent(this), this);
+		getServer().getPluginManager().registerEvents(new ListenForPlayerJoinEvent(this), this);
 		
 	}
 	
@@ -39,12 +39,9 @@ public class nerdUHC extends JavaPlugin {
 	}
 	
 	public void setGameMode(int gamemode) {
+		// note to self: figure out somewhere else to put this
 		gameMode = gamemode;
 		ScoreboardHandler.configureScoreboards(gameMode);
-	}
-	
-	public void reportError(String e) {
-		getLogger().info("[nerdUHC REAL BAD ERROR] " + e);
 	}
 
 }
