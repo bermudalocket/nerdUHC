@@ -6,16 +6,16 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
-import com.bermudalocket.nerdUHC.nerdUHC;
+import com.bermudalocket.nerdUHC.NerdUHC;
 
 public class ListenForEntityDamageByEntityEvent implements Listener {
 	
-	public nerdUHC plugin;
+	private NerdUHC plugin;
 	
 	public Player player;
 	public Player combatant;
 	
-	public ListenForEntityDamageByEntityEvent(nerdUHC plugin) {
+	public ListenForEntityDamageByEntityEvent(NerdUHC plugin) {
 		this.plugin = plugin;
 	}
 	
@@ -23,16 +23,7 @@ public class ListenForEntityDamageByEntityEvent implements Listener {
 	public void onPlayerCombat(EntityDamageByEntityEvent e) {
 		if ((e.getEntity() instanceof Player) && (e.getDamager() instanceof Player)) {
 			
-			player = (Player) e.getEntity();
-			combatant = (Player) e.getDamager();
 			
-			if ((player == null) || (combatant == null)) {
-				return;
-			}
-			
-			if (player == combatant) {
-				return;
-			}
 			
 		}
 

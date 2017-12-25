@@ -6,13 +6,14 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.entity.Player;
 
-import com.bermudalocket.nerdUHC.nerdUHC;
+import com.bermudalocket.nerdUHC.NerdUHC;
+import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
 
-public class nerdUHCCommandExecutor implements CommandExecutor {
+public class NerdUHCCommandExecutor implements CommandExecutor {
 	
-	private nerdUHC plugin;
+	private NerdUHC plugin;
 	
-	public nerdUHCCommandExecutor(nerdUHC plugin) {
+	public NerdUHCCommandExecutor(NerdUHC plugin) {
 		this.plugin = plugin;
 		plugin.getCommand("uhc").setExecutor(this);
 	}
@@ -26,18 +27,9 @@ public class nerdUHCCommandExecutor implements CommandExecutor {
 		if (command.getName().equalsIgnoreCase("uhc")) {
 			switch (args[0].toLowerCase()) {
 				case "mode":
-					switch (args[1].toLowerCase()) {
-						case "solo":
-							plugin.setGameMode(1);
-							sender.sendMessage("Game mode set to solo");
-							break;
-						case "team":
-							plugin.setGameMode(2);
-							sender.sendMessage("Game mode set to teams");
-							break;
-						default:
-							sender.sendMessage(ChatColor.RED + "Invalid input.");
-							break;
+					if (plugin.isValidGameMode(args[0].toUpperCase())) {
+						plugin.setGameMode(UHCGameMode.valueOf(args[0].toUpperCase()));
+						sender.sendMessage("Gamemode updated successfully");
 					}
 					return true;
 			case "barrier":
@@ -51,7 +43,7 @@ public class nerdUHCCommandExecutor implements CommandExecutor {
 							break;
 					}
 					return true;
-				case "forefeit":
+				case "forfeit":
 					return true;
 				default:
 					sender.sendMessage(ChatColor.RED + "/uhc subcommands:");
@@ -62,7 +54,7 @@ public class nerdUHCCommandExecutor implements CommandExecutor {
 					sender.sendMessage("/uhc barrier on : encloses a small area around the spawn coordinates with glass");
 					sender.sendMessage("/uhc barrier off : removes the glass barrier around the spawn coordinates");
 					sender.sendMessage(ChatColor.GRAY + "================================================");
-					sender.sendMessage("/uhc forefeit <player> : removes a player from the UHC");
+					sender.sendMessage("/uhc forfeit <player> : removes a player from the UHC");
 					return true;
 			} // switch args[0]
 		} // if /uhc

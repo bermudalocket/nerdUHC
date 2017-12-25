@@ -3,99 +3,144 @@ package com.bermudalocket.nerdUHC;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+//import java.util.Map.Entry;
+import java.util.Set;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 
+import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
+
 public class ScoreboardHandler {
 	
-	public nerdUHC plugin;
-	public ScoreboardManager manager;
-	public Scoreboard board;
-	public Objective objDeaths;
-	public Objective objKills;
-	public Objective objHealth;
-	public Objective objHealthOverhead;
-	public Team teamAlive;
-	public Team teamDead;
-	public Team teamRed;
-	public Team teamOrange;
-	public Team teamYellow;
-	public Team teamGreen;
-	public Team teamBlue;
-	public Team teamPurple;
+	private NerdUHC plugin;
+	private ScoreboardManager manager;
+	private Scoreboard board;
+	private Objective objDeaths;
+	private Objective objKills;
+	private Objective objHealth;
+	private Objective objHealthOverhead;
 	
-	public ScoreboardHandler(nerdUHC plugin) {
+	// teams for SOLO mode
+	private Team teamAlive;
+	private Team teamDead;
+	
+	// map holding user-defined teams for TEAM mode
+	public Map<String, Team> TEAMS = new HashMap<String, Team>();
+	
+	public ScoreboardHandler(NerdUHC plugin) {
 		this.plugin = plugin;
 		manager = Bukkit.getScoreboardManager();
 		board = manager.getNewScoreboard();
 	}
 	
-	public boolean TeamExists(String team) {
-		return board.getTeam(team)==null ? true : false;
+	public boolean teamExists(String team) {
+		plugin.getLogger().info("teamExists("+team+")");
+		try {
+			board.getTeam(team);
+		} catch (Exception f) {
+			return false;
+		}
+		return true;
 	}
 	
-	public void RemovePlayerTeam(Player player) {
+	public void removePlayerTeam(Player player) {
 		board.getEntryTeam(player.getName()).removeEntry(player.getName());
 	}
 	
-	public void SetPlayerTeam(Player player, String team) {
+	public void setPlayerTeam(Player player, String team) {
 		board.getTeam(team).addEntry(player.getName());
 	}
 	
-	public void SetPlayerBoard(Player player) {
-		player.setScoreboard(board);
+	public Team getPlayerTeam(Player player) {
+		try {
+			return board.getEntryTeam(player.getName());
+		} catch (Exception f) {
+			return null;
+		}
 	}
 	
-	public int GetPlayerScore(Player player, String objective) {
+	public boolean chooseTeamForPlayer(Player player) {
+		
+		Optional<Team> foundteam = board.getTeams().stream().filter(team -> team.getSize() < plugin.CONFIG.MAX_TEAM_SIZE).findFirst();
+		
+		if (foundteam.orElse(null) != null) {
+			setPlayerTeam(player, foundteam.get().getName());
+			return true;
+		} else {
+			// no teams need players
+			return false;
+		}
+		
+	}
+	
+	public void setPlayerBoard(Player player) {
+		try {
+			player.setScoreboard(board);
+			plugin.getLogger().info("Set board for player");
+		} catch (IllegalArgumentException f) {
+			// board doesnt exist
+		} catch (IllegalStateException g) {
+			// player doesnt exist
+		}
+	}
+	
+	public void unsetPlayerBoard(Player player) {
+		try {
+			player.setScoreboard(manager.getNewScoreboard());
+		} catch (IllegalArgumentException f) {
+			// board doesnt exist, which shouldnt happen in this case
+		} catch (IllegalStateException g) {
+			// player doesnt exist
+		}
+	}
+	
+	public int getPlayerScore(Player player, String objective) {
 		return board.getObjective(objective).getScore(player.getName()).getScore();
 	}
 	
-	public void SetPlayerScore(Player player, String objective, int score) {
+	public void setPlayerScore(Player player, String objective, int score) {
 		board.getObjective(objective).getScore(player.getName()).setScore(score);
 	}
 	
-	public void ClearBoards() {
-		if (!board.getEntries().isEmpty()) {
-			board.getEntries().forEach(entry -> board.resetScores(entry));
-		}
-		if (!board.getTeams().isEmpty()) {
-			board.getTeams().forEach(team -> team.unregister());
-		}
-		if (!board.getObjectives().isEmpty()) {
-			board.getObjectives().forEach(objective -> objective.unregister());
-		}
+	public void clearBoards() {
+		board.getEntries().forEach(entry -> board.resetScores(entry));
+		board.getTeams().forEach(team -> team.unregister());
+		board.getObjectives().forEach(objective -> objective.unregister());
 	}
 	
-	public void configureScoreboards(int gameMode) {
+	public void configureScoreboards(UHCGameMode gameMode) {
 		
 		objDeaths = board.registerNewObjective("Deaths","deathCount");
 		objKills = board.registerNewObjective("Kills","playerKillCount");
 		objHealth = board.registerNewObjective("Health","health");
 		objHealthOverhead = board.registerNewObjective("HealthOverhead", "health");
 		
-		objHealth.setDisplaySlot(DisplaySlot.PLAYER_LIST);
-		objKills.setDisplaySlot(DisplaySlot.SIDEBAR);
-		objHealthOverhead.setDisplaySlot(DisplaySlot.BELOW_NAME);
+		objHealth.setDisplaySlot(plugin.CONFIG.HEALTH_DISPLAY_SLOT);
+		objKills.setDisplaySlot(plugin.CONFIG.KILLS_DISPLAY_SLOT);
+		if (plugin.CONFIG.DISPLAY_HEALTH_BELOW_NAME) objHealthOverhead.setDisplaySlot(DisplaySlot.BELOW_NAME);
 	
 		switch (gameMode) {
-	
 			default:
-			case 0:
+			case SOLO:
 				teamAlive = board.registerNewTeam("Alive");
 				teamDead = board.registerNewTeam("Dead");
 				break;
-			case 1:
-				teamRed = board.registerNewTeam("Red");
-				teamOrange = board.registerNewTeam("Orange");
-				teamYellow = board.registerNewTeam("Yellow");
-				teamGreen = board.registerNewTeam("Green");
-				teamBlue = board.registerNewTeam("Blue");
-				teamPurple = board.registerNewTeam("Purple");
+			case TEAM:
+				plugin.CONFIG.rawteamlist.forEach(team -> {
+					board.registerNewTeam(team);
+					TEAMS.put(team, board.getTeam(team));
+					plugin.getLogger().info(team);
+				});
 				break;
-		
-		} // end switch
+		}
 
 	} // end configureScoreboards()
 

@@ -1,35 +1,23 @@
 package com.bermudalocket.nerdUHC.listeners;
 
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import com.bermudalocket.nerdUHC.nerdUHC;
+import com.bermudalocket.nerdUHC.NerdUHC;
 
 public class ListenForPlayerJoinEvent implements Listener {
 	
-	public nerdUHC plugin;
-	public Player player;
+	private NerdUHC plugin;
 	
-	public ListenForPlayerJoinEvent(nerdUHC plugin) {
+	public ListenForPlayerJoinEvent(NerdUHC plugin) {
 		this.plugin = plugin;
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled=true)
 	public void onPlayerJoin(PlayerJoinEvent e) {
-
-		try { 
-			plugin.ScoreboardHandler.SetPlayerBoard(e.getPlayer());
-		} catch (IllegalArgumentException f) {
-			// board doesnt exist, but it should. wtf happened.
-			return;
-		} catch (IllegalStateException g) {
-			// player dropped/quit/didnt fully login
-			return;
-		}
-		
+		plugin.registerPlayer(e.getPlayer(), false);		// true = ignore "has UHC started" check
 	}
 	
 }

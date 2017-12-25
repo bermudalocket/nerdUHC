@@ -1,5 +1,5 @@
 name: nerdUHC
-main: com.bermudalocket.nerdUHC.nerdUHC
+main: com.bermudalocket.nerdUHC.NerdUHC
 version: 1.0
 commands:
    uhc:

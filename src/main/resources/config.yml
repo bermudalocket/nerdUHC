@@ -1,2 +1,17 @@
 health-display-slot: PLAYER_LIST
 kills-display-slot: SIDEBAR
+display-health-below-name: TRUE
+
+default-uhc-mode: TEAM
+
+let-players-pick-team: TRUE
+force-even-teams: TRUE
+teams-max-size: 3
+
+teams:
+  - Red
+  - Orange
+  - Yellow
+  - Green
+  - Blue
+  - Purple
