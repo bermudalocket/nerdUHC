@@ -2,8 +2,8 @@ name: nerdUHC
 main: com.bermudalocket.nerdUHC.NerdUHC
 version: 1.0
 commands:
-   uhc:
-      description: nerdUHC general command
-      usage: /uhc
-      permission: nerdUHC.basic
-      permission-message: y u do that
+  nerduhc:
+    description: nerdUHC general command
+    usage: /nerduhc
+    permission: nerdUHC.basic
+    permission-message: y u do that

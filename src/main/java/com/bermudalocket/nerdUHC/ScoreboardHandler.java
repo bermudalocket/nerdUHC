@@ -5,11 +5,8 @@ import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
-//import java.util.Map.Entry;
-import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -126,7 +123,7 @@ public class ScoreboardHandler {
 		objHealth.setDisplaySlot(plugin.CONFIG.HEALTH_DISPLAY_SLOT);
 		objKills.setDisplaySlot(plugin.CONFIG.KILLS_DISPLAY_SLOT);
 		if (plugin.CONFIG.DISPLAY_HEALTH_BELOW_NAME) objHealthOverhead.setDisplaySlot(DisplaySlot.BELOW_NAME);
-	
+		
 		switch (gameMode) {
 			default:
 			case SOLO:
@@ -137,7 +134,6 @@ public class ScoreboardHandler {
 				plugin.CONFIG.rawteamlist.forEach(team -> {
 					board.registerNewTeam(team);
 					TEAMS.put(team, board.getTeam(team));
-					plugin.getLogger().info(team);
 				});
 				break;
 		}

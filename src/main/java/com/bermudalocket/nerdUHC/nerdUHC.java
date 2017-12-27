@@ -1,10 +1,11 @@
 package com.bermudalocket.nerdUHC;
 
+import org.bukkit.World;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.bermudalocket.nerdUHC.ScoreboardHandler;
-//import com.bermudalocket.nerdUHC.CombatLogger;
 import com.bermudalocket.nerdUHC.commands.NerdUHCCommandExecutor;
 import com.bermudalocket.nerdUHC.listeners.ListenForPlayerDeathEvent;
 import com.bermudalocket.nerdUHC.listeners.ListenForPlayerJoinEvent;
@@ -15,12 +16,14 @@ public class NerdUHC extends JavaPlugin {
 	public NerdUHC plugin;
 	public Configuration CONFIG;
 	protected ScoreboardHandler scoreboardHandler;
+	protected CombatLogger combatLogger;
 	public enum UHCGameMode {
 		SOLO,
 		TEAM
 	}
-	private UHCGameMode gameMode;
+	public UHCGameMode uhcgamemode;
 	private boolean gameStarted = false;
+	private World world;
 
 	@Override
 	public void onEnable() {
@@ -28,12 +31,14 @@ public class NerdUHC extends JavaPlugin {
 		CONFIG = new Configuration(this);
 		CONFIG.reload();
 		
-		new NerdUHCCommandExecutor(this);
+		this.getCommand("nerduhc").setExecutor(new NerdUHCCommandExecutor(this));
 		
 		scoreboardHandler = new ScoreboardHandler(this);
 		scoreboardHandler.configureScoreboards(CONFIG.DEFAULT_UHC_MODE);
+		uhcgamemode = CONFIG.DEFAULT_UHC_MODE;
+		getLogger().info(uhcgamemode.toString());
 		
-		gameMode = CONFIG.DEFAULT_UHC_MODE;
+		combatLogger = new CombatLogger(this);
 		
 		getServer().getPluginManager().registerEvents(new ListenForPlayerDeathEvent(this), this);
 		getServer().getPluginManager().registerEvents(new ListenForEntityDamageByEntityEvent(this), this);
@@ -46,10 +51,23 @@ public class NerdUHC extends JavaPlugin {
 		scoreboardHandler.clearBoards();
 	}
 	
-	public void setGameMode(UHCGameMode gameMode) {
-		if (!gameStarted) scoreboardHandler.configureScoreboards(gameMode);
+	public void throwError(String msg) {
+		getLogger().info(msg);
 	}
 	
+	public void reloadScoreboards() {
+		scoreboardHandler.clearBoards();
+		scoreboardHandler.configureScoreboards(this.uhcgamemode);
+	}
+	
+	public void setGameMode(UHCGameMode gameMode) {
+		this.uhcgamemode = gameMode;
+	}
+	
+	public UHCGameMode getGameMode() {
+		return this.uhcgamemode;
+	}
+
 	public boolean isValidGameMode(String gameMode) {
 		try {
 			UHCGameMode.valueOf(gameMode);
@@ -59,10 +77,14 @@ public class NerdUHC extends JavaPlugin {
 		}
 	}
 	
+	public boolean isGameStarted() { 
+		return gameStarted;
+	}
+	
 	public void registerPlayer(Player player, Boolean overridegamestarted) {
 		scoreboardHandler.setPlayerBoard(player);
 		if (!gameStarted || overridegamestarted) {
-			switch (gameMode) {
+			switch (uhcgamemode) {
 				case SOLO:
 					scoreboardHandler.setPlayerTeam(player, "Alive");
 					player.sendMessage("Welcome to nerdUHC. You have been added to the Alive team.");
@@ -101,5 +123,31 @@ public class NerdUHC extends JavaPlugin {
 		} // if gameStarted
 		
 	} // handleDeath
+	
+	// drawBarrier: it's almost a sphere!
+	public void drawBarrier(World world, int x, int y, int z, int radius, Material barriertype, Material onlyreplace) {
+		if (radius <= 0) return;
+		
+		Location center = new Location(world, x, y, z);
+		Location point = new Location(world, 0, 0, 0);
+		
+		for (int i = -radius - 1; i < radius + 1; i++) {
+			for (int j = -radius - 1; j < radius + 1; j++) {
+				for (int k = -radius - 1; k < radius + 1; k++) {
+					point.setX(x+i);
+					point.setY(y+j);
+					point.setZ(z+k);
+					Material lookingat = world.getBlockAt(point).getType();
+					if (Math.abs((int) Math.round(center.distanceSquared(point)) - radius*radius) <= radius) {
+						if (lookingat == onlyreplace) {
+							world.getBlockAt(point).setType(barriertype);
+						}  else {
+							// nope
+						}
+					}
+				}
+			}
+		}
+	}
 
 } // NerdUHC
