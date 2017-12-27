@@ -1,4 +1,4 @@
-package com.bermudalocket.nerdUHC.commands;
+package com.bermudalocket.nerdUHC;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -8,15 +8,13 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.entity.Player;
 
-import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
-import com.bermudalocket.nerdUHC.ScoreboardHandler;
 
-public class NerdUHCCommandExecutor implements CommandExecutor {
+public class CommandHandler implements CommandExecutor {
 	
 	private NerdUHC plugin;
 	
-	public NerdUHCCommandExecutor(NerdUHC plugin) {
+	public CommandHandler(NerdUHC plugin) {
 		this.plugin = plugin;
 	}
 	

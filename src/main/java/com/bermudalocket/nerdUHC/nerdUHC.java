@@ -6,7 +6,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.bermudalocket.nerdUHC.commands.NerdUHCCommandExecutor;
 import com.bermudalocket.nerdUHC.listeners.ListenForPlayerDeathEvent;
 import com.bermudalocket.nerdUHC.listeners.ListenForPlayerJoinEvent;
 import com.bermudalocket.nerdUHC.listeners.ListenForEntityDamageByEntityEvent;
@@ -31,7 +30,7 @@ public class NerdUHC extends JavaPlugin {
 		CONFIG = new Configuration(this);
 		CONFIG.reload();
 		
-		this.getCommand("nerduhc").setExecutor(new NerdUHCCommandExecutor(this));
+		this.getCommand("nerduhc").setExecutor(new CommandHandler(this));
 		
 		scoreboardHandler = new ScoreboardHandler(this);
 		scoreboardHandler.configureScoreboards(CONFIG.DEFAULT_UHC_MODE);
