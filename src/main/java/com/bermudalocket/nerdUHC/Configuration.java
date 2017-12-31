@@ -62,6 +62,10 @@ public class Configuration {
 	//
 	//
 	
+	// ********************************************
+	// converts raw gamerules to GAMERULES map and
+	// then sets each gamerule
+	// ********************************************
 	public void setGameRules() {
 		GAMERULES.forEach(gamerule -> {
 			String rule = gamerule.keySet().toArray()[0].toString();
@@ -75,9 +79,15 @@ public class Configuration {
 		NerdUHC.PLUGIN.reloadConfig();
 		FileConfiguration config = NerdUHC.PLUGIN.getConfig();
 
+		// ********************************************
+		// GAME MODE CONFIG
+		// ********************************************
 		String getgamemode = config.getString("default-uhc-mode", "SOLO");
 		DEFAULT_UHC_MODE = NerdUHC.isValidGameMode(getgamemode) ? UHCGameMode.valueOf(getgamemode) : UHCGameMode.SOLO;
 		
+		// ********************************************
+		// SPAWNPOINT and BARRIER CONFIG
+		// ********************************************
 		SPAWN_X = config.getInt("spawn-x", 0);
 		SPAWN_Y = config.getInt("spawn-y", 65);
 		SPAWN_Z = config.getInt("spawn-z", 0);
@@ -90,25 +100,37 @@ public class Configuration {
 			plugin.getLogger().info(ChatColor.RED + "Value of SPAWN_BARRIER_BLOCK_ID in config is invalid");
 		}
 		
+		// ********************************************
+		// TEAMS CONFIG
+		// ********************************************
 		LET_PLAYERS_PICK_TEAMS = config.getBoolean("let-players-pick-teams", true);
 		FORCE_EVEN_TEAMS = config.getBoolean("force-even-teams", true);
 		MAX_TEAM_SIZE = config.getInt("max-team-size", 3);
+		ALIVE_TEAM_NAME = config.getString("alive-team-name", "Alive");
+		DEAD_TEAM_NAME = config.getString("dead-team-name", "Dead");
+		
+		// ********************************************
+		// CombatLogging CONFIG
+		// ********************************************
 		PLAYER_COMBAT_TAG_TIME = config.getInt("player-combat-tag-time-in-sec", 30);
 		try {
 			COMBAT_TAG_DOPPEL = EntityType.valueOf(config.getString("combat-tag-doppel"));
 		} catch (Exception f) {
 			COMBAT_TAG_DOPPEL = EntityType.CHICKEN;
-			plugin.getLogger().info(ChatColor.RED + "Value of COMBAT_TAG_DOPPEL in config is invalid");
+			plugin.getLogger().info(ChatColor.RED + "Value of COMBAT_TAG_DOPPEL in config is invalid!");
 		}
-		ALIVE_TEAM_NAME = config.getString("alive-team-name", "Alive");
-		DEAD_TEAM_NAME = config.getString("dead-team-name", "Dead");
 		
+		// ********************************************
+		// spreadplayers CONFIG
+		// ********************************************
 		SPREAD_DIST_BTWN_PLAYERS = config.getInt("spread-distance-between-players", 200);
 		SPREAD_DIST_FROM_SPAWN = config.getDouble("spread-distance-from-spawn", NerdUHC.getWorld().getWorldBorder().getSize());
 		SPREAD_RESPECT_TEAMS = config.getBoolean("spread-respect-teams", true);
 		
+		// ********************************************
+		// Get raw maps and lists
+		// ********************************************
 		GAMERULES = config.getMapList("gamerules");
-		
 		rawteamlist = config.getStringList("teams");
 		rawobjectiveslist = config.getMapList("objectives");
 	}

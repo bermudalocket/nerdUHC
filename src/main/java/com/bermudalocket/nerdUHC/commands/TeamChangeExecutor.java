@@ -7,12 +7,24 @@ import org.bukkit.entity.Player;
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
 
+/////////////////////////////////////////////////////////////////////////////
+//
+//	Team Change Executor
+//
+//
+
 public class TeamChangeExecutor extends CommandHandler {
 	
+	// ********************************************
+	// registers subcommands
+	// ********************************************
 	public TeamChangeExecutor() {
 		super("uhcteam", "join", "leave", "list", "help");
 	}
 	
+	// ********************************************
+	//		/uhcteam [join|leave|list]
+	// ********************************************
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
 		if (NerdUHC.isGameStarted()) return true;

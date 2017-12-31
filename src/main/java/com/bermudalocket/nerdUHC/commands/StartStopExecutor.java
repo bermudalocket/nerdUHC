@@ -2,20 +2,31 @@ package com.bermudalocket.nerdUHC.commands;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 
+/////////////////////////////////////////////////////////////////////////////
+//
+//	Start Stop Executor
+//
+//
+
 public class StartStopExecutor extends CommandHandler {
 	
-	private CommandSender console = NerdUHC.PLUGIN.getServer().getConsoleSender();
-	
+	// ********************************************
+	// register subcommands
+	// ********************************************
 	public StartStopExecutor() {
 		super("uhc", "start", "stop", "help");
 	}
 	
+	// ********************************************
+	// 		/uhc [start|stop]
+	// ********************************************
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
 		if (args.length == 1) {
@@ -38,8 +49,6 @@ public class StartStopExecutor extends CommandHandler {
 					}
 					final String spreadplayerscmd = spreadplayers + target;
 					
-					System.out.println(spreadplayers);
-					
 					String saturation = "effect " + target + " 23 1 4";
 					String fullhealth = "effect " + target + " 6 1 4";
 					
@@ -58,14 +67,15 @@ public class StartStopExecutor extends CommandHandler {
 			    					
 			            		    Bukkit.getOnlinePlayers().forEach(player -> 
 	            		    				player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 10, 1));
+			            		    
 			    					NerdUHC.setGameStarted(true);
-			    					sender.sendMessage("UHC started!");
+			    					sender.sendMessage(ChatColor.GRAY + "UHC started!");
 			            			this.cancel();
 			            			
 			            		} else {
 			            			
 			            			Bukkit.getOnlinePlayers().forEach(player -> 
-			            				player.sendTitle("The UHC will commence in ", countfrom + " seconds", 2, 16, 2));
+			            				player.sendTitle(ChatColor.RED + "The UHC will commence in ", countfrom + " seconds", 2, 16, 2));
 			            		}
 			            		
 			            		countfrom--;
@@ -73,13 +83,25 @@ public class StartStopExecutor extends CommandHandler {
 			        };
 			        task.runTaskTimer(NerdUHC.PLUGIN, 1, 20);
 				} else {
-					sender.sendMessage("There's already a UHC running!");
+					sender.sendMessage(ChatColor.RED + "There's already a UHC running!");
 				}
 			} else if (args[0].equalsIgnoreCase("stop")) {
 				NerdUHC.setGameStarted(false);
+				sender.sendMessage(ChatColor.RED + "UHC stopped!");
 			}
 		}
 		return true;
 	}
+	
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	//	Fields
+	//
+	//
+	
+	// ********************************************
+	// gets the server's console
+	// ********************************************
+	private CommandSender console = NerdUHC.PLUGIN.getServer().getConsoleSender();
 }
 

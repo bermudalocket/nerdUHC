@@ -12,7 +12,6 @@ import org.bukkit.command.PluginCommand;
 import com.bermudalocket.nerdUHC.listeners.ListenForPlayerDeathEvent;
 import com.bermudalocket.nerdUHC.listeners.ListenForPlayerJoinEvent;
 import com.bermudalocket.nerdUHC.listeners.ListenForPlayerQuitEvent;
-import com.bermudalocket.nerdUHC.listeners.ListenForChunkUnloadEvent;
 import com.bermudalocket.nerdUHC.listeners.ListenForEntityDamageByEntityEvent;
 import com.bermudalocket.nerdUHC.listeners.ListenForEntityDeathEvent;
 import com.bermudalocket.nerdUHC.commands.CommandHandler;
@@ -76,7 +75,6 @@ public class NerdUHC extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(new ListenForPlayerJoinEvent(), this);
 		getServer().getPluginManager().registerEvents(new ListenForPlayerQuitEvent(), this);
 		getServer().getPluginManager().registerEvents(new ListenForEntityDeathEvent(), this);
-		getServer().getPluginManager().registerEvents(new ListenForChunkUnloadEvent(), this);
 		
 	}
 	

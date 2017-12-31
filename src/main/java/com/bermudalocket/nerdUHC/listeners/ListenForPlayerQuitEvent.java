@@ -18,6 +18,12 @@ import com.bermudalocket.nerdUHC.NerdUHC;
 
 public class ListenForPlayerQuitEvent implements Listener {
 	
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	//	Listen
+	//
+	//
+	
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled=true)
 	public void onPlayerQuit(PlayerQuitEvent e) {
 		

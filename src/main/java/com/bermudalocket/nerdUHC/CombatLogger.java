@@ -7,7 +7,6 @@ import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Damageable;
@@ -26,17 +25,16 @@ import com.bermudalocket.nerdUHC.NerdUHC;
 
 public class CombatLogger {
 	
-	private Map<UUID, Long> taglist = new HashMap<UUID, Long>();		// player UUID
-	private Map<UUID, UUID> doppellist = new HashMap<UUID, UUID>();		// player UUID to entity UUID
-	private Map<UUID, ArrayList<ItemStack>> doppeldrops = new HashMap<UUID, ArrayList<ItemStack>>();	// player UUID
-	private Map<UUID, UUID> lastattackerlist = new HashMap<UUID, UUID>();
-	
 	/////////////////////////////////////////////////////////////////////////////
 	//
 	//	ListenForEntityDamageByEntityEvent
 	//
 	//
 
+	// ********************************************
+	// Tags player and combatant adding them to
+	// the taglist and lastattackerlist maps
+	// ********************************************
 	public void tagCombat(UUID player, UUID combatant) {
 		
 		Long timenow = System.currentTimeMillis();
@@ -59,14 +57,23 @@ public class CombatLogger {
 	//	
 	//
 	
+	// ********************************************
+	// Checks if the UUID belongs to a doppel
+	// ********************************************
 	public boolean isDoppel(UUID doppel) {
 		return doppellist.containsValue(doppel);
 	}
 	
+	// ********************************************
+	// GETTER for what doppel should drop upon death
+	// ********************************************
 	public ArrayList<ItemStack> getDoppelDrops(UUID player) {
 		return doppeldrops.get(player);
 	}
 	
+	// ********************************************
+	// gets the player associated with a doppel
+	// ********************************************
 	public UUID getDoppelPlayer(UUID doppel) {
 		for (UUID player : doppellist.keySet()) {
 			if (doppellist.get(player).equals(doppel)) {
@@ -82,6 +89,9 @@ public class CombatLogger {
 	//	
 	//
 	
+	// ********************************************
+	// returns if player's tag is active
+	// ********************************************
 	public boolean isPlayerTagged(UUID player) {
 		
 		Long timenow = System.currentTimeMillis();
@@ -96,6 +106,10 @@ public class CombatLogger {
 		
 	}
 	
+	// ********************************************
+	// spawns a doppel and gives it all the
+	// attributes of its player counterpart
+	// ********************************************
 	@SuppressWarnings("deprecation")
 	public void spawnDoppel(UUID playeruuid, Location location) {
 		
@@ -124,6 +138,7 @@ public class CombatLogger {
 		doppeldrops.put(player.getUniqueId(), inventory);
 		
 		// If player was being attacked when they logged out, make the attacker target doppel
+		// Doesn't currently work exactly right if chunk isn't loaded
 		Creature lastattacker = (Creature) Bukkit.getEntity(lastattackerlist.get(playeruuid));
 		if (lastattacker != null) {
 			if (!lastattacker.isDead()) {
@@ -139,11 +154,18 @@ public class CombatLogger {
 	//	
 	//
 	
+	// ********************************************
+	// checks if player has an active doppel
+	// ********************************************
 	public boolean doesPlayerHaveDoppel(UUID player) {
 		
 		return doppellist.containsKey(player);
 	}
 	
+	// ********************************************
+	// reconciles a player with its doppel, transf-
+	// erring damage taken
+	// ********************************************
 	public void reconcileDoppelWithPlayer(UUID playeruuid) {
 
 		Player player = Bukkit.getPlayer(playeruuid);
@@ -156,20 +178,36 @@ public class CombatLogger {
 		} else {
 			Double dmg = player.getHealth() - combatdoppel.getHealth();
 			player.damage(dmg);
-			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel took " + dmg + " damage!");
+			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel took " + ChatColor.BOLD + dmg + ChatColor.RESET + ChatColor.RED + " damage!");
 			combatdoppel.damage(20);
 		}
 		doppellist.remove(player.getUniqueId());
 	}
-
+	
 	/////////////////////////////////////////////////////////////////////////////
 	//
-	//	ListenForChunkUnloadEvent
-	//	
+	//	Fields
+	//
 	//
 	
-	public boolean doesChunkHaveDoppel(Chunk chunk) {
-		return doppellist.values().stream().anyMatch(doppel -> Bukkit.getEntity(doppel).getLocation().getChunk().equals(chunk));
-	}
-
+	// ********************************************
+	// Map: tagged players -> tagged time
+	// ********************************************
+	private Map<UUID, Long> taglist = new HashMap<UUID, Long>();		// player UUID
+	
+	// ********************************************
+	// Map: player -> player's doppel
+	// ********************************************
+	private Map<UUID, UUID> doppellist = new HashMap<UUID, UUID>();		// player UUID to entity UUID
+	
+	// ********************************************
+	// Map: player -> list of items in inventory
+	// ********************************************
+	private Map<UUID, ArrayList<ItemStack>> doppeldrops = new HashMap<UUID, ArrayList<ItemStack>>();	// player UUID
+	
+	// ********************************************
+	// Map: player -> player's last attacker
+	// ********************************************
+	private Map<UUID, UUID> lastattackerlist = new HashMap<UUID, UUID>();
+	
 }

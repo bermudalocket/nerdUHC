@@ -24,12 +24,6 @@ import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
 //
 
 public class ScoreboardHandler {
-	
-	private ScoreboardManager manager;
-	private Scoreboard board;
-
-	public Map<String, Objective> OBJECTIVES = new HashMap<String, Objective>();
-	public Map<String, Team> TEAMS = new HashMap<String, Team>();
 
 	/////////////////////////////////////////////////////////////////////////////
 	//
@@ -37,6 +31,9 @@ public class ScoreboardHandler {
 	//
 	//	
 	
+	// ********************************************
+	// checks if a team exists
+	// ********************************************
 	public boolean teamExists(String team) {
 		try {
 			board.getTeam(team);
@@ -46,18 +43,30 @@ public class ScoreboardHandler {
 		return true;
 	}
 	
+	// ********************************************
+	// removes a player from their team
+	// ********************************************
 	public void removePlayerTeam(Player player) {
 		board.getEntryTeam(player.getName()).removeEntry(player.getName());
 	}
 	
+	// ********************************************
+	// assigns a player to a team
+	// ********************************************
 	public void setPlayerTeam(Player player, String team) {
 		board.getTeam(team).addEntry(player.getName());
 	}
 	
+	// ********************************************
+	// returns the # of players on a team
+	// ********************************************
 	public int getTeamSize(String team) {
 		return board.getTeam(team).getSize();
 	}
 	
+	// ********************************************
+	// gets the team a player is currently on
+	// ********************************************
 	public Team getPlayerTeam(Player player) {
 		try {
 			return board.getEntryTeam(player.getName());
@@ -66,6 +75,10 @@ public class ScoreboardHandler {
 		}
 	}
 	
+	// ********************************************
+	// chooses a team for a player if the setting
+	// LET_PLAYERS_PICK_TEAMS is FALSE
+	// ********************************************
 	public boolean chooseTeamForPlayer(Player player) {
 		
 		Optional<Team> foundteam = board.getTeams().stream().filter(team -> team.getSize() < NerdUHC.CONFIG.MAX_TEAM_SIZE).findFirst();
@@ -86,6 +99,9 @@ public class ScoreboardHandler {
 	//
 	//	
 	
+	// ********************************************
+	// sets the player's scoreboard
+	// ********************************************
 	public void setPlayerBoard(Player player) {
 		try {
 			player.setScoreboard(board);
@@ -96,6 +112,9 @@ public class ScoreboardHandler {
 		}
 	}
 	
+	// ********************************************
+	// unsets the players scoreboard
+	// ********************************************
 	public void unsetPlayerBoard(Player player) {
 		try {
 			player.setScoreboard(manager.getNewScoreboard());
@@ -112,11 +131,16 @@ public class ScoreboardHandler {
 	//	
 	//	
 	
-	
+	// ********************************************
+	// returns the player's score for an objective
+	// ********************************************
 	public int getPlayerScore(Player player, String objective) {
 		return board.getObjective(objective).getScore(player.getName()).getScore();
 	}
 	
+	// ********************************************
+	// sets the player's score for an objective
+	// ********************************************
 	public void setPlayerScore(Player player, String objective, int score) {
 		board.getObjective(objective).getScore(player.getName()).setScore(score);
 	}
@@ -127,22 +151,36 @@ public class ScoreboardHandler {
 	//	
 	//	
 
+	// ********************************************
+	// gets server's scoreboard manager and creates
+	// a new scoreboard
+	// ********************************************
 	public void setManager() {
 		manager = Bukkit.getScoreboardManager();
 		board = manager.getNewScoreboard();
 	}
 	
+	// ********************************************
+	// 2-in-1 command to clear and reconfigure
+	// scoreboard, teams, etc
+	// ********************************************
 	public void reloadScoreboards() {
 		clearBoards();
 		configureScoreboards();
 	}
 	
+	// ********************************************
+	// clears out the scoreboard entirely
+	// ********************************************
 	public void clearBoards() {
 		board.getEntries().forEach(entry -> board.resetScores(entry));
 		board.getTeams().forEach(team -> team.unregister());
 		board.getObjectives().forEach(objective -> objective.unregister());
 	}
 	
+	// ********************************************
+	// returns if a string is a valid DisplaySlot
+	// ********************************************
 	public boolean isValidDisplaySlot(String slot) {
 		try {
 			DisplaySlot.valueOf(slot);
@@ -152,6 +190,10 @@ public class ScoreboardHandler {
 		}
 	}
 	
+	// ********************************************
+	// configures the scoreboard objectives and
+	// teams based on CONFIG
+	// ********************************************
 	public void configureScoreboards() {
 		
 		UHCGameMode gameMode = NerdUHC.getGameMode();
@@ -191,5 +233,31 @@ public class ScoreboardHandler {
 		}
 
 	} // end configureScoreboards()
+	
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	//	Fields
+	//
+	//
+	
+	// ********************************************
+	// server's scoreboard manager
+	// ********************************************
+	private ScoreboardManager manager;
+	
+	// ********************************************
+	// current scoreboard instance
+	// ********************************************
+	private Scoreboard board;
+	
+	// ********************************************
+	// Map: objective name -> Objective
+	// ********************************************
+	public Map<String, Objective> OBJECTIVES = new HashMap<String, Objective>();
+	
+	// ********************************************
+	// Map: team name -> Team
+	// ********************************************
+	public Map<String, Team> TEAMS = new HashMap<String, Team>();
 
 } //ScoreboardHandler

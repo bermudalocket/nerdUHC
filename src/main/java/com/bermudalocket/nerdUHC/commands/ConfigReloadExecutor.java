@@ -7,12 +7,24 @@ import org.bukkit.entity.Player;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 
+/////////////////////////////////////////////////////////////////////////////
+//
+//	Config Reload Executor
+//
+//
+
 public class ConfigReloadExecutor extends CommandHandler {
 	
+	// ********************************************
+	// register subcommands
+	// ********************************************
 	public ConfigReloadExecutor() {
 		super("uhcreload", "help");
 	}
 	
+	// ********************************************
+	//			/uhcreload
+	// ********************************************
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
 		if (args.length == 1 && args[0].equalsIgnoreCase("help")) return false;
