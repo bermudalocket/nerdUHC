@@ -1,9 +1,50 @@
 name: nerdUHC
 main: com.bermudalocket.nerdUHC.NerdUHC
 version: 1.0
+permissions:
+  nerduhc.gamemaster:
+    description: Full permissions
+    default: op
+  nerduhc.reload:
+    description: Permission to reload nerdUHC configuration.
+    default: op
+  nerduhc.startpausestop:
+    description: Permission to start, pause, and stop UHCs.
+    default: op
+  nerduhc.barrier:
+    description: Permission to enable and disable the spawn barrier.
+    default: op
+  nerduhc.basic:
+    description: Base permission level for nerdUHC.
+    default: true
 commands:
   nerduhc:
-    description: nerdUHC general command
-    usage: /nerduhc
-    permission: nerdUHC.basic
+    description: One stop command access for nerdUHC.
+    usage: /nerduhc [mode|barrier|forfeit] [...]
+    permission: nerduhc.basic
+    permission-message: y u do that
+  barrier:
+    description: Enables and disables the barrier around world's spawnpoint.
+    usage: /barrier [on|off]
+    permission: nerduhc.barrier
+    permission-message: y u do that
+  uhc:
+    description: Command which controls starting, pausing, and stopping of current round
+    usage: /uhc [start|pause|unpause|stop]
+    permission: nerduhc.gamemaster
+    permission-message: y u do that
+  uhcreload:
+    description: Reloads nerdUHC configuration
+    usage: /uhcreload
+    permission: nerduhc.reload
+    permission-message: y u do that
+  uhcmode:
+    description: Changes the current or upcoming UHC's mode
+    usage: /uhcmode [mode]
+    permission: nerduhc.reload
+    permission-message: y u do that
+  uhcteam:
+    description: Join and leave UHC teams during team mode
+    usage: /uhcteam [join|leave] [teamname]
+    permission: nerduhc.basic
     permission-message: y u do that

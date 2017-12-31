@@ -15,31 +15,29 @@ import org.bukkit.scoreboard.Objective;
 
 import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//	ScoreboardHandler
+//    Handles everything to do with the scoreboards, including:
+//    Teams, Players, Scores, and configuration
+//
+
 public class ScoreboardHandler {
 	
-	private NerdUHC plugin;
 	private ScoreboardManager manager;
 	private Scoreboard board;
-	private Objective objDeaths;
-	private Objective objKills;
-	private Objective objHealth;
-	private Objective objHealthOverhead;
-	
-	// teams for SOLO mode
-	private Team teamAlive;
-	private Team teamDead;
-	
-	// map holding user-defined teams for TEAM mode
+
+	public Map<String, Objective> OBJECTIVES = new HashMap<String, Objective>();
 	public Map<String, Team> TEAMS = new HashMap<String, Team>();
-	
-	public ScoreboardHandler(NerdUHC plugin) {
-		this.plugin = plugin;
-		manager = Bukkit.getScoreboardManager();
-		board = manager.getNewScoreboard();
-	}
+
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	//	Team commands
+	//
+	//	
 	
 	public boolean teamExists(String team) {
-		plugin.getLogger().info("teamExists("+team+")");
 		try {
 			board.getTeam(team);
 		} catch (Exception f) {
@@ -56,6 +54,10 @@ public class ScoreboardHandler {
 		board.getTeam(team).addEntry(player.getName());
 	}
 	
+	public int getTeamSize(String team) {
+		return board.getTeam(team).getSize();
+	}
+	
 	public Team getPlayerTeam(Player player) {
 		try {
 			return board.getEntryTeam(player.getName());
@@ -66,7 +68,7 @@ public class ScoreboardHandler {
 	
 	public boolean chooseTeamForPlayer(Player player) {
 		
-		Optional<Team> foundteam = board.getTeams().stream().filter(team -> team.getSize() < plugin.CONFIG.MAX_TEAM_SIZE).findFirst();
+		Optional<Team> foundteam = board.getTeams().stream().filter(team -> team.getSize() < NerdUHC.CONFIG.MAX_TEAM_SIZE).findFirst();
 		
 		if (foundteam.orElse(null) != null) {
 			setPlayerTeam(player, foundteam.get().getName());
@@ -78,10 +80,15 @@ public class ScoreboardHandler {
 		
 	}
 	
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	//	Player scoreboard commands
+	//
+	//	
+	
 	public void setPlayerBoard(Player player) {
 		try {
 			player.setScoreboard(board);
-			plugin.getLogger().info("Set board for player");
 		} catch (IllegalArgumentException f) {
 			// board doesnt exist
 		} catch (IllegalStateException g) {
@@ -98,6 +105,13 @@ public class ScoreboardHandler {
 			// player doesnt exist
 		}
 	}
+
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	//	Score commands
+	//	
+	//	
+	
 	
 	public int getPlayerScore(Player player, String objective) {
 		return board.getObjective(objective).getScore(player.getName()).getScore();
@@ -107,33 +121,71 @@ public class ScoreboardHandler {
 		board.getObjective(objective).getScore(player.getName()).setScore(score);
 	}
 	
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	//	Configuration commands
+	//	
+	//	
+
+	public void setManager() {
+		manager = Bukkit.getScoreboardManager();
+		board = manager.getNewScoreboard();
+	}
+	
+	public void reloadScoreboards() {
+		clearBoards();
+		configureScoreboards();
+	}
+	
 	public void clearBoards() {
 		board.getEntries().forEach(entry -> board.resetScores(entry));
 		board.getTeams().forEach(team -> team.unregister());
 		board.getObjectives().forEach(objective -> objective.unregister());
 	}
 	
-	public void configureScoreboards(UHCGameMode gameMode) {
+	public boolean isValidDisplaySlot(String slot) {
+		try {
+			DisplaySlot.valueOf(slot);
+			return true;
+		} catch (Exception f) {
+			return false;
+		}
+	}
+	
+	public void configureScoreboards() {
 		
-		objDeaths = board.registerNewObjective("Deaths","deathCount");
-		objKills = board.registerNewObjective("Kills","playerKillCount");
-		objHealth = board.registerNewObjective("Health","health");
-		objHealthOverhead = board.registerNewObjective("HealthOverhead", "health");
+		UHCGameMode gameMode = NerdUHC.getGameMode();
 		
-		objHealth.setDisplaySlot(plugin.CONFIG.HEALTH_DISPLAY_SLOT);
-		objKills.setDisplaySlot(plugin.CONFIG.KILLS_DISPLAY_SLOT);
-		if (plugin.CONFIG.DISPLAY_HEALTH_BELOW_NAME) objHealthOverhead.setDisplaySlot(DisplaySlot.BELOW_NAME);
+		NerdUHC.CONFIG.rawobjectiveslist.forEach(objective -> {
+			String objname = objective.get("name").toString();
+			String objcriteria = objective.get("criteria").toString();
+			String objdisplayslot = objective.get("displayslot").toString();
+			
+			if (objcriteria != null && isValidDisplaySlot(objdisplayslot)) {
+				board.registerNewObjective(objname.toUpperCase(), objcriteria).setDisplaySlot(DisplaySlot.valueOf(objdisplayslot));
+				OBJECTIVES.put(objname.toUpperCase(), board.getObjective(objname.toUpperCase()));
+			}
+		});
+		
+		try {
+			Objective deaths = (Objective) board.getObjectivesByCriteria("deathCount");
+			NerdUHC.CONFIG.DEATH_OBJECTIVE_NAME = deaths.getName();
+		} catch (Exception f) {
+			board.registerNewObjective("DEATHS", "deathCount");
+			OBJECTIVES.put("DEATHS", board.getObjective("DEATHS"));
+			NerdUHC.CONFIG.DEATH_OBJECTIVE_NAME = "DEATHS";
+		}
 		
 		switch (gameMode) {
 			default:
 			case SOLO:
-				teamAlive = board.registerNewTeam("Alive");
-				teamDead = board.registerNewTeam("Dead");
+				TEAMS.put(NerdUHC.CONFIG.ALIVE_TEAM_NAME.toUpperCase(), board.registerNewTeam(NerdUHC.CONFIG.ALIVE_TEAM_NAME));
+				TEAMS.put(NerdUHC.CONFIG.DEAD_TEAM_NAME.toUpperCase(), board.registerNewTeam(NerdUHC.CONFIG.DEAD_TEAM_NAME));
 				break;
 			case TEAM:
-				plugin.CONFIG.rawteamlist.forEach(team -> {
-					board.registerNewTeam(team);
-					TEAMS.put(team, board.getTeam(team));
+				NerdUHC.CONFIG.rawteamlist.forEach(team -> {
+					board.registerNewTeam(team.toUpperCase());
+					TEAMS.put(team.toUpperCase(), board.getTeam(team.toUpperCase()));
 				});
 				break;
 		}

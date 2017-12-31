@@ -1,10 +1,9 @@
 package com.bermudalocket.nerdUHC.listeners;
 
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 
@@ -14,7 +13,7 @@ import com.bermudalocket.nerdUHC.NerdUHC;
 //  Executes: Combat tagging
 //
 
-public class ListenForEntityDamageByEntityEvent implements Listener {
+public class ListenForChunkUnloadEvent implements Listener {
 	
 	/////////////////////////////////////////////////////////////////////////////
 	//
@@ -23,12 +22,9 @@ public class ListenForEntityDamageByEntityEvent implements Listener {
 	//
 	
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled=true)
-	public void onPlayerCombat(EntityDamageByEntityEvent e) {
-		
-		if (e.getEntity() == null || e.getDamager() == null) return;
-		
-		if ((e.getEntity() instanceof Player)) {
-			NerdUHC.combatLogger.tagCombat(e.getEntity().getUniqueId(), e.getDamager().getUniqueId());
+	public void onChunkUnload(ChunkUnloadEvent e) {
+		if (NerdUHC.combatLogger.doesChunkHaveDoppel(e.getChunk())) {
+			e.setCancelled(true);
 		}
 
 	}

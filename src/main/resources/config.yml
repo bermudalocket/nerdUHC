@@ -15,3 +15,17 @@ teams:
   - Green
   - Blue
   - Purple
+  
+objectives:
+  - name: 'health'
+    criteria: 'health'
+    displayslot: 'PLAYER_LIST'
+  - name: 'healthoverhead'
+    criteria: 'health'
+    displayslot: 'BELOW_NAME'
+  - name: 'kills'
+    criteria: 'playerKillCount'
+    displayslot: 'SIDEBAR'
+  - name: 'deaths'
+    criteria: 'deathCount'
+    displayslot: 'none'
