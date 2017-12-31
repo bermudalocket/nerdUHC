@@ -45,13 +45,20 @@ public abstract class CommandHandler implements CommandExecutor, TabCompleter {
 	}
 	
 	public void showCommandMenu(CommandSender sender) {
-		sender.sendMessage(ChatColor.RED + "NerdUHC Commands:");
-		sender.sendMessage("/uhcmode solo : sets the next UHC's mode to solo");
-		sender.sendMessage("/uhcmode team : sets the next UHC's mode to team");
-		sender.sendMessage("/uhcteam list : displays a list of all teams");
-		sender.sendMessage("/uhcteam join : join a team");
-		sender.sendMessage("/uhcteam leave : leave a team");
-		sender.sendMessage("/barrier on : encloses a small area around the spawn coordinates with glass");
-		sender.sendMessage("/barrier off : removes the glass barrier around the spawn coordinates");
+		if (sender.hasPermission("nerduhc.basic")) {
+			sender.sendMessage(ChatColor.AQUA + "NerdUHC commands list:");
+			sender.sendMessage("/uhcteam list : displays a list of all teams");
+			sender.sendMessage("/uhcteam join : join a team");
+			sender.sendMessage("/uhcteam leave : leave a team");
+		} else {
+			sender.sendMessage(ChatColor.AQUA + "NerdUHC commands list:");
+			sender.sendMessage("/uhcmode solo : sets the next UHC's mode to solo");
+			sender.sendMessage("/uhcmode team : sets the next UHC's mode to team");
+			sender.sendMessage("/uhcteam list : displays a list of all teams");
+			sender.sendMessage("/uhcteam join : join a team");
+			sender.sendMessage("/uhcteam leave : leave a team");
+			sender.sendMessage("/barrier on : encloses a small area around the spawn coordinates with glass");
+			sender.sendMessage("/barrier off : removes the glass barrier around the spawn coordinates");
+		}
 	}
 }

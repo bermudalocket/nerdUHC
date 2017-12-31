@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.Creature;
@@ -88,10 +89,8 @@ public class CombatLogger {
 		Long tagexpires = playerlasttagged + NerdUHC.CONFIG.PLAYER_COMBAT_TAG_TIME*100;
 		
 		if (timenow < tagexpires) {
-			System.out.println("tag not expired");
 			return true;
 		} else {
-			System.out.println("tag expired");
 			return false;
 		}
 		
@@ -112,6 +111,7 @@ public class CombatLogger {
 		((LivingEntity) combatdoppel).setAI(false);
 		combatdoppel.setCustomName(player.getName());
 		combatdoppel.setCustomNameVisible(true);
+		combatdoppel.setFireTicks(20*20);
 		
 		// Make doppel drop player's inventory
 		ArrayList<ItemStack> inventory = new ArrayList<>();
@@ -152,11 +152,11 @@ public class CombatLogger {
 		
 		if (combatdoppel.isDead()) {
 			player.damage(20);
-			player.sendMessage("Whoops - you combat logged and your doppel died!");
+			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel died!");
 		} else {
 			Double dmg = player.getHealth() - combatdoppel.getHealth();
 			player.damage(dmg);
-			player.sendMessage("Whoops - you combat logged and your doppel took " + dmg + " damage!");
+			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel took " + dmg + " damage!");
 			combatdoppel.damage(20);
 		}
 		doppellist.remove(player.getUniqueId());

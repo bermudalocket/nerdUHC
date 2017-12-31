@@ -21,7 +21,7 @@ import net.md_5.bungee.api.ChatColor;
 public class Configuration {
 	
 	private NerdUHC plugin;
-	
+
 	public boolean LET_PLAYERS_PICK_TEAMS;
 	public boolean FORCE_EVEN_TEAMS;
 	public String ALIVE_TEAM_NAME;

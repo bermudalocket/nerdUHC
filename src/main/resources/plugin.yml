@@ -18,11 +18,6 @@ permissions:
     description: Base permission level for nerdUHC.
     default: true
 commands:
-  nerduhc:
-    description: One stop command access for nerdUHC.
-    usage: /nerduhc [mode|barrier|forfeit] [...]
-    permission: nerduhc.basic
-    permission-message: y u do that
   barrier:
     description: Enables and disables the barrier around world's spawnpoint.
     usage: /barrier [on|off]

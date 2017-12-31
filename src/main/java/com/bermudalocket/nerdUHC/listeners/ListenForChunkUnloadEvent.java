@@ -26,7 +26,6 @@ public class ListenForChunkUnloadEvent implements Listener {
 		if (NerdUHC.combatLogger.doesChunkHaveDoppel(e.getChunk())) {
 			e.setCancelled(true);
 		}
-
 	}
 	
 }

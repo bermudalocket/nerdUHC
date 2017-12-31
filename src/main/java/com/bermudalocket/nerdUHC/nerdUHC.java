@@ -2,6 +2,7 @@ package com.bermudalocket.nerdUHC;
 
 import org.bukkit.World;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -162,21 +163,21 @@ public class NerdUHC extends JavaPlugin {
 			switch (uhcgamemode) {
 				case SOLO:
 					scoreboardHandler.setPlayerTeam(player, NerdUHC.CONFIG.ALIVE_TEAM_NAME);
-					player.sendMessage("Welcome to nerdUHC. You have been added to the " + NerdUHC.CONFIG.ALIVE_TEAM_NAME + " team.");
+					player.sendMessage(ChatColor.GRAY + "Welcome to nerdUHC. You have been added to the " + NerdUHC.CONFIG.ALIVE_TEAM_NAME + " team.");
 					break;
 				case TEAM:
 					if (CONFIG.LET_PLAYERS_PICK_TEAMS) {
-						player.sendMessage("Welcome to nerdUHC. View a list of teams with /teamlist. Join a team with /jointeam.");
+						player.sendMessage(ChatColor.GRAY + "Welcome to nerdUHC. View a list of teams with " + ChatColor.WHITE + "/uhcteam list" + ChatColor.GRAY + ". Join a team with " + ChatColor.WHITE + "/uhcteam join [TEAM]" + ChatColor.GRAY + ".");
 					} else {
 						if (scoreboardHandler.chooseTeamForPlayer(player)) {
-							player.sendMessage("Welcome to nerdUHC. You have been added to the " + scoreboardHandler.getPlayerTeam(player).getName() + " team");
+							player.sendMessage(ChatColor.GRAY + "Welcome to nerdUHC. You have been added to the " + scoreboardHandler.getPlayerTeam(player).getName() + " team");
 						} else {
-							player.sendMessage("Sorry, there are no available teams to join.");
+							player.sendMessage(ChatColor.GRAY + "Sorry, there are no available teams to join.");
 						}
 					}
 			}
 		} else {
-			player.sendMessage("Sorry! You joined after the UHC began, so you will have to spectate.");
+			player.sendMessage(ChatColor.GRAY + "Sorry! You joined after the UHC began, so you will have to spectate.");
 		}
 	}
 	
