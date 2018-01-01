@@ -15,7 +15,7 @@ The plugin runs as a singleton limiting the number of concurrent matches to one.
 3. **Combat Logging Prevention** - don't worry about players being less-than-honest and logging out during combat. If a player attacks (or is attacked by) a mob, CombatLogger will tag them for a set duration customizable in the configuration. If they log out while they are actively tagged, a *doppel* will spawn in their place. Any damage the doppel takes will be transferred to the player upon relog.
 * The doppel's entity type is customizable but defaults fittingly to a chicken :chicken:.
 * The doppel inherits the player's name, position, health, and inventory drops.
-* ~~Hostile mobs near the doppel will continue to attack the doppel.~~ (WIP)
+* Hostile mobs targeting the player upon logout will continue to attack the doppel.
 4. **Spawn Barrier Builder** - having to create a pre-game lobby can be a bit of a headache, and allowing players to get a preview of the spawn/showdown area can have its perks. With the Spawn Barrier Builder, one simply sets the barrier type and radius in the configuration, and the plugin does the rest. The configuration defaults to a 6-block radius barrier made of the invisible BARRIER block. The builder will not overwrite any existing blocks in your spawn build.
 
 ## Commands
