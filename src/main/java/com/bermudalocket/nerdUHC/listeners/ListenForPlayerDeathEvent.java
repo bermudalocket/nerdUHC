@@ -4,7 +4,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.ChatColor;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 
@@ -26,13 +28,19 @@ public class ListenForPlayerDeathEvent implements Listener {
 	public void onPlayerDeath(PlayerDeathEvent e) {
 		Player player = e.getEntity();
 		if (NerdUHC.isGameStarted()) {
-			
 			if (NerdUHC.scoreboardHandler.getPlayerScore(player, NerdUHC.CONFIG.DEATH_OBJECTIVE_NAME) == 0) {
-				
+				if (player.getLastDamageCause().getCause().equals(DamageCause.VOID)) {
+					e.setDeathMessage(player.getDisplayName() + ChatColor.RED + " thought they could get away with combat logging");
+				} else if (player.getKiller() != null) {
+					e.setDeathMessage(ChatColor.RED + "Down falls " + player.getDisplayName() + ChatColor.RED + ", killed by " + player.getKiller());
+				} else if (player.getKiller() == null) {
+					e.setDeathMessage(ChatColor.RED + "Down falls " + player.getDisplayName() + ChatColor.RED + ", killed by the Olmecs");
+				}
 				NerdUHC.scoreboardHandler.setPlayerScore(player, NerdUHC.CONFIG.DEATH_OBJECTIVE_NAME, 1);
 				NerdUHC.scoreboardHandler.removePlayerTeam(player);
 				NerdUHC.scoreboardHandler.setPlayerTeam(player, NerdUHC.CONFIG.DEAD_TEAM_NAME);
-				
+				player.setDisplayName(ChatColor.STRIKETHROUGH + player.getName());
+				player.setPlayerListName(ChatColor.STRIKETHROUGH + player.getName());
 			}
 		} 
 	}

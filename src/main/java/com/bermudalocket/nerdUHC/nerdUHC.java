@@ -17,7 +17,9 @@ import com.bermudalocket.nerdUHC.listeners.ListenForEntityDeathEvent;
 import com.bermudalocket.nerdUHC.commands.CommandHandler;
 import com.bermudalocket.nerdUHC.commands.BarrierExecutor;
 import com.bermudalocket.nerdUHC.commands.ConfigReloadExecutor;
-import com.bermudalocket.nerdUHC.commands.TeamChangeExecutor;
+import com.bermudalocket.nerdUHC.commands.TeamJoinExecutor;
+import com.bermudalocket.nerdUHC.commands.TeamLeaveExecutor;
+import com.bermudalocket.nerdUHC.commands.TeamListExecutor;
 import com.bermudalocket.nerdUHC.commands.GamemodeExecutor;
 import com.bermudalocket.nerdUHC.commands.StartStopExecutor;
 
@@ -65,7 +67,9 @@ public class NerdUHC extends JavaPlugin {
 		// Construct command handlers
 		addCommandHandler(new BarrierExecutor());
 		addCommandHandler(new ConfigReloadExecutor());
-		addCommandHandler(new TeamChangeExecutor());
+		addCommandHandler(new TeamJoinExecutor());
+		addCommandHandler(new TeamLeaveExecutor());
+		addCommandHandler(new TeamListExecutor());
 		addCommandHandler(new GamemodeExecutor());
 		addCommandHandler(new StartStopExecutor());
 		
@@ -165,7 +169,7 @@ public class NerdUHC extends JavaPlugin {
 					break;
 				case TEAM:
 					if (CONFIG.LET_PLAYERS_PICK_TEAMS) {
-						player.sendMessage(ChatColor.GRAY + "Welcome to nerdUHC. View a list of teams with " + ChatColor.WHITE + "/uhcteam list" + ChatColor.GRAY + ". Join a team with " + ChatColor.WHITE + "/uhcteam join [TEAM]" + ChatColor.GRAY + ".");
+						player.sendMessage(ChatColor.GRAY + "Welcome to nerdUHC. View a list of teams with " + ChatColor.WHITE + "/teamlist" + ChatColor.GRAY + ". Join a team with " + ChatColor.WHITE + "/join [TEAM]" + ChatColor.GRAY + ", or leave a team with " + ChatColor.WHITE + "/leave [TEAM]" + ChatColor.GRAY + ".");
 					} else {
 						if (scoreboardHandler.chooseTeamForPlayer(player)) {
 							player.sendMessage(ChatColor.GRAY + "Welcome to nerdUHC. You have been added to the " + scoreboardHandler.getPlayerTeam(player).getName() + " team");

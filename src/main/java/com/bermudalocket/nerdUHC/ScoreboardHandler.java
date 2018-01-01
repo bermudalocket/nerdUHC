@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -48,13 +49,18 @@ public class ScoreboardHandler {
 	// ********************************************
 	public void removePlayerTeam(Player player) {
 		board.getEntryTeam(player.getName()).removeEntry(player.getName());
+		player.setDisplayName(ChatColor.WHITE + player.getName());
+		player.setPlayerListName(ChatColor.WHITE + player.getName());
 	}
 	
 	// ********************************************
 	// assigns a player to a team
 	// ********************************************
 	public void setPlayerTeam(Player player, String team) {
+		ChatColor color = getTeamColor(team);
 		board.getTeam(team).addEntry(player.getName());
+		player.setDisplayName(color + player.getName());
+		player.setPlayerListName(color + player.getName());
 	}
 	
 	// ********************************************
@@ -91,6 +97,10 @@ public class ScoreboardHandler {
 			return false;
 		}
 		
+	}
+	
+	public ChatColor getTeamColor(String team) {
+		return board.getTeam(team).getColor();
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -176,6 +186,9 @@ public class ScoreboardHandler {
 		board.getEntries().forEach(entry -> board.resetScores(entry));
 		board.getTeams().forEach(team -> team.unregister());
 		board.getObjectives().forEach(objective -> objective.unregister());
+		
+		TEAMS.clear();
+		OBJECTIVES.clear();
 	}
 	
 	// ********************************************
@@ -226,8 +239,21 @@ public class ScoreboardHandler {
 				break;
 			case TEAM:
 				NerdUHC.CONFIG.rawteamlist.forEach(team -> {
-					board.registerNewTeam(team.toUpperCase());
-					TEAMS.put(team.toUpperCase(), board.getTeam(team.toUpperCase()));
+					String teamname = team.get("name").toString().toUpperCase();
+					String teamcolor = team.get("color").toString().toUpperCase();
+					
+					board.registerNewTeam(teamname);
+					TEAMS.put(teamname, board.getTeam(teamname));
+					ChatColor color;
+					
+					try {
+						color = ChatColor.valueOf(teamcolor);
+						board.getTeam(teamname).setColor(color);
+					} catch (Exception f) {
+						color = ChatColor.STRIKETHROUGH;
+						board.getTeam(teamname).setColor(color);
+						NerdUHC.PLUGIN.getLogger().info("Config error: Invalid color option for team " + teamname);
+					}
 				});
 				break;
 		}

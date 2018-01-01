@@ -27,7 +27,7 @@ public class ListenForEntityDamageByEntityEvent implements Listener {
 		
 		if (e.getEntity() == null || e.getDamager() == null) return;
 		
-		if ((e.getEntity() instanceof Player)) {
+		if ((e.getEntity() instanceof Player) || (e.getDamager() instanceof Player)) {
 			NerdUHC.combatLogger.tagCombat(e.getEntity().getUniqueId(), e.getDamager().getUniqueId());
 		}
 

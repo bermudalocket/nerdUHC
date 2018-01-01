@@ -42,7 +42,7 @@ public class Configuration {
 	public List<Map<?, ?>> GAMERULES = new ArrayList<>();
 	public String DEATH_OBJECTIVE_NAME;
 	
-	List<String> rawteamlist = new ArrayList<String>();
+	List<Map<?, ?>> rawteamlist = new ArrayList<Map<?, ?>>();
 	List<Map<?, ?>> rawobjectiveslist = new ArrayList<Map<?, ?>>();
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -78,6 +78,7 @@ public class Configuration {
 		
 		NerdUHC.PLUGIN.reloadConfig();
 		FileConfiguration config = NerdUHC.PLUGIN.getConfig();
+		
 
 		// ********************************************
 		// GAME MODE CONFIG
@@ -124,14 +125,14 @@ public class Configuration {
 		// spreadplayers CONFIG
 		// ********************************************
 		SPREAD_DIST_BTWN_PLAYERS = config.getInt("spread-distance-between-players", 200);
-		SPREAD_DIST_FROM_SPAWN = config.getDouble("spread-distance-from-spawn", NerdUHC.getWorld().getWorldBorder().getSize());
+		SPREAD_DIST_FROM_SPAWN = config.getDouble("spread-distance-from-spawn", NerdUHC.getWorld().getWorldBorder().getSize()/2);
 		SPREAD_RESPECT_TEAMS = config.getBoolean("spread-respect-teams", true);
 		
 		// ********************************************
 		// Get raw maps and lists
 		// ********************************************
 		GAMERULES = config.getMapList("gamerules");
-		rawteamlist = config.getStringList("teams");
+		rawteamlist = config.getMapList("teams");
 		rawobjectiveslist = config.getMapList("objectives");
 	}
 

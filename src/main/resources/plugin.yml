@@ -38,8 +38,18 @@ commands:
     usage: /uhcmode [mode]
     permission: nerduhc.reload
     permission-message: y u do that
-  uhcteam:
-    description: Join and leave UHC teams during team mode
-    usage: /uhcteam [join|leave] [teamname]
+  join:
+    description: Join a team.
+    usage: /join [team]
+    permission: nerduhc.basic
+    permission-message: y u do that
+  leave:
+    description: Join a team.
+    usage: /join [team]
+    permission: nerduhc.basic
+    permission-message: y u do that
+  teamlist:
+    description: List the current UHC teams.
+    usage: /teamlist
     permission: nerduhc.basic
     permission-message: y u do that

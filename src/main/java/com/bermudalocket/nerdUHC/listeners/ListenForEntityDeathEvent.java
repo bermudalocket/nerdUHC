@@ -31,10 +31,11 @@ public class ListenForEntityDeathEvent implements Listener {
 			
 			UUID doppel = e.getEntity().getUniqueId();
 
-			if (NerdUHC.combatLogger.isDoppel(doppel) && (e.getEntity().getLastDamageCause().getCause().equals(DamageCause.ENTITY_ATTACK))) {
-				
-				UUID associatedplayer = NerdUHC.combatLogger.getDoppelPlayer(doppel);
+			if (NerdUHC.combatLogger.isDoppel(doppel) && 
+					(e.getEntity().getLastDamageCause().getCause().equals(DamageCause.ENTITY_ATTACK) ||
+					 e.getEntity().getLastDamageCause().getCause().equals(DamageCause.FIRE_TICK))) {
 				e.getDrops().clear();
+				UUID associatedplayer = NerdUHC.combatLogger.getDoppelPlayer(doppel);
 				NerdUHC.combatLogger.getDoppelDrops(associatedplayer).forEach(item -> e.getDrops().add(item));
 				
 			}

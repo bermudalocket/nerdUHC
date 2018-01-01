@@ -7,7 +7,9 @@ import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Entity;
@@ -35,20 +37,27 @@ public class CombatLogger {
 	// Tags player and combatant adding them to
 	// the taglist and lastattackerlist maps
 	// ********************************************
-	public void tagCombat(UUID player, UUID combatant) {
+	public void tagCombat(UUID first, UUID second) {
 		
 		Long timenow = System.currentTimeMillis();
-		Entity combatantentity = Bukkit.getEntity(combatant);
+		Entity firstentity = Bukkit.getEntity(first);
+		Entity secondentity = Bukkit.getEntity(second);
 	
-		if ((player == null) || (combatant == null)) return;
-		if (player == combatant) return;
+		if ((first == null) || (second == null)) return;
+		if (first == second) return;
 		
-		taglist.put(player, timenow);
-		if (combatantentity instanceof Player) { 
-			taglist.put(combatant, timenow);
-		} else if (combatantentity instanceof Creature) {
-			lastattackerlist.put(player, combatant);
+		if (firstentity instanceof Player && secondentity instanceof Player) { 
+			taglist.put(first, timenow);
+			taglist.put(second,  timenow);
+		} else if ((firstentity instanceof Creature)) { 
+			taglist.put(second, timenow);
+			lastattackerlist.put(second, first);
+		} else if (secondentity instanceof Creature) {
+			taglist.put(first,  timenow);
+			lastattackerlist.put(first, second);
 		}
+		NerdUHC.PLUGIN.getLogger().info(taglist.toString());
+		NerdUHC.PLUGIN.getLogger().info(lastattackerlist.toString());
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////
@@ -95,8 +104,11 @@ public class CombatLogger {
 	public boolean isPlayerTagged(UUID player) {
 		
 		Long timenow = System.currentTimeMillis();
-		Long playerlasttagged = taglist.get(player);		
-		Long tagexpires = playerlasttagged + NerdUHC.CONFIG.PLAYER_COMBAT_TAG_TIME*100;
+		Long playerlasttagged = taglist.get(player);	
+		
+		if (playerlasttagged == null) return false;
+		
+		Long tagexpires = playerlasttagged + NerdUHC.CONFIG.PLAYER_COMBAT_TAG_TIME*1000;
 		
 		if (timenow < tagexpires) {
 			return true;
@@ -125,7 +137,7 @@ public class CombatLogger {
 		((LivingEntity) combatdoppel).setAI(false);
 		combatdoppel.setCustomName(player.getName());
 		combatdoppel.setCustomNameVisible(true);
-		combatdoppel.setFireTicks(20*20);
+		//combatdoppel.setFireTicks(20*20);
 		
 		// Make doppel drop player's inventory
 		ArrayList<ItemStack> inventory = new ArrayList<>();
@@ -167,21 +179,45 @@ public class CombatLogger {
 	// erring damage taken
 	// ********************************************
 	public void reconcileDoppelWithPlayer(UUID playeruuid) {
-
+		
 		Player player = Bukkit.getPlayer(playeruuid);
 		UUID combatdoppelID = doppellist.get(player.getUniqueId());
-		Damageable combatdoppel = ((Damageable) Bukkit.getEntity(combatdoppelID));
+		Entity combatdoppel = Bukkit.getEntity(combatdoppelID);
+		Location locvoid = new Location(player.getWorld(), 0, -100, 0);
 		
-		if (combatdoppel.isDead()) {
-			player.damage(20);
-			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel died!");
-		} else {
-			Double dmg = player.getHealth() - combatdoppel.getHealth();
-			player.damage(dmg);
-			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel took " + ChatColor.BOLD + dmg + ChatColor.RESET + ChatColor.RED + " damage!");
-			combatdoppel.damage(20);
-		}
-		doppellist.remove(player.getUniqueId());
+		
+			if (combatdoppel == null) {
+				// doppel died before player logged back in
+				player.teleport(locvoid);
+    				player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_IMPACT, 10, 1);
+    				player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel died!");
+    				return;
+			}
+            	if (!combatdoppel.isValid()) {
+            		player.teleport(locvoid);
+        			player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_IMPACT, 10, 1);
+        			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel died!");
+        		} else {
+        			Damageable combatdoppeldmg = (Damageable) combatdoppel;
+        			Double dmg = player.getHealth() - combatdoppeldmg.getHealth();
+        			player.setSaturation(0);
+        			player.setHealth(player.getHealth() - dmg);
+        			player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_IMPACT, 10, 1);
+        			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel took " + ChatColor.BOLD + dmg + ChatColor.RESET + ChatColor.RED + " damage!");
+        			combatdoppel.remove();
+        		}
+            	doppellist.remove(player.getUniqueId());
+            	doppeldrops.remove(player.getUniqueId());
+	}
+	
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	//	ListenForChunkUnloadEvent
+	//	
+	//
+	
+	public boolean doesChunkHaveDoppel(Chunk chunk) {
+		return doppellist.values().stream().anyMatch(doppel -> Bukkit.getEntity(doppel).getLocation().getChunk().equals(chunk));
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////
