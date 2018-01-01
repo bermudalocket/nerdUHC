@@ -2,8 +2,10 @@ package com.bermudalocket.nerdUHC;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -15,6 +17,7 @@ import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
@@ -182,32 +185,42 @@ public class CombatLogger {
 		
 		Player player = Bukkit.getPlayer(playeruuid);
 		UUID combatdoppelID = doppellist.get(player.getUniqueId());
-		Entity combatdoppel = Bukkit.getEntity(combatdoppelID);
-		Location locvoid = new Location(player.getWorld(), 0, -100, 0);
 		
-		
-			if (combatdoppel == null) {
-				// doppel died before player logged back in
-				player.teleport(locvoid);
-    				player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_IMPACT, 10, 1);
-    				player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel died!");
-    				return;
+		List<Entity> nearbyent = player.getNearbyEntities(3,3,3);
+		if (nearbyent.isEmpty()) {
+			// nothing around
+		} else {
+			List<Entity> match = nearbyent.stream().filter(ent -> ent.getUniqueId().equals(combatdoppelID)).collect(Collectors.toList());
+			if (match.isEmpty()) {
+				// doppel is gone or something
+			} else {
+				Entity combatdoppel = match.get(0);
+            		if (!combatdoppel.isValid()) {
+            			killPlayer(player);
+            			player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_THUNDER, 10, 1);
+            			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel died!");
+            		} else {
+            			Damageable combatdoppeldmg = (Damageable) combatdoppel;
+            			Double dmg = player.getHealth() - combatdoppeldmg.getHealth();
+            			player.setSaturation(0);
+            			player.setHealth(player.getHealth() - dmg);
+            			player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_THUNDER, 10, 1);
+            			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel took " + ChatColor.BOLD + dmg + ChatColor.RESET + ChatColor.RED + " damage!");
+            			combatdoppel.remove();
+            		}
 			}
-            	if (!combatdoppel.isValid()) {
-            		player.teleport(locvoid);
-        			player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_IMPACT, 10, 1);
-        			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel died!");
-        		} else {
-        			Damageable combatdoppeldmg = (Damageable) combatdoppel;
-        			Double dmg = player.getHealth() - combatdoppeldmg.getHealth();
-        			player.setSaturation(0);
-        			player.setHealth(player.getHealth() - dmg);
-        			player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_IMPACT, 10, 1);
-        			player.sendMessage(ChatColor.RED + "Whoops - you combat logged and your doppel took " + ChatColor.BOLD + dmg + ChatColor.RESET + ChatColor.RED + " damage!");
-        			combatdoppel.remove();
-        		}
-            	doppellist.remove(player.getUniqueId());
-            	doppeldrops.remove(player.getUniqueId());
+			doppellist.remove(player.getUniqueId());
+        		doppeldrops.remove(player.getUniqueId());
+		}
+	}
+	
+	public void killPlayer(Entity player) {
+		@SuppressWarnings("deprecation")
+		EntityDamageEvent e = new EntityDamageEvent(player, EntityDamageEvent.DamageCause.VOID, 1000);
+		Bukkit.getPluginManager().callEvent(e);
+		if (e.isCancelled()) return;
+		e.getEntity().setLastDamageCause(e);
+		((Player) player).setHealth(0);
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////

@@ -57,10 +57,14 @@ public class ScoreboardHandler {
 	// assigns a player to a team
 	// ********************************************
 	public void setPlayerTeam(Player player, String team) {
-		ChatColor color = getTeamColor(team);
 		board.getTeam(team).addEntry(player.getName());
-		player.setDisplayName(color + player.getName());
-		player.setPlayerListName(color + player.getName());
+	}
+	
+	public void setPlayerColor(Player player) {
+		String team = getPlayerTeam(player).getName();
+		ChatColor color = getTeamColor(team);
+		player.setDisplayName(color + player.getName() + ChatColor.WHITE);
+		player.setPlayerListName(color + player.getName() + ChatColor.WHITE);
 	}
 	
 	// ********************************************
@@ -223,6 +227,13 @@ public class ScoreboardHandler {
 		});
 		
 		try {
+			Objective displayhealth = (Objective) board.getObjective(DisplaySlot.BELOW_NAME);
+			displayhealth.setDisplayName(ChatColor.RED + "❤");
+		} catch (Exception f) {
+			// no below-name health tracking
+		}
+		
+		try {
 			Objective deaths = (Objective) board.getObjectivesByCriteria("deathCount");
 			NerdUHC.CONFIG.DEATH_OBJECTIVE_NAME = deaths.getName();
 		} catch (Exception f) {
@@ -230,6 +241,9 @@ public class ScoreboardHandler {
 			OBJECTIVES.put("DEATHS", board.getObjective("DEATHS"));
 			NerdUHC.CONFIG.DEATH_OBJECTIVE_NAME = "DEATHS";
 		}
+		
+		// update health display
+		Bukkit.getOnlinePlayers().forEach(player -> player.setHealth(player.getHealth()));
 		
 		switch (gameMode) {
 			default:
@@ -249,6 +263,8 @@ public class ScoreboardHandler {
 					try {
 						color = ChatColor.valueOf(teamcolor);
 						board.getTeam(teamname).setColor(color);
+						board.getTeam(teamname).setPrefix(color + "");
+						board.getTeam(teamname).setSuffix(ChatColor.WHITE + "");
 					} catch (Exception f) {
 						color = ChatColor.STRIKETHROUGH;
 						board.getTeam(teamname).setColor(color);

@@ -161,6 +161,9 @@ public class NerdUHC extends JavaPlugin {
 	// ********************************************
 	public static void registerPlayer(Player player, Boolean overridegamestarted) {
 		scoreboardHandler.setPlayerBoard(player);
+		if (scoreboardHandler.getPlayerTeam(player) != null) {
+			
+		}
 		if (!gameStarted || overridegamestarted) {
 			switch (uhcgamemode) {
 				case SOLO:
