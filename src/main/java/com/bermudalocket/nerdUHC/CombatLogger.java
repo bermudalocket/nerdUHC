@@ -34,7 +34,9 @@ public class CombatLogger {
 	}
 
 	public boolean isDoppel(UUID check) {
-		return doppellist.containsKey(check) ? true : false;
+		return doppellist.values().stream().
+						anyMatch(doppel -> doppel.getEntity().getUniqueId().equals(check))
+						? true : false;
 	}
 	
 	public UHCDoppel getDoppel(UUID doppel) {
@@ -85,6 +87,8 @@ public class CombatLogger {
 			p.setHealth(d.getHealth());
 			d.despawn();
 		}
+		
+		doppellist.remove(player);
 		
 	}
 	

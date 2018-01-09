@@ -59,10 +59,13 @@ public class UHCDoppel {
 	
 	public void setAI(boolean AI) {
 		_AI = AI;
+		getEntity().setAI(AI);
 	}
 	
 	public void setName(String name) {
 		_name = name;
+		getEntity().setCustomName(name);
+		getEntity().setCustomNameVisible(true);
 	}
 	
 	public void setAlive(boolean state) {
