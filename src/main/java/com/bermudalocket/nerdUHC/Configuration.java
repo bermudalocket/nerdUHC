@@ -8,7 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 
-import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.Match.UHCGameMode;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -21,6 +21,8 @@ import net.md_5.bungee.api.ChatColor;
 public class Configuration {
 	
 	private NerdUHC plugin;
+	
+	public boolean DEBUG;
 
 	public boolean LET_PLAYERS_PICK_TEAMS;
 	public boolean FORCE_EVEN_TEAMS;
@@ -66,25 +68,19 @@ public class Configuration {
 	// converts raw gamerules to GAMERULES map and
 	// then sets each gamerule
 	// ********************************************
-	public void setGameRules() {
-		GAMERULES.forEach(gamerule -> {
-			String rule = gamerule.keySet().toArray()[0].toString();
-			String value = gamerule.values().toArray()[0].toString();
-			NerdUHC.getWorld().setGameRuleValue(rule, value);
-		});
-	}
 	
 	public void reload() {
 		
-		NerdUHC.PLUGIN.reloadConfig();
-		FileConfiguration config = NerdUHC.PLUGIN.getConfig();
+		plugin.reloadConfig();
+		FileConfiguration config = plugin.getConfig();
 		
-
+		DEBUG = config.getBoolean("debug", false);
+		
 		// ********************************************
 		// GAME MODE CONFIG
 		// ********************************************
 		String getgamemode = config.getString("default-uhc-mode", "SOLO");
-		DEFAULT_UHC_MODE = NerdUHC.isValidGameMode(getgamemode) ? UHCGameMode.valueOf(getgamemode) : UHCGameMode.SOLO;
+		DEFAULT_UHC_MODE = plugin.match.isValidGameMode(getgamemode) ? UHCGameMode.valueOf(getgamemode) : UHCGameMode.SOLO;
 		
 		// ********************************************
 		// SPAWNPOINT and BARRIER CONFIG
@@ -125,7 +121,7 @@ public class Configuration {
 		// spreadplayers CONFIG
 		// ********************************************
 		SPREAD_DIST_BTWN_PLAYERS = config.getInt("spread-distance-between-players", 200);
-		SPREAD_DIST_FROM_SPAWN = config.getDouble("spread-distance-from-spawn", NerdUHC.getWorld().getWorldBorder().getSize()/2);
+		SPREAD_DIST_FROM_SPAWN = config.getDouble("spread-distance-from-spawn", plugin.match.getWorld().getWorldBorder().getSize()/2);
 		SPREAD_RESPECT_TEAMS = config.getBoolean("spread-respect-teams", true);
 		
 		// ********************************************

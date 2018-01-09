@@ -7,47 +7,40 @@ import org.bukkit.entity.Player;
 import org.bukkit.ChatColor;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-
-/////////////////////////////////////////////////////////////////////////////
-//
-//	Barrier Executor
-//
-//
+import com.bermudalocket.nerdUHC.modules.Util;
 
 public class BarrierExecutor extends CommandHandler {
 	
-	// ********************************************
-	// register subcommands
-	// ********************************************
-	public BarrierExecutor() {
+	private NerdUHC plugin;
+	private Util util = new Util();
+	
+	public BarrierExecutor(NerdUHC plugin) {
 		super("barrier", "on", "off", "help");
+		this.plugin = plugin;
 	}
 	
-	// ********************************************
-	// 		/barrier [on|off]
-	// ********************************************
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
 		Player player = (Player) sender;
 		if (args[0].equalsIgnoreCase("on")) {
 			player.sendMessage(ChatColor.GRAY + "Drawing barrier, please wait...");
-			NerdUHC.drawBarrier(player.getWorld(), 
-					NerdUHC.CONFIG.SPAWN_X,
-					NerdUHC.CONFIG.SPAWN_Y,
-					NerdUHC.CONFIG.SPAWN_Z,
-					NerdUHC.CONFIG.SPAWN_BARRIER_RADIUS,
-					NerdUHC.CONFIG.SPAWN_BARRIER_BLOCK,
+			util.drawBarrier(player.getWorld(), 
+					plugin.CONFIG.SPAWN_X,
+					plugin.CONFIG.SPAWN_Y,
+					plugin.CONFIG.SPAWN_Z,
+					plugin.CONFIG.SPAWN_BARRIER_RADIUS,
+					plugin.CONFIG.SPAWN_BARRIER_BLOCK,
 					Material.AIR);
 			player.sendMessage(ChatColor.GRAY + "Barrier drawn!");
 		} else if (args[0].equalsIgnoreCase("off")) {
 			player.sendMessage(ChatColor.GRAY + "Removing barrier, please wait...");
-			NerdUHC.drawBarrier(player.getWorld(), 
-					NerdUHC.CONFIG.SPAWN_X,
-					NerdUHC.CONFIG.SPAWN_Y,
-					NerdUHC.CONFIG.SPAWN_Z,
-					NerdUHC.CONFIG.SPAWN_BARRIER_RADIUS,
+			util.drawBarrier(player.getWorld(), 
+					plugin.CONFIG.SPAWN_X,
+					plugin.CONFIG.SPAWN_Y,
+					plugin.CONFIG.SPAWN_Z,
+					plugin.CONFIG.SPAWN_BARRIER_RADIUS,
 					Material.AIR,
-					NerdUHC.CONFIG.SPAWN_BARRIER_BLOCK);
+					plugin.CONFIG.SPAWN_BARRIER_BLOCK);
 			player.sendMessage(ChatColor.GRAY + "Barrier removed!");
 		} else {
 			showCommandMenu(sender);

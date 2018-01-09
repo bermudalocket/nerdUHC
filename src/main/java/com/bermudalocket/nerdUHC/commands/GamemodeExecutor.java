@@ -5,42 +5,38 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.ChatColor;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
-
-/////////////////////////////////////////////////////////////////////////////
-//
-//	GameMode Executor
-//
-//
+import com.bermudalocket.nerdUHC.modules.Match.UHCGameMode;
 
 public class GamemodeExecutor extends CommandHandler {
 	
-	// ********************************************
-	// register subcommands
-	// ********************************************
-	public GamemodeExecutor() {
+	private NerdUHC plugin;
+	
+	public GamemodeExecutor(NerdUHC plugin) {
 		super("uhcmode", "solo", "team", "help");
+		this.plugin = plugin;
 	}
 	
-	// ********************************************
-	//			/uhcmode [mode]
-	// will dynamically handle any new modes
-	// as long as they are defined in the
-	// UHCGameMode enum in NerdUHC.java
-	// ********************************************
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
+		
+		String LIB_UPDATED = ChatColor.GRAY + "Game mode updated!";
+		String LIB_ERR_INVALID = ChatColor.RED + "Invalid game mode!";
+		
+		
 		if (args.length == 1) {
-			if (NerdUHC.isValidGameMode(args[0].toUpperCase())) {					
-				NerdUHC.setGameMode(UHCGameMode.valueOf(args[0].toUpperCase()));
-				sender.sendMessage(ChatColor.GRAY + "Game mode updated! You must refresh configuration with " + ChatColor.WHITE + "/uhcreload" + ChatColor.GRAY + " before any changes will take effect.");
+			String mode = args[0].toUpperCase();
+			
+			if (plugin.match.isValidGameMode(mode)) {					
+				plugin.match.setGameMode(UHCGameMode.valueOf(mode));
+				plugin.CONFIG.reload();
+				sender.sendMessage(LIB_UPDATED);
 			} else {
-				sender.sendMessage(ChatColor.RED + "Invalid game mode!");
+				sender.sendMessage(LIB_ERR_INVALID);
 			}
+			
 		} else {
-			sender.sendMessage(ChatColor.RED + "You have to specify a mode.");
+			showCommandMenu(sender);
 		}
 		return true;
 	}
 }
-

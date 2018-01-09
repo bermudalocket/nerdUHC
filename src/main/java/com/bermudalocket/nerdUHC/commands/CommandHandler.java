@@ -11,12 +11,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabCompleter;
 
-/////////////////////////////////////////////////////////////////////////////
-//
-//	CommandHandler
-//	Thanks to totemo (via EasyRider) for this layout/setup
-//
-
 public abstract class CommandHandler implements CommandExecutor, TabCompleter {
 	
 	protected String _command;

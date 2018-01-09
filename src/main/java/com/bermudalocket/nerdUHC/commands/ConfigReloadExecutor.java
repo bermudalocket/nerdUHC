@@ -1,43 +1,30 @@
 package com.bermudalocket.nerdUHC.commands;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.ChatColor;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 
-/////////////////////////////////////////////////////////////////////////////
-//
-//	Config Reload Executor
-//
-//
-
 public class ConfigReloadExecutor extends CommandHandler {
 	
-	// ********************************************
-	// register subcommands
-	// ********************************************
-	public ConfigReloadExecutor() {
+	private NerdUHC plugin;
+	
+
+	public ConfigReloadExecutor(NerdUHC plugin) {
 		super("uhcreload", "help");
+		this.plugin = plugin;
 	}
 	
-	// ********************************************
-	//			/uhcreload
-	// ********************************************
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
-		if (args.length == 1 && args[0].equalsIgnoreCase("help")) return false;
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("Consoles don't play UHCs!");
-			return true;
-		}
-		if (NerdUHC.isGameStarted()) {
-			sender.sendMessage("You can't reload the config while a UHC is in session.");
+		
+		String LIB_ERR_STARTED = ChatColor.RED + "You can't reload the config while a UHC is in session.";
+		
+		if (plugin.match.isGameStarted()) {
+			sender.sendMessage(LIB_ERR_STARTED);
 		} else {
-			NerdUHC.CONFIG.reload();
-			NerdUHC.scoreboardHandler.reloadScoreboards();
-			Bukkit.getOnlinePlayers().forEach(player -> NerdUHC.registerPlayer(player, true));
+			plugin.CONFIG.reload();
 		}
 		return true;
 	}

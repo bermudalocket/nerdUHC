@@ -8,44 +8,38 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-
-/////////////////////////////////////////////////////////////////////////////
-//
-//	Start Stop Executor
-//
-//
+import com.bermudalocket.nerdUHC.modules.Match.UHCGameMode;
 
 public class StartStopExecutor extends CommandHandler {
 	
-	// ********************************************
-	// register subcommands
-	// ********************************************
-	public StartStopExecutor() {
+	private NerdUHC plugin;
+	
+	private CommandSender console = plugin.getServer().getConsoleSender();
+	
+	public StartStopExecutor(NerdUHC plugin) {
 		super("uhc", "start", "stop", "help");
+		this.plugin = plugin;
 	}
 	
-	// ********************************************
-	// 		/uhc [start|stop]
-	// ********************************************
 	@Override
 	public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
 		if (args.length == 1) {
 			if (args[0].equalsIgnoreCase("start")) {
-				if (!NerdUHC.isGameStarted()) {
-					String target = "@a[x=" + NerdUHC.CONFIG.SPAWN_X + 
-							",y=" + NerdUHC.CONFIG.SPAWN_Y + 
-							",z=" + NerdUHC.CONFIG.SPAWN_Z + 
-							",r=" + NerdUHC.CONFIG.SPAWN_BARRIER_RADIUS + "]";
+				if (!plugin.match.isGameStarted()) {
+					String target = "@a[x=" + plugin.CONFIG.SPAWN_X + 
+							",y=" + plugin.CONFIG.SPAWN_Y + 
+							",z=" + plugin.CONFIG.SPAWN_Z + 
+							",r=" + plugin.CONFIG.SPAWN_BARRIER_RADIUS + "]";
 					
 					String spreadplayers = "spreadplayers " + 
-											NerdUHC.CONFIG.SPAWN_X + " " + 
-											NerdUHC.CONFIG.SPAWN_Z + " " + 
-											NerdUHC.CONFIG.SPREAD_DIST_BTWN_PLAYERS + " " +
-											NerdUHC.CONFIG.SPREAD_DIST_FROM_SPAWN + " ";
-					if (NerdUHC.getGameMode().equals(NerdUHC.UHCGameMode.TEAM)) {
-						spreadplayers = spreadplayers + NerdUHC.CONFIG.SPREAD_RESPECT_TEAMS + " ";
+											plugin.CONFIG.SPAWN_X + " " + 
+											plugin.CONFIG.SPAWN_Z + " " + 
+											plugin.CONFIG.SPREAD_DIST_BTWN_PLAYERS + " " +
+											plugin.CONFIG.SPREAD_DIST_FROM_SPAWN + " ";
+					if (plugin.match.getGameMode().equals(UHCGameMode.TEAM)) {
+						spreadplayers = spreadplayers + plugin.CONFIG.SPREAD_RESPECT_TEAMS + " ";
 					} else {
-						spreadplayers = spreadplayers + !NerdUHC.CONFIG.SPREAD_RESPECT_TEAMS + " ";
+						spreadplayers = spreadplayers + !plugin.CONFIG.SPREAD_RESPECT_TEAMS + " ";
 					}
 					final String spreadplayerscmd = spreadplayers + target;
 					
@@ -61,14 +55,14 @@ public class StartStopExecutor extends CommandHandler {
 			            	
 			            		if (countfrom == 0) {
 			            			
-			            		    NerdUHC.PLUGIN.getServer().dispatchCommand(console, spreadplayerscmd);
-			    					NerdUHC.PLUGIN.getServer().dispatchCommand(console, saturation);
-			    					NerdUHC.PLUGIN.getServer().dispatchCommand(console, fullhealth);
+			            		    plugin.getServer().dispatchCommand(console, spreadplayerscmd);
+			    					plugin.getServer().dispatchCommand(console, saturation);
+			    					plugin.getServer().dispatchCommand(console, fullhealth);
 			    					
 			            		    Bukkit.getOnlinePlayers().forEach(player -> 
 	            		    				player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 10, 1));
 			            		    
-			    					NerdUHC.setGameStarted(true);
+			    					plugin.match.setGameStarted(true);
 			    					sender.sendMessage(ChatColor.GRAY + "UHC started!");
 			            			this.cancel();
 			            			
@@ -81,27 +75,17 @@ public class StartStopExecutor extends CommandHandler {
 			            		countfrom--;
 			            }
 			        };
-			        task.runTaskTimer(NerdUHC.PLUGIN, 1, 20);
+			        task.runTaskTimer(plugin, 1, 20);
 				} else {
 					sender.sendMessage(ChatColor.RED + "There's already a UHC running!");
 				}
 			} else if (args[0].equalsIgnoreCase("stop")) {
-				NerdUHC.setGameStarted(false);
+				plugin.match.setGameStarted(false);
 				sender.sendMessage(ChatColor.RED + "UHC stopped!");
 			}
 		}
 		return true;
 	}
 	
-	/////////////////////////////////////////////////////////////////////////////
-	//
-	//	Fields
-	//
-	//
-	
-	// ********************************************
-	// gets the server's console
-	// ********************************************
-	private CommandSender console = NerdUHC.PLUGIN.getServer().getConsoleSender();
 }
 

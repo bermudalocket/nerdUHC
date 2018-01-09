@@ -4,218 +4,52 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 
+import com.bermudalocket.nerdUHC.modules.Match.UHCGameMode;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Criterias;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 
-import com.bermudalocket.nerdUHC.NerdUHC.UHCGameMode;
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-//	ScoreboardHandler
-//    Handles everything to do with the scoreboards, including:
-//    Teams, Players, Scores, and configuration
-//
-
 public class ScoreboardHandler {
-
-	/////////////////////////////////////////////////////////////////////////////
-	//
-	//	Team commands
-	//
-	//	
 	
-	// ********************************************
-	// checks if a team exists
-	// ********************************************
-	public boolean teamExists(String team) {
-		try {
-			board.getTeam(team);
-		} catch (Exception f) {
-			return false;
-		}
-		return true;
-	}
+	private NerdUHC plugin;
+	private UHCGameMode uhcgamemode;
 	
-	// ********************************************
-	// removes a player from their team
-	// ********************************************
-	public void removePlayerTeam(Player player) {
-		board.getEntryTeam(player.getName()).removeEntry(player.getName());
-		player.setDisplayName(ChatColor.WHITE + player.getName());
-		player.setPlayerListName(ChatColor.WHITE + player.getName());
-	}
+	private ScoreboardManager manager;
+	private Scoreboard board;
 	
-	// ********************************************
-	// assigns a player to a team
-	// ********************************************
-	public void setPlayerTeam(Player player, String team) {
-		board.getTeam(team).addEntry(player.getName());
-	}
+	private Map<String, Objective> OBJECTIVES = new HashMap<String, Objective>();
+	private Map<String, Team> TEAMS = new HashMap<String, Team>();
 	
-	public void setPlayerColor(Player player) {
-		String team = getPlayerTeam(player).getName();
-		ChatColor color = getTeamColor(team);
-		player.setDisplayName(color + player.getName() + ChatColor.WHITE);
-		player.setPlayerListName(color + player.getName() + ChatColor.WHITE);
-	}
-	
-	// ********************************************
-	// returns the # of players on a team
-	// ********************************************
-	public int getTeamSize(String team) {
-		return board.getTeam(team).getSize();
-	}
-	
-	// ********************************************
-	// gets the team a player is currently on
-	// ********************************************
-	public Team getPlayerTeam(Player player) {
-		try {
-			return board.getEntryTeam(player.getName());
-		} catch (Exception f) {
-			return null;
-		}
-	}
-	
-	// ********************************************
-	// chooses a team for a player if the setting
-	// LET_PLAYERS_PICK_TEAMS is FALSE
-	// ********************************************
-	public boolean chooseTeamForPlayer(Player player) {
+	public ScoreboardHandler(NerdUHC plugin) {
 		
-		Optional<Team> foundteam = board.getTeams().stream().filter(team -> team.getSize() < NerdUHC.CONFIG.MAX_TEAM_SIZE).findFirst();
+		this.plugin = plugin;
 		
-		if (foundteam.orElse(null) != null) {
-			setPlayerTeam(player, foundteam.get().getName());
-			return true;
-		} else {
-			// no teams need players
-			return false;
-		}
-		
-	}
-	
-	public ChatColor getTeamColor(String team) {
-		return board.getTeam(team).getColor();
-	}
-	
-	/////////////////////////////////////////////////////////////////////////////
-	//
-	//	Player scoreboard commands
-	//
-	//	
-	
-	// ********************************************
-	// sets the player's scoreboard
-	// ********************************************
-	public void setPlayerBoard(Player player) {
-		try {
-			player.setScoreboard(board);
-		} catch (IllegalArgumentException f) {
-			// board doesnt exist
-		} catch (IllegalStateException g) {
-			// player doesnt exist
-		}
-	}
-	
-	// ********************************************
-	// unsets the players scoreboard
-	// ********************************************
-	public void unsetPlayerBoard(Player player) {
-		try {
-			player.setScoreboard(manager.getNewScoreboard());
-		} catch (IllegalArgumentException f) {
-			// board doesnt exist, which shouldnt happen in this case
-		} catch (IllegalStateException g) {
-			// player doesnt exist
-		}
-	}
-
-	/////////////////////////////////////////////////////////////////////////////
-	//
-	//	Score commands
-	//	
-	//	
-	
-	// ********************************************
-	// returns the player's score for an objective
-	// ********************************************
-	public int getPlayerScore(Player player, String objective) {
-		return board.getObjective(objective).getScore(player.getName()).getScore();
-	}
-	
-	// ********************************************
-	// sets the player's score for an objective
-	// ********************************************
-	public void setPlayerScore(Player player, String objective, int score) {
-		board.getObjective(objective).getScore(player.getName()).setScore(score);
-	}
-	
-	/////////////////////////////////////////////////////////////////////////////
-	//
-	//	Configuration commands
-	//	
-	//	
-
-	// ********************************************
-	// gets server's scoreboard manager and creates
-	// a new scoreboard
-	// ********************************************
-	public void setManager() {
 		manager = Bukkit.getScoreboardManager();
 		board = manager.getNewScoreboard();
-	}
-	
-	// ********************************************
-	// 2-in-1 command to clear and reconfigure
-	// scoreboard, teams, etc
-	// ********************************************
-	public void reloadScoreboards() {
-		clearBoards();
-		configureScoreboards();
-	}
-	
-	// ********************************************
-	// clears out the scoreboard entirely
-	// ********************************************
-	public void clearBoards() {
-		board.getEntries().forEach(entry -> board.resetScores(entry));
-		board.getTeams().forEach(team -> team.unregister());
-		board.getObjectives().forEach(objective -> objective.unregister());
 		
-		TEAMS.clear();
-		OBJECTIVES.clear();
+		uhcgamemode = plugin.match.getGameMode();
+		
+		populateObjectives();
+		setFormattingHealthBelowName();
+		checkForDeathObjective();
+		createTeams();
+		
 	}
 	
-	// ********************************************
-	// returns if a string is a valid DisplaySlot
-	// ********************************************
-	public boolean isValidDisplaySlot(String slot) {
-		try {
-			DisplaySlot.valueOf(slot);
-			return true;
-		} catch (Exception f) {
-			return false;
-		}
-	}
-	
-	// ********************************************
-	// configures the scoreboard objectives and
-	// teams based on CONFIG
-	// ********************************************
-	public void configureScoreboards() {
-		
-		UHCGameMode gameMode = NerdUHC.getGameMode();
-		
-		NerdUHC.CONFIG.rawobjectiveslist.forEach(objective -> {
+	private void populateObjectives() {
+		plugin.CONFIG.rawobjectiveslist.forEach(objective -> {
 			String objname = objective.get("name").toString();
 			String objcriteria = objective.get("criteria").toString();
 			String objdisplayslot = objective.get("displayslot").toString();
@@ -225,34 +59,52 @@ public class ScoreboardHandler {
 				OBJECTIVES.put(objname.toUpperCase(), board.getObjective(objname.toUpperCase()));
 			}
 		});
+	}
+	
+	
+	private void setFormattingHealthBelowName() {
+		List<Objective> healthobj = board.getObjectives()
+											.stream()
+											.filter(obj -> obj.getDisplaySlot().equals(DisplaySlot.BELOW_NAME)
+														&& obj.getCriteria().equals(Criterias.HEALTH))
+											.collect(Collectors.toList());
 		
-		try {
-			Objective displayhealth = (Objective) board.getObjective(DisplaySlot.BELOW_NAME);
-			displayhealth.setDisplayName(ChatColor.RED + "❤");
-		} catch (Exception f) {
-			// no below-name health tracking
-		}
+		if (healthobj == null) return;
 		
-		try {
-			Objective deaths = (Objective) board.getObjectivesByCriteria("deathCount");
-			NerdUHC.CONFIG.DEATH_OBJECTIVE_NAME = deaths.getName();
-		} catch (Exception f) {
+		healthobj.get(0).setDisplayName(ChatColor.RED + "❤");
+	}
+	
+	
+	private void checkForDeathObjective() {
+		List<Objective> deathobj = board.getObjectives()
+										.stream()
+										.filter(obj -> obj.getCriteria().equals(Criterias.DEATHS))
+										.collect(Collectors.toList());
+
+		if (deathobj == null) {
 			board.registerNewObjective("DEATHS", "deathCount");
+			plugin.CONFIG.DEATH_OBJECTIVE_NAME = "DEATHS";
 			OBJECTIVES.put("DEATHS", board.getObjective("DEATHS"));
-			NerdUHC.CONFIG.DEATH_OBJECTIVE_NAME = "DEATHS";
+		} else {
+			plugin.CONFIG.DEATH_OBJECTIVE_NAME = deathobj.get(0).getName();
 		}
-		
-		// update health display
+	}
+	
+	
+	public void forceHealthUpdates() {
 		Bukkit.getOnlinePlayers().forEach(player -> player.setHealth(player.getHealth()));
-		
-		switch (gameMode) {
+	}
+	
+
+	private void createTeams() {
+		switch (uhcgamemode) {
 			default:
 			case SOLO:
-				TEAMS.put(NerdUHC.CONFIG.ALIVE_TEAM_NAME.toUpperCase(), board.registerNewTeam(NerdUHC.CONFIG.ALIVE_TEAM_NAME));
-				TEAMS.put(NerdUHC.CONFIG.DEAD_TEAM_NAME.toUpperCase(), board.registerNewTeam(NerdUHC.CONFIG.DEAD_TEAM_NAME));
+				TEAMS.put(plugin.CONFIG.ALIVE_TEAM_NAME.toUpperCase(), board.registerNewTeam(plugin.CONFIG.ALIVE_TEAM_NAME));
+				TEAMS.put(plugin.CONFIG.DEAD_TEAM_NAME.toUpperCase(), board.registerNewTeam(plugin.CONFIG.DEAD_TEAM_NAME));
 				break;
 			case TEAM:
-				NerdUHC.CONFIG.rawteamlist.forEach(team -> {
+				plugin.CONFIG.rawteamlist.forEach(team -> {
 					String teamname = team.get("name").toString().toUpperCase();
 					String teamcolor = team.get("color").toString().toUpperCase();
 					
@@ -268,38 +120,84 @@ public class ScoreboardHandler {
 					} catch (Exception f) {
 						color = ChatColor.STRIKETHROUGH;
 						board.getTeam(teamname).setColor(color);
-						NerdUHC.PLUGIN.getLogger().info("Config error: Invalid color option for team " + teamname);
+						plugin.getLogger().info("Config error: Invalid color option for team " + teamname);
 					}
 				});
 				break;
 		}
 
-	} // end configureScoreboards()
+	}
+
+	public Set<String> getTeams() {
+		return TEAMS.keySet();
+	}
 	
-	/////////////////////////////////////////////////////////////////////////////
-	//
-	//	Fields
-	//
-	//
+	public boolean chooseTeamForPlayer(UUID player) {
+		Player p = Bukkit.getPlayer(player);
+		Optional<Team> foundteam = board.getTeams().stream().
+													filter(team -> team.getSize() < plugin.CONFIG.MAX_TEAM_SIZE).
+													findFirst();
+		
+		if (foundteam.orElse(null) != null) {
+			String t = foundteam.get().getName();
+			
+			setPlayerTeam(player, t);
+			p.sendMessage(ChatColor.GRAY + "Team set to " + t);
+			return true;
+		} else {
+			p.sendMessage(ChatColor.GRAY + "Sorry, there are no available teams to join.");
+			return false;
+		}
+	}
 	
-	// ********************************************
-	// server's scoreboard manager
-	// ********************************************
-	private ScoreboardManager manager;
+	public boolean teamExists(String team) {
+		return TEAMS.containsKey(team) ? true : false;
+	}
 	
-	// ********************************************
-	// current scoreboard instance
-	// ********************************************
-	private Scoreboard board;
+	public boolean isTeamFull(String team) {
+		return (plugin.scoreboardHandler.getTeamSize(team) < plugin.CONFIG.MAX_TEAM_SIZE) ? true : false;
+	}
 	
-	// ********************************************
-	// Map: objective name -> Objective
-	// ********************************************
-	public Map<String, Objective> OBJECTIVES = new HashMap<String, Objective>();
+	public void setPlayerTeam(UUID player, String team) {
+		Player p = Bukkit.getPlayer(player);
+		board.getTeam(team).addEntry(p.getName());
+	}
 	
-	// ********************************************
-	// Map: team name -> Team
-	// ********************************************
-	public Map<String, Team> TEAMS = new HashMap<String, Team>();
+	public void removePlayerTeam(Player player) {
+		board.getEntryTeam(player.getName()).removeEntry(player.getName());
+		player.setDisplayName(ChatColor.WHITE + player.getName());
+		player.setPlayerListName(ChatColor.WHITE + player.getName());
+	}
+
+	public int getTeamSize(String team) {
+		return board.getTeam(team).getSize();
+	}
+	
+	public ChatColor getTeamColor(String team) {
+		return board.getTeam(team).getColor();
+	}
+
+	public void setPlayerBoard(UUID player) {
+		Player p = Bukkit.getPlayer(player);
+		p.setScoreboard(board);
+	}
+
+	public void clearBoards() {
+		board.getEntries().forEach(entry -> board.resetScores(entry));
+		board.getTeams().forEach(team -> team.unregister());
+		board.getObjectives().forEach(objective -> objective.unregister());
+		
+		TEAMS.clear();
+		OBJECTIVES.clear();
+	}
+	
+	public boolean isValidDisplaySlot(String slot) {
+		try {
+			DisplaySlot.valueOf(slot);
+			return true;
+		} catch (Exception f) {
+			return false;
+		}
+	}
 
 } //ScoreboardHandler
