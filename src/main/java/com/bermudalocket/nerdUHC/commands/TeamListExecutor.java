@@ -35,7 +35,8 @@ public class TeamListExecutor extends CommandHandler {
 		
 		teams.forEach(team -> {
 			ChatColor color = plugin.scoreboardHandler.getTeamColor(team);
-			sender.sendMessage(color + team);
+			int size = plugin.scoreboardHandler.getTeamSize(team);
+			sender.sendMessage(color + team + ChatColor.WHITE + "(" + size + "/" + plugin.CONFIG.MAX_TEAM_SIZE + ")");
 		});
 		sender.sendMessage(LIB_SPEC);
 		return true;

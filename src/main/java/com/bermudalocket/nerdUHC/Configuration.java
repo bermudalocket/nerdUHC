@@ -80,7 +80,7 @@ public class Configuration {
 		// GAME MODE CONFIG
 		// ********************************************
 		String getgamemode = config.getString("default-uhc-mode", "SOLO");
-		DEFAULT_UHC_MODE = plugin.match.isValidGameMode(getgamemode) ? UHCGameMode.valueOf(getgamemode) : UHCGameMode.SOLO;
+		DEFAULT_UHC_MODE = isValidGameMode(getgamemode) ? UHCGameMode.valueOf(getgamemode) : UHCGameMode.SOLO;
 		
 		// ********************************************
 		// SPAWNPOINT and BARRIER CONFIG
@@ -121,7 +121,7 @@ public class Configuration {
 		// spreadplayers CONFIG
 		// ********************************************
 		SPREAD_DIST_BTWN_PLAYERS = config.getInt("spread-distance-between-players", 200);
-		SPREAD_DIST_FROM_SPAWN = config.getDouble("spread-distance-from-spawn", plugin.match.getWorld().getWorldBorder().getSize()/2);
+		SPREAD_DIST_FROM_SPAWN = config.getDouble("spread-distance-from-spawn", 950);
 		SPREAD_RESPECT_TEAMS = config.getBoolean("spread-respect-teams", true);
 		
 		// ********************************************
@@ -130,6 +130,15 @@ public class Configuration {
 		GAMERULES = config.getMapList("gamerules");
 		rawteamlist = config.getMapList("teams");
 		rawobjectiveslist = config.getMapList("objectives");
+	}
+	
+	public boolean isValidGameMode(String gameMode) {
+		try {
+			UHCGameMode.valueOf(gameMode);
+			return true;
+		} catch (Exception f) {
+			return false;
+		}
 	}
 
 }

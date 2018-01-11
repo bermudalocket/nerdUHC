@@ -50,6 +50,7 @@ public class NerdUHC extends JavaPlugin {
 	
 	@Override
 	public void onDisable() {
+		combatLogger.clearDoppels();
 		scoreboardHandler.clearBoards();
 	}
 	

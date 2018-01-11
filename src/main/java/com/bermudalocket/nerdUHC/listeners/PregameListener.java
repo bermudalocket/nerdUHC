@@ -30,20 +30,25 @@ public class PregameListener implements Listener {
 		
 		String LIB_WELCOME = ChatColor.GRAY + "Welcome to nerdUHC. The next round will be a " + mode.toString() + " round.";
 		String LIB_SOLO_JOIN = ChatColor.GRAY + "To join, run " + ChatColor.WHITE + "/join";
-		String LIB_SPEC = ChatColor.GRAY + "To spectate, run " + ChatColor.WHITE + "/spectate";
+		String LIB_SPEC = ChatColor.GRAY + "To spectate, run " + ChatColor.WHITE + "/join spectator";
 		String LIB_TEAM_LIST = ChatColor.GRAY + "To view a list of teams, run " + ChatColor.WHITE + "/teamlist";
 		String LIB_TEAM_JOIN = ChatColor.GRAY + "To join a team, run " + ChatColor.WHITE + "/join [team]";
 		
 		if (plugin.match.isGameStarted()) return;
 		
 		p.sendMessage(LIB_WELCOME);
-		if (mode.equals(UHCGameMode.SOLO)) {
-			p.sendMessage(LIB_SOLO_JOIN);
-			p.sendMessage(LIB_SPEC);
+		
+		if (plugin.match.playerExists(player)) {
+			plugin.match.getPlayer(player).unite();
 		} else {
-			p.sendMessage(LIB_TEAM_LIST);
-			p.sendMessage(LIB_TEAM_JOIN);
-			p.sendMessage(LIB_SPEC);
+			if (mode.equals(UHCGameMode.SOLO)) {
+				p.sendMessage(LIB_SOLO_JOIN);
+				p.sendMessage(LIB_SPEC);
+			} else {
+				p.sendMessage(LIB_TEAM_LIST);
+				p.sendMessage(LIB_TEAM_JOIN);
+				p.sendMessage(LIB_SPEC);
+			}
 		}
 		
 	}

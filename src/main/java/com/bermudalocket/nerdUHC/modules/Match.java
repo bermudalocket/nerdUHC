@@ -33,12 +33,15 @@ public class Match {
 	}
 	
 	public void registerPlayer(UUID player, String team) {
-		playerlist.put(player, new UHCPlayer(player, plugin));
+		
+		UHCPlayer p = new UHCPlayer(player, plugin);
+		
+		playerlist.put(player, p);
 		
 		if (team.equals("SPECTATOR")) {
 			Bukkit.getPlayer(player).setGameMode(GameMode.SPECTATOR);
 		} else {
-			playerlist.get(player).setTeam(team);
+			p.setTeam(team);
 		}
 	}
 	
@@ -52,7 +55,7 @@ public class Match {
 	}
 	
 	public UHCPlayer getPlayer(UUID player) {
-		return playerlist.containsKey(player) ? playerlist.get(player) : null;
+		return playerlist.get(player);
 	}
 	
 	public void setGameRules() {
@@ -77,15 +80,6 @@ public class Match {
 	
 	public UHCGameMode getGameMode() {
 		return _mode;
-	}
-	
-	public  boolean isValidGameMode(String gameMode) {
-		try {
-			UHCGameMode.valueOf(gameMode);
-			return true;
-		} catch (Exception f) {
-			return false;
-		}
 	}
 	
 	public  boolean isGameStarted() { 

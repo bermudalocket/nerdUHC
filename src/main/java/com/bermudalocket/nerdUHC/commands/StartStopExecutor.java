@@ -14,7 +14,7 @@ public class StartStopExecutor extends CommandHandler {
 	
 	private NerdUHC plugin;
 	
-	private CommandSender console = plugin.getServer().getConsoleSender();
+	private CommandSender console = Bukkit.getConsoleSender();
 	
 	public StartStopExecutor(NerdUHC plugin) {
 		super("uhc", "start", "stop", "help");
@@ -43,8 +43,8 @@ public class StartStopExecutor extends CommandHandler {
 					}
 					final String spreadplayerscmd = spreadplayers + target;
 					
-					String saturation = "effect " + target + " 23 1 4";
-					String fullhealth = "effect " + target + " 6 1 4";
+					String saturation = "effect " + target + " 23 1 10";
+					String fullhealth = "effect " + target + " 6 1 10";
 					
 					BukkitRunnable task = new BukkitRunnable() {
 				        

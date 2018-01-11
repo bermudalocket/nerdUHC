@@ -49,6 +49,7 @@ public class TeamJoinExecutor extends CommandHandler {
 				return true;
 			} else if (args.length == 1 && args[0].equalsIgnoreCase("spectator")) {
 				uhcplayer.setTeam("SPECTATOR");
+				p.setGameMode(GameMode.SPECTATOR);
 				return true;
 			} else if (args.length == 1 && mode.equals(UHCGameMode.TEAM)) {
 				String team = args[0].toString().toUpperCase();
@@ -75,7 +76,9 @@ public class TeamJoinExecutor extends CommandHandler {
 				p.setGameMode(GameMode.SPECTATOR);
 				return true;
 			} else if (args.length == 1 && mode.equals(UHCGameMode.TEAM)) {
+				
 				String team = args[0].toString().toUpperCase();
+				
 				if (!plugin.scoreboardHandler.teamExists(team)) {
 					p.sendMessage(LIB_NO_SUCH_TEAM);
 					return true;
@@ -84,10 +87,12 @@ public class TeamJoinExecutor extends CommandHandler {
 					p.sendMessage(LIB_TEAM_FULL);
 					return true;
 				}
+
 				plugin.match.registerPlayer(player, team);
 				plugin.scoreboardHandler.forceHealthUpdates();
 				p.sendMessage(LIB_TEAM_JOIN.replace("%t", team));
 				return true;
+				
 			} else {
 				showCommandMenu(p);
 			}

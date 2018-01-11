@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
@@ -21,25 +22,34 @@ public class UHCPlayer {
 	private ChatColor _color;
 	private long _combattag = 0;
 	private boolean _alive;
+	private boolean _doppeldeath = false;
 	
 	public UHCPlayer(UUID player, NerdUHC plugin) {
 		this._player = player;
-		this._name = Bukkit.getPlayer(player).getName();
+		this.p = Bukkit.getPlayer(player);
+		this._name = p.getName();
+		this.plugin = plugin;
 	}
 	
 	public void unite() {
+		p = Bukkit.getPlayer(_player);
 		plugin.scoreboardHandler.setPlayerBoard(_player);
-		p.setDisplayName(_color + p.getName() + ChatColor.WHITE);
-		p.setPlayerListName(_color + p.getName() + ChatColor.WHITE);
+		p.setDisplayName(_color + _name + ChatColor.WHITE);
+		p.setPlayerListName(_color + _name + ChatColor.WHITE);
+		if (_team.equalsIgnoreCase("SPECTATOR")) {
+			p.setGameMode(GameMode.SPECTATOR);
+		}
 	}
 	
 	public Player bukkitPlayer() {
-		return p;
+		return Bukkit.getPlayer(_player);
 	}
 	
 	public void setTeam(String team) {
 		if (team == null) {
 			plugin.scoreboardHandler.removePlayerTeam(p);
+			_team = null;
+			_color = ChatColor.WHITE;
 		} else if (team.equalsIgnoreCase("SPECTATOR")) {
 			_team = team;
 			_color = ChatColor.ITALIC;
@@ -83,16 +93,28 @@ public class UHCPlayer {
 		return _doppel;
 	}
 	
-	public void kill() {
-		bukkitPlayer().damage(200.0);
+	public void setDoppelDeath(boolean state) {
+		_doppeldeath = state;
+	}
+	
+	public boolean isDoppelDeath() {
+		return _doppeldeath;
 	}
 	
 	public void setAlive(boolean state) {
 		_alive = state;
 	}
 	
+	public boolean isAlive() {
+		return _alive;
+	}
+	
+	public void kill() {
+		bukkitPlayer().setHealth(bukkitPlayer().getHealth() - bukkitPlayer().getHealth());
+	}
+	
 	public boolean isDead() {
-		return !_alive;
+		return bukkitPlayer().isDead();
 	}
 
 }

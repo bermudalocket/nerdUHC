@@ -1,7 +1,10 @@
 package com.bermudalocket.nerdUHC.listeners;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -35,25 +38,21 @@ public class GameListener implements Listener {
 		UUID player = e.getPlayer().getUniqueId();
 		
 		if (plugin.match.playerExists(player)) {
-			
 			UHCPlayer p = plugin.match.getPlayer(player);
 			
 			p.unite();
 			
-			if (p.isDead()) return;
-			
-			if (p.getDoppel() != null) {
+			if (e.getPlayer().isDead()) return;
 
-				BukkitRunnable task = new BukkitRunnable() {
-					@Override
-					public void run() {
-						plugin.combatLogger.reconcileDoppelWithPlayer(player);
-					}
-				};
-				task.runTaskLater(plugin, 1);
-				
+			if (!(p.getDoppel() == null)) {
+					BukkitRunnable task = new BukkitRunnable() {
+						@Override
+						public void run() {
+							plugin.combatLogger.reconcileDoppelWithPlayer(player);
+						}
+					};
+					task.runTaskLater(plugin, 1);
 			}
-			
 		} else {
 			plugin.match.registerPlayer(player, "SPECTATOR");
 		}
@@ -74,13 +73,17 @@ public class GameListener implements Listener {
 	
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent e) {
-		
 		if (!plugin.match.isGameStarted()) return;
 		
 		UHCPlayer p = plugin.match.getPlayer(e.getEntity().getUniqueId());
+		if (p.isDoppelDeath()) {
+			e.getDrops().clear();
+			e.setDroppedExp(0);
+		}
 		
+		p.setTeam("SPECTATOR");
+		p.bukkitPlayer().setGameMode(GameMode.SPECTATOR);
 		p.setAlive(false);
-		
 	}
 	
 	@EventHandler 
@@ -91,7 +94,7 @@ public class GameListener implements Listener {
 		UUID entity = e.getEntity().getUniqueId();
 		
 		if (plugin.combatLogger.isDoppel(entity)) {
-			plugin.combatLogger.getDoppel(entity).damage(e.getDamage());
+			plugin.combatLogger.getDoppelByEntityUUID(entity).damage(e.getDamage());
 		}
 	}
 	
@@ -112,19 +115,22 @@ public class GameListener implements Listener {
 	public void onEntityDeath(EntityDeathEvent e) {
 		
 		if (!plugin.match.isGameStarted()) return;
+		if (e.getEntity() instanceof Player) return;
 		
 		UUID entity = e.getEntity().getUniqueId();
 		
 		if (plugin.combatLogger.isDoppel(entity)) {
-			UHCDoppel d = plugin.combatLogger.getDoppel(entity);
-			ItemStack[] i = d.getDrops();
+			UHCDoppel d = plugin.combatLogger.getDoppelByEntityUUID(entity);
 			
 			d.setAlive(false);
-			d.recordDeath(e);
 			
 			e.getDrops().clear();
-			for (int j = 0; j <= i.length; j++) {
-				e.getDrops().add(i[j]);
+			e.setDroppedExp(0);
+			
+			if (!Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(d.getPlayer()))) {
+				ArrayList<ItemStack> i = d.getDrops();
+				i.forEach(item -> e.getDrops().add(item));
+				e.setDroppedExp(Math.round(d.getXP()));
 			}
 		}
 	}

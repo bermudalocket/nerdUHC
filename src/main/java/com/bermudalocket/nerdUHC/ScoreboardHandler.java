@@ -81,7 +81,7 @@ public class ScoreboardHandler {
 										.filter(obj -> obj.getCriteria().equals(Criterias.DEATHS))
 										.collect(Collectors.toList());
 
-		if (deathobj == null) {
+		if (deathobj.isEmpty()) {
 			board.registerNewObjective("DEATHS", "deathCount");
 			plugin.CONFIG.DEATH_OBJECTIVE_NAME = "DEATHS";
 			OBJECTIVES.put("DEATHS", board.getObjective("DEATHS"));
@@ -155,7 +155,7 @@ public class ScoreboardHandler {
 	}
 	
 	public boolean isTeamFull(String team) {
-		return (plugin.scoreboardHandler.getTeamSize(team) < plugin.CONFIG.MAX_TEAM_SIZE) ? true : false;
+		return (getTeamSize(team) >= plugin.CONFIG.MAX_TEAM_SIZE) ? true : false;
 	}
 	
 	public void setPlayerTeam(UUID player, String team) {
@@ -200,4 +200,4 @@ public class ScoreboardHandler {
 		}
 	}
 
-} //ScoreboardHandler
+}

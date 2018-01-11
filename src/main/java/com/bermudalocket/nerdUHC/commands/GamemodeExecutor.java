@@ -26,7 +26,7 @@ public class GamemodeExecutor extends CommandHandler {
 		if (args.length == 1) {
 			String mode = args[0].toUpperCase();
 			
-			if (plugin.match.isValidGameMode(mode)) {					
+			if (plugin.CONFIG.isValidGameMode(mode)) {					
 				plugin.match.setGameMode(UHCGameMode.valueOf(mode));
 				plugin.CONFIG.reload();
 				sender.sendMessage(LIB_UPDATED);
