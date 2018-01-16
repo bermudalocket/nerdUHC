@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -67,6 +66,14 @@ public class ScoreboardHandler implements Listener {
 		board.registerNewObjective("main", "dummy").setDisplayName(ChatColor.BOLD + "NerdUHC");
 	}
 	
+	public void update() {
+		if (plugin.match.isGameStarted()) {
+			showTeamsKillsAndTimer();
+		} else {
+			showTeamCountCapacity();
+		}
+	}
+	
 	// PRE-GAME ONLY
 	public void showTeamCountCapacity() {
 		
@@ -81,8 +88,8 @@ public class ScoreboardHandler implements Listener {
 		o.getScore( "----------------").setScore(currteams + 1);
 		o.getScore("Team (Curr./Max)").setScore(currteams);
 		for (int i=0; i < currteams; i++) {
-			Team team = (Team) plugin.match.getTeams().toArray()[i];
-			o.getScore(team.getColor() + team.getName() + " " + ChatColor.WHITE + " (" + (team.getSize()-1) + "/" + plugin.CONFIG.MAX_TEAM_SIZE + ")").setScore(i);
+			UHCTeam team = (UHCTeam) plugin.match.getTeams().toArray()[i];
+			o.getScore(team.getColor() + team.getName() + " " + ChatColor.WHITE + " (" + team.getSize() + "/" + team.getMaxSize() + ")").setScore(i);
 		}
 
 	}
@@ -97,21 +104,22 @@ public class ScoreboardHandler implements Listener {
 		o.setDisplayName(ChatColor.BOLD + "NerdUHC");
 		o.setDisplaySlot(DisplaySlot.SIDEBAR);
 		int currteams = plugin.match.getTeams().size();
-		
 		int i = 1;
 		o.getScore(ChatColor.WHITE + "----------------").setScore(currteams + 1);
 		String alive = "";
 		String dead = "";
 		for (UHCTeam team : plugin.match.getTeams()) {
 			int aliveplayers = team.getAlivePlayers();
+			plugin.getLogger().info("alive = " + aliveplayers);
 			for (int j = 0; j < aliveplayers; j++) {
 				alive.concat("❤");
 			}
 			int deadplayers = team.getSize() - aliveplayers;
+			plugin.getLogger().info("dead = " + deadplayers);
 			for (int k = 0; k < deadplayers; k++) {
 				dead.concat("\u2620");
 			}
-			o.getScore(team.getColor() + team.getName() + " " + ChatColor.WHITE + " (" + aliveplayers + "/" + (team.getSize()-1) + ")").setScore(i);
+			o.getScore(team.getColor() + team.getName() + ": " + ChatColor.WHITE + alive + dead).setScore(i);
 			i++;
 		}
 	}
@@ -136,7 +144,7 @@ public class ScoreboardHandler implements Listener {
         		if (nexttime <= 600000) color = ChatColor.RED;
         		
         		try {
-        			board.getObjective(ChatColor.BOLD + "NerdUHC").setDisplayName(color + "" + ChatColor.BOLD + timedisplay);
+        			board.getObjective("main").setDisplayName(color + "" + ChatColor.BOLD + timedisplay);
         			if (TimeUnit.MILLISECONDS.toSeconds(nexttime) == 10) {
         				plugin.match.stopUHC();	// 10 second countdown
         			}
@@ -194,7 +202,7 @@ public class ScoreboardHandler implements Listener {
 	}
 	
 	public void showSidebar() {
-		board.getObjective(ChatColor.BOLD + "NerdUHC").setDisplaySlot(DisplaySlot.SIDEBAR);
+		board.getObjective("main").setDisplaySlot(DisplaySlot.SIDEBAR);
 	}
 
 }

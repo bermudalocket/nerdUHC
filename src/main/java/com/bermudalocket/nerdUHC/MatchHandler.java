@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.command.ConsoleCommandSender;
@@ -33,6 +34,7 @@ public class MatchHandler implements Listener {
 	private boolean playersfrozen;
 	private World world;
 	private int timelimit;
+	private Location spawn;
 	
 	private HashMap<UUID, UHCPlayer> playerlist = new HashMap<UUID, UHCPlayer>();
 	private HashMap<String, UHCTeam> teamlist = new HashMap<String, UHCTeam>();
@@ -43,6 +45,7 @@ public class MatchHandler implements Listener {
 		this.world = Bukkit.getServer().getWorld("world");
 		this.mode = uhcgamemode;
 		this.timelimit = timelimit;
+		spawn = new Location(world, plugin.CONFIG.SPAWN_X, plugin.CONFIG.SPAWN_Y, plugin.CONFIG.SPAWN_Z);
 		createTeams();
 	}
 	
@@ -79,6 +82,36 @@ public class MatchHandler implements Listener {
 			}
 		}
 		p.bukkitPlayer().sendMessage("You joined the " + newteam.getName() + " team!");
+		plugin.scoreboardHandler.update();
+	}
+	
+	private void createTeams() {
+		switch (this.mode) {
+			default:
+			case SOLO:
+				UHCTeam alive = new UHCTeam(this, plugin.CONFIG.ALIVE_TEAM_NAME, ChatColor.WHITE, plugin.CONFIG.MAX_TEAM_SIZE, plugin.CONFIG.ALLOW_FRIENDLY_FIRE);
+				UHCTeam dead = new UHCTeam(this, plugin.CONFIG.DEAD_TEAM_NAME, ChatColor.GRAY, plugin.CONFIG.MAX_TEAM_SIZE, false);
+				teamlist.put(plugin.CONFIG.ALIVE_TEAM_NAME, alive);
+				teamlist.put(plugin.CONFIG.DEAD_TEAM_NAME, dead);
+				break;
+			case TEAM:
+				plugin.CONFIG.getRawTeamList().forEach(team -> {
+					String teamname = team.get("name").toString().toUpperCase();
+					String teamcolor = team.get("color").toString();
+					ChatColor color;
+					plugin.getLogger().info("Creating " + teamname);
+					try {
+						color = ChatColor.valueOf(teamcolor);
+					} catch (Exception f) {
+						color = ChatColor.STRIKETHROUGH;
+						plugin.getLogger().info("Config error: Invalid color option for team " + teamname);
+					}
+					teamlist.put(teamname, new UHCTeam(this, teamname, color, plugin.CONFIG.MAX_TEAM_SIZE, plugin.CONFIG.ALLOW_FRIENDLY_FIRE));
+				});
+				break;
+		}
+		this.spectator = new UHCTeam(this, "SPECTATOR", ChatColor.GRAY, 999, false);
+		teamlist.put("SPECTATOR", spectator);
 	}
 	
 	/*
@@ -125,16 +158,16 @@ public class MatchHandler implements Listener {
 	 * 		Gamerules and other match parameters
 	 */
 	
+	public Location getSpawn() {
+		return spawn;
+	}
+	
 	public void setGameRules() {
 		plugin.CONFIG.GAMERULES.forEach(gamerule -> {
 			String rule = gamerule.keySet().toArray()[0].toString();
 			String value = gamerule.values().toArray()[0].toString();
 			world.setGameRuleValue(rule, value);
 		});
-	}
-	
-	public void setWorld(World world) {
-		this.world = world;
 	}
 	
 	public World getWorld() {
@@ -194,36 +227,6 @@ public class MatchHandler implements Listener {
 		} else {
 			return false;
 		}
-	}
-	
-	private void createTeams() {
-		switch (this.mode) {
-			default:
-			case SOLO:
-				UHCTeam alive = new UHCTeam(this, plugin.CONFIG.ALIVE_TEAM_NAME, ChatColor.WHITE, plugin.CONFIG.MAX_TEAM_SIZE, plugin.CONFIG.ALLOW_FRIENDLY_FIRE);
-				UHCTeam dead = new UHCTeam(this, plugin.CONFIG.DEAD_TEAM_NAME, ChatColor.GRAY, plugin.CONFIG.MAX_TEAM_SIZE, false);
-				teamlist.put(plugin.CONFIG.ALIVE_TEAM_NAME, alive);
-				teamlist.put(plugin.CONFIG.DEAD_TEAM_NAME, dead);
-				break;
-			case TEAM:
-				plugin.CONFIG.getRawTeamList().forEach(team -> {
-					String teamname = team.get("name").toString().toUpperCase();
-					String teamcolor = team.get("color").toString();
-					ChatColor color;
-					plugin.getLogger().info("Creating " + teamname);
-					try {
-						color = ChatColor.valueOf(teamcolor);
-					} catch (Exception f) {
-						color = ChatColor.STRIKETHROUGH;
-						plugin.getLogger().info("Config error: Invalid color option for team " + teamname);
-					}
-					
-					teamlist.put(teamname, new UHCTeam(this, teamname, color, plugin.CONFIG.MAX_TEAM_SIZE, plugin.CONFIG.ALLOW_FRIENDLY_FIRE));
-				});
-				break;
-		}
-		this.spectator = new UHCTeam(this, "SPECTATOR", ChatColor.GRAY, 999, false);
-		teamlist.put("SPECTATOR", spectator);
 	}
 	
 	public UHCTeam getSpectatorTeam() {
@@ -328,9 +331,9 @@ public class MatchHandler implements Listener {
 	    					plugin.getServer().dispatchCommand(console, fullhealth);
 	            		    Bukkit.getOnlinePlayers().forEach(player -> 
         		    				player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 10, 1));
+	            		    plugin.match.setGameStarted(true);
 	            		    plugin.scoreboardHandler.showSidebar();
 	            		    plugin.scoreboardHandler.showTeamsKillsAndTimer();
-	    					plugin.match.setGameStarted(true);
 	            			this.cancel();
 	            		} else {
 	            			Bukkit.getOnlinePlayers().forEach(player -> 

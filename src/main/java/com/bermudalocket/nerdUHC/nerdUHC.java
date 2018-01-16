@@ -40,6 +40,7 @@ public class NerdUHC extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(PregameListener, this);
 		getServer().getPluginManager().registerEvents(GameListener, this);
 		getServer().getPluginManager().registerEvents(match, this);
+		getServer().getPluginManager().registerEvents(scoreboardHandler, this);
 	}
 	
 	@Override

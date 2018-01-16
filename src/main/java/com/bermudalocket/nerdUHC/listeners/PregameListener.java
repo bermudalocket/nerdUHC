@@ -36,6 +36,8 @@ public class PregameListener implements Listener {
 		
 		if (plugin.match.isGameStarted()) return;
 		
+		p.teleport(plugin.match.getSpawn());
+		
 		p.sendMessage(LIB_WELCOME);
 		
 		if (!plugin.match.playerExists(player)) {
