@@ -16,13 +16,11 @@ public class UHCPlayer {
 	private UHCTeam team;
 	private ChatColor color;
 	private long combattag = 0;
-	private boolean alive;
+	private boolean alive = true;
 	private boolean doppeldeath = false;
 	
 	public UHCPlayer(UUID player) {
-		this.player = player;
-		this.p = Bukkit.getPlayer(player);
-		this.name = p.getName();
+		this(player, null);
 	}
 	
 	public UHCPlayer(UUID player, UHCTeam team) {
@@ -30,7 +28,7 @@ public class UHCPlayer {
 		this.p = Bukkit.getPlayer(player);
 		this.name = p.getName();
 		this.team = team;
-		this.color = team.getColor();
+		if (team != null) this.color = team.getColor();
 	}
 	
 	public Player bukkitPlayer() {

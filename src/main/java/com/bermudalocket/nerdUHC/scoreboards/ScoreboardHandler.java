@@ -1,18 +1,21 @@
-package com.bermudalocket.nerdUHC;
+package com.bermudalocket.nerdUHC.scoreboards;
 
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
-import org.bukkit.scoreboard.Team;
 
+import com.bermudalocket.nerdUHC.NerdUHC;
+import com.bermudalocket.nerdUHC.events.MatchStateChangeEvent;
+import com.bermudalocket.nerdUHC.events.MatchTimerTickEvent;
+import com.bermudalocket.nerdUHC.events.PlayerChangeTeamEvent;
+import com.bermudalocket.nerdUHC.match.MatchHandler;
+import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 import com.bermudalocket.nerdUHC.modules.UHCTeam;
-
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Criterias;
@@ -30,7 +33,13 @@ public class ScoreboardHandler implements Listener {
 		this.plugin = plugin;
 		manager = Bukkit.getScoreboardManager();
 		board = manager.getNewScoreboard();
-		populateObjectives();
+		
+		board.registerNewObjective("DEATHS", Criterias.DEATHS);
+		board.registerNewObjective("KILLS", Criterias.TOTAL_KILLS);
+		board.registerNewObjective("HEALTH", Criterias.HEALTH).setDisplaySlot(DisplaySlot.PLAYER_LIST);
+		board.registerNewObjective("HEALTHBELOWNAME", Criterias.HEALTH).setDisplaySlot(DisplaySlot.BELOW_NAME);
+		board.getObjective("HEALTHBELOWNAME").setDisplayName(ChatColor.RED + "❤");
+		board.registerNewObjective("main", "dummy").setDisplayName(ChatColor.BOLD + "NerdUHC");
 	}
 	
 	//
@@ -53,20 +62,29 @@ public class ScoreboardHandler implements Listener {
         PlayerJoinTask.runTaskLater(plugin, 1);
 	}
 	
-	//
-	// SETUP
-	//
-	
-	private void populateObjectives() {
-		board.registerNewObjective("DEATHS", Criterias.DEATHS);
-		board.registerNewObjective("KILLS", Criterias.TOTAL_KILLS);
-		board.registerNewObjective("HEALTH", Criterias.HEALTH).setDisplaySlot(DisplaySlot.PLAYER_LIST);
-		board.registerNewObjective("HEALTHBELOWNAME", Criterias.HEALTH).setDisplaySlot(DisplaySlot.BELOW_NAME);
-		board.getObjective("HEALTHBELOWNAME").setDisplayName(ChatColor.RED + "❤");
-		board.registerNewObjective("main", "dummy").setDisplayName(ChatColor.BOLD + "NerdUHC");
+	@EventHandler
+	public void onPlayerChangeTeam(PlayerChangeTeamEvent e) {
+		if (!plugin.match.isGameStarted()) showTeamCountCapacity();
+		forceHealthUpdates();
 	}
 	
-	public void update() {
+	@EventHandler
+	public void onPlayerDeath(PlayerDeathEvent e) {
+		showTeamsKillsAndTimer();
+	}
+	
+	@EventHandler
+	public void onMatchStateChange(MatchStateChangeEvent e) {
+		if (e.getState().equals(UHCMatchState.DEATHMATCH)) {
+			board.getObjective("main").setDisplayName(ChatColor.BOLD + "" + ChatColor.RED + "Deathmatch");
+		} else if (e.getState().equals(UHCMatchState.INPROGRESS)) {
+		    showSidebar();
+		    showTeamsKillsAndTimer();
+		}
+	}
+	
+	@EventHandler 
+	public void onMatchTimerTick(MatchTimerTickEvent e) {
 		if (plugin.match.isGameStarted()) {
 			showTeamsKillsAndTimer();
 		} else {
@@ -74,11 +92,12 @@ public class ScoreboardHandler implements Listener {
 		}
 	}
 	
+	//
+	// SETUP
+	//
+	
 	// PRE-GAME ONLY
 	public void showTeamCountCapacity() {
-		
-		if (plugin.match.isGameStarted()) return;
-		
 		board.getObjective("main").unregister();
 		Objective o = board.registerNewObjective("main", "dummy");
 		o.setDisplayName(ChatColor.BOLD + "NerdUHC");
@@ -96,9 +115,6 @@ public class ScoreboardHandler implements Listener {
 	
 	// DURING GAME ONLY
 	public void showTeamsKillsAndTimer() {
-		
-		if (!plugin.match.isGameStarted()) return;
-		
 		board.getObjective("main").unregister();
 		Objective o = board.registerNewObjective("main", "dummy");
 		o.setDisplayName(ChatColor.BOLD + "NerdUHC");
@@ -110,59 +126,22 @@ public class ScoreboardHandler implements Listener {
 		String dead = "";
 		for (UHCTeam team : plugin.match.getTeams()) {
 			int aliveplayers = team.getAlivePlayers();
-			plugin.getLogger().info("alive = " + aliveplayers);
 			for (int j = 0; j < aliveplayers; j++) {
-				alive.concat("❤");
+				alive += "❤ ";
 			}
 			int deadplayers = team.getSize() - aliveplayers;
-			plugin.getLogger().info("dead = " + deadplayers);
 			for (int k = 0; k < deadplayers; k++) {
-				dead.concat("\u2620");
+				dead += "X ";
 			}
 			o.getScore(team.getColor() + team.getName() + ": " + ChatColor.WHITE + alive + dead).setScore(i);
 			i++;
+			alive = "";
+			dead = "";
 		}
 	}
-	
-	public BukkitRunnable MatchTimer = new BukkitRunnable() {
-		
-		String timedisplay;
-		ChatColor color = ChatColor.WHITE;
-		long nexttime;
-		
-        @Override
-        public void run() {
-        	
-        		if (!plugin.match.isGameStarted()) this.cancel();
-        		if (plugin.match.arePlayersFrozen()) plugin.match.extendTime(1);
-        		
-        		nexttime = plugin.match.getTimeEnd() - System.currentTimeMillis();
-        		timedisplay = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(nexttime),
-        	            TimeUnit.MILLISECONDS.toMinutes(nexttime) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(nexttime)),
-        	            TimeUnit.MILLISECONDS.toSeconds(nexttime) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(nexttime)));
-        		
-        		if (nexttime <= 600000) color = ChatColor.RED;
-        		
-        		try {
-        			board.getObjective("main").setDisplayName(color + "" + ChatColor.BOLD + timedisplay);
-        			if (TimeUnit.MILLISECONDS.toSeconds(nexttime) == 10) {
-        				plugin.match.stopUHC();	// 10 second countdown
-        			}
-        		} catch(Exception e) {
-        			// small hiccup, objective just happened to get unregistered
-        		}
-        		
-        		
-        }
-    };
-	
+
 	public void forceHealthUpdates() {
 		Bukkit.getOnlinePlayers().forEach(player -> player.setHealth(player.getHealth()));
-	}
-	
-	public void forceKillsUpdates(UUID player) {
-		String playername = Bukkit.getPlayer(player).getName();
-		board.getObjective("KILLS").getScore(playername).setScore(0);
 	}
 	
 	//
@@ -176,6 +155,10 @@ public class ScoreboardHandler implements Listener {
 	//
 	// SCOREBOARD (meta)
 	//
+	
+	protected Objective getObjective(String name) {
+		return board.getObjective(name);
+	}
 
 	public void clearBoards() {
 		board.getEntries().forEach(entry -> board.resetScores(entry));
@@ -190,11 +173,6 @@ public class ScoreboardHandler implements Listener {
 		} catch (Exception f) {
 			return false;
 		}
-	}
-	
-	public void refreshScoreboard() {
-		this.board = manager.getNewScoreboard();
-		populateObjectives();
 	}
 	
 	public void hideSidebar() {

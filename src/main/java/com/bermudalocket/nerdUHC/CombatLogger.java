@@ -10,11 +10,14 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 
 import com.bermudalocket.nerdUHC.modules.UHCDoppel;
 import com.bermudalocket.nerdUHC.modules.UHCPlayer;
 
-public class CombatLogger {
+public class CombatLogger implements Listener {
 	
 	private NerdUHC plugin;
 	
@@ -22,6 +25,18 @@ public class CombatLogger {
 	
 	public CombatLogger(NerdUHC plugin) {
 		this.plugin = plugin;
+	}
+	
+	@EventHandler
+	public void onPlayerDeath(PlayerDeathEvent e) {
+		if (!plugin.match.isGameStarted()) return;
+			if (plugin.match.playerExists(e.getEntity().getUniqueId())) {
+			UHCPlayer p = plugin.match.getPlayer(e.getEntity().getUniqueId());
+			if (p.isDoppelDeath()) {
+				e.getDrops().clear();
+				e.setDroppedExp(0);
+			}
+		}
 	}
 	
 	public void tagCombat(UUID first, UUID second) {

@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 
+import com.bermudalocket.nerdUHC.match.MatchHandler;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
 
 import net.md_5.bungee.api.ChatColor;

@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 
-import com.bermudalocket.nerdUHC.MatchHandler;
+import com.bermudalocket.nerdUHC.match.MatchHandler;
 
 public class UHCTeam {
 	

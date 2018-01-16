@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,7 +11,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -68,21 +66,6 @@ public class GameListener implements Listener {
 		if (plugin.combatLogger.isPlayerTagged(player)) {
 			plugin.combatLogger.spawnDoppel(player, playerlocation);
 		}
-	}
-	
-	@EventHandler
-	public void onPlayerDeath(PlayerDeathEvent e) {
-		if (!plugin.match.isGameStarted()) return;
-		
-		UHCPlayer p = plugin.match.getPlayer(e.getEntity().getUniqueId());
-		if (p.isDoppelDeath()) {
-			e.getDrops().clear();
-			e.setDroppedExp(0);
-		}
-		
-		// set to spectator but preserve team
-		p.bukkitPlayer().setGameMode(GameMode.SPECTATOR);
-		p.setAlive(false);
 	}
 	
 	@EventHandler 

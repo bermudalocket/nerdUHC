@@ -6,7 +6,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
+import com.bermudalocket.nerdUHC.events.MatchStateChangeEvent;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
 public class GamemasterCommands implements CommandExecutor {
 
@@ -22,7 +24,6 @@ public class GamemasterCommands implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		
 		String LIB_UPDATED = ChatColor.GRAY + "Game mode updated!";
-		String LIB_UHC_STARTED = ChatColor.GRAY + "Starting a UHC...";
 		String LIB_UHC_STOPPED = ChatColor.GRAY + "Stopping the UHC...";
 		String LIB_CONF_RELOADED = ChatColor.GRAY + "Config reloaded!";
 		String LIB_FROZEN = ChatColor.GRAY + "Players have been " + ChatColor.AQUA + "frozen" + ChatColor.GRAY + ".";
@@ -35,6 +36,11 @@ public class GamemasterCommands implements CommandExecutor {
 		
 		if (cmd.getName().equalsIgnoreCase("freeze")) {
 			Boolean frozen = plugin.match.arePlayersFrozen();
+			if (frozen) {
+				plugin.call(new MatchStateChangeEvent(UHCMatchState.LAST));
+			} else {
+				plugin.call(new MatchStateChangeEvent(UHCMatchState.FROZEN));
+			}
 			plugin.match.freezePlayers(!frozen);
 			sender.sendMessage((frozen) ? LIB_UNFROZEN : LIB_FROZEN);
 		}
@@ -68,7 +74,11 @@ public class GamemasterCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("uhc")) {
 			if (args.length == 1) {
 				if (args[0].equalsIgnoreCase("start")) {
-					sender.sendMessage(plugin.match.startUHC() ? LIB_UHC_STARTED : LIB_ERR_UHC_RUNNING);
+					if (plugin.match.getMatchState().equals(UHCMatchState.PREGAME)) {
+						plugin.call(new MatchStateChangeEvent(UHCMatchState.INPROGRESS));
+					} else {
+						sender.sendMessage(LIB_ERR_UHC_RUNNING);
+					}
 					return true;
 				}
 			}
@@ -101,7 +111,7 @@ public class GamemasterCommands implements CommandExecutor {
 			return false;
 		} else {
 			plugin.CONFIG.reload();
-			plugin.scoreboardHandler.refreshScoreboard();
+			plugin.getNewScoreboardHandler();
 			return true;
 		}
 	}

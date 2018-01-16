@@ -1,4 +1,4 @@
-package com.bermudalocket.nerdUHC;
+package com.bermudalocket.nerdUHC.match;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,11 +15,15 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import com.bermudalocket.nerdUHC.NerdUHC;
+import com.bermudalocket.nerdUHC.events.MatchStateChangeEvent;
 import com.bermudalocket.nerdUHC.events.PlayerChangeTeamEvent;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 import com.bermudalocket.nerdUHC.modules.UHCPlayer;
 import com.bermudalocket.nerdUHC.modules.UHCTeam;
 
@@ -29,24 +33,33 @@ public class MatchHandler implements Listener {
 	private ConsoleCommandSender console = Bukkit.getConsoleSender();
 	
 	private UHCGameMode mode;
-	private boolean inprogress = false;
 	private long timeend;
 	private boolean playersfrozen;
 	private World world;
-	private int timelimit;
 	private Location spawn;
 	
 	private HashMap<UUID, UHCPlayer> playerlist = new HashMap<UUID, UHCPlayer>();
 	private HashMap<String, UHCTeam> teamlist = new HashMap<String, UHCTeam>();
 	private UHCTeam spectator;
 	
-	public MatchHandler(NerdUHC plugin, UHCGameMode uhcgamemode, Integer timelimit) {
+	private UHCMatchState state;
+	
+	public MatchHandler(NerdUHC plugin, UHCGameMode uhcgamemode) {
 		this.plugin = plugin;
 		this.world = Bukkit.getServer().getWorld("world");
 		this.mode = uhcgamemode;
-		this.timelimit = timelimit;
 		spawn = new Location(world, plugin.CONFIG.SPAWN_X, plugin.CONFIG.SPAWN_Y, plugin.CONFIG.SPAWN_Z);
 		createTeams();
+	}
+	
+	@EventHandler
+	public void onMatchStateChange(MatchStateChangeEvent e) {
+		this.state = e.getState();
+		if (state.equals(UHCMatchState.PREGAME)) {
+			
+		} else if (state.equals(UHCMatchState.INPROGRESS) || e.getLastState().equals(UHCMatchState.PREGAME)) {
+			startUHC();
+		} 
 	}
 	
 	@EventHandler
@@ -58,6 +71,7 @@ public class MatchHandler implements Listener {
 			pl.setPlayerListName(p.getColor() + p.getName());
 			pl.setDisplayName(p.getColor() + p.getName() + ChatColor.WHITE);
 		} else {
+			Bukkit.getPlayer(player).setGameMode(GameMode.SURVIVAL);
 			registerPlayer(player);
 		}
 	}
@@ -82,7 +96,27 @@ public class MatchHandler implements Listener {
 			}
 		}
 		p.bukkitPlayer().sendMessage("You joined the " + newteam.getName() + " team!");
-		plugin.scoreboardHandler.update();
+	}
+	
+	@EventHandler
+	public void onPlayerDeath(PlayerDeathEvent e) {
+		if (!plugin.match.isGameStarted()) return;
+		if (playerExists(e.getEntity().getUniqueId())) {
+			UHCPlayer p = getPlayer(e.getEntity().getUniqueId());
+			p.setAlive(false);
+			e.getEntity().setGameMode(GameMode.SPECTATOR);
+		}
+	}
+	
+	@EventHandler
+	public void onMatchStateChangeScoreboard(MatchStateChangeEvent e) {
+		if (e.getState().equals(UHCMatchState.DEATHMATCH)) {
+			startDeathmatch();
+		}
+	}
+	
+	public UHCMatchState getMatchState() {
+		return state;
 	}
 	
 	private void createTeams() {
@@ -99,7 +133,6 @@ public class MatchHandler implements Listener {
 					String teamname = team.get("name").toString().toUpperCase();
 					String teamcolor = team.get("color").toString();
 					ChatColor color;
-					plugin.getLogger().info("Creating " + teamname);
 					try {
 						color = ChatColor.valueOf(teamcolor);
 					} catch (Exception f) {
@@ -124,10 +157,6 @@ public class MatchHandler implements Listener {
 	
 	public void registerPlayer(UUID player, UHCTeam team) {
 		playerlist.put(player, new UHCPlayer(player, team));
-	}
-	
-	public void unregisterPlayer(UUID player) {
-		playerlist.remove(player);
 	}
 	
 	public boolean playerExists(UUID player) {
@@ -183,15 +212,7 @@ public class MatchHandler implements Listener {
 	}
 	
 	public boolean isGameStarted() { 
-		return inprogress;
-	}
-	
-	public void setGameStarted(Boolean bool) {
-		inprogress = bool;
-		if (inprogress) { 
-			timeend = System.currentTimeMillis() + plugin.CONFIG.MATCH_DURATION*60*1000;
-			plugin.scoreboardHandler.MatchTimer.runTaskTimer(plugin, 0, 20);
-		}
+		return (this.state.equals(UHCMatchState.INPROGRESS) || this.state.equals(UHCMatchState.DEATHMATCH)) ? true : false;
 	}
 	
 	public long getTimeEnd() {
@@ -238,7 +259,10 @@ public class MatchHandler implements Listener {
 	 */
 	
 	public void startDeathmatch() {
-		String target = "@a";
+		String target = "";
+		for (UHCPlayer p : playerlist.values()) {
+			if (p.isAlive()) target += p.getName() + " ";
+		}
 		
 		String spreadplayers = "spreadplayers " + 
 								plugin.CONFIG.SPAWN_X + " " + 
@@ -256,47 +280,9 @@ public class MatchHandler implements Listener {
 		
 		Bukkit.getOnlinePlayers().forEach(player -> 
 		player.sendTitle(ChatColor.RED + "Deathmatch!", null, 15, 60, 15));
-		
 	}
 	
-	public boolean stopUHC() {
-		if (!plugin.match.isGameStarted()) {
-			return false;
-		} else {
-				BukkitRunnable task = new BukkitRunnable() {
-		        
-				int countfrom = 10;
-				ChatColor color = ChatColor.WHITE;
-			
-	            @Override
-	            public void run() {
-	            		if (countfrom == 0) {
-	            			//plugin.match.setPVP(false);
-	            			//plugin.match.freezePlayers(true);
-	            		    Bukkit.getOnlinePlayers().forEach(player -> 
-        		    				player.playSound(player.getLocation(), Sound.ENTITY_ENDERDRAGON_DEATH, 10, 1));
-	            		    if (plugin.CONFIG.DO_DEATHMATCH) {
-	            		    		startDeathmatch();
-	            		    } else {
-	            		    		// cleanUp();
-	            		    }
-	    					plugin.match.setGameStarted(false);
-	            			this.cancel();
-	            		} else {
-	            			if (countfrom <= 3) color = ChatColor.RED;
-	            			Bukkit.getOnlinePlayers().forEach(player -> 
-	            				player.sendTitle(color + "" + countfrom, null, 10, 0, 10));
-	            		}
-	            		countfrom--;
-	            }
-	        };
-	        task.runTaskTimer(plugin, 1, 20);
-	        return true;
-		}
-	}
-	
-	public boolean startUHC() {
-		if (!plugin.match.isGameStarted()) {
+	public void startUHC() {
 			String target = "@a[x=" + plugin.CONFIG.SPAWN_X + 
 					",y=" + plugin.CONFIG.SPAWN_Y + 
 					",z=" + plugin.CONFIG.SPAWN_Z + 
@@ -314,26 +300,22 @@ public class MatchHandler implements Listener {
 			}
 			final String spreadplayerscmd = spreadplayers + target;
 			
-			String saturation = "effect " + target + " 23 1 10";
-			String fullhealth = "effect " + target + " 6 1 10";
-			
-			plugin.scoreboardHandler.hideSidebar();
-			
-			BukkitRunnable task = new BukkitRunnable() {
+			for (UHCPlayer p : playerlist.values()) {
+				p.bukkitPlayer().setHealth(20);
+				p.bukkitPlayer().setSaturation(20);
+			}
+
+			BukkitRunnable StartUHCTask = new BukkitRunnable() {
 		        
 				int countfrom = 10;
 			
 	            @Override
 	            public void run() {
 	            		if (countfrom == 0) {
+	            			plugin.call(new MatchStateChangeEvent(UHCMatchState.INPROGRESS));
 	            		    plugin.getServer().dispatchCommand(console, spreadplayerscmd);
-	    					plugin.getServer().dispatchCommand(console, saturation);
-	    					plugin.getServer().dispatchCommand(console, fullhealth);
 	            		    Bukkit.getOnlinePlayers().forEach(player -> 
         		    				player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 10, 1));
-	            		    plugin.match.setGameStarted(true);
-	            		    plugin.scoreboardHandler.showSidebar();
-	            		    plugin.scoreboardHandler.showTeamsKillsAndTimer();
 	            			this.cancel();
 	            		} else {
 	            			Bukkit.getOnlinePlayers().forEach(player -> 
@@ -342,11 +324,7 @@ public class MatchHandler implements Listener {
 	            		countfrom--;
 	            }
 	        };
-	        task.runTaskTimer(plugin, 1, 20);
-	        return true;
-		} else {
-			return false;
-		}
+	        StartUHCTask.runTaskTimer(plugin, 1, 20);
 	}
 
 }
