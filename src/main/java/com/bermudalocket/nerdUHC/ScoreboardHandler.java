@@ -4,191 +4,175 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
 
-import com.bermudalocket.nerdUHC.modules.Match.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.UHCTeam;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
+import org.bukkit.Sound;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Criterias;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 
-public class ScoreboardHandler {
+public class ScoreboardHandler implements Listener {
 	
 	private NerdUHC plugin;
-	private UHCGameMode uhcgamemode;
 	
 	private ScoreboardManager manager;
 	private Scoreboard board;
 	
-	private Map<String, Objective> OBJECTIVES = new HashMap<String, Objective>();
-	private Map<String, Team> TEAMS = new HashMap<String, Team>();
-	
-	public ScoreboardHandler(NerdUHC plugin) {
-		
+	public ScoreboardHandler(NerdUHC plugin, MatchHandler match) {
 		this.plugin = plugin;
-		
 		manager = Bukkit.getScoreboardManager();
 		board = manager.getNewScoreboard();
-		
-		uhcgamemode = plugin.match.getGameMode();
-		
 		populateObjectives();
-		setFormattingHealthBelowName();
-		checkForDeathObjective();
-		createTeams();
-		
 	}
+	
+	//
+	// LISTENERS
+	//
+	
+	@EventHandler
+	public void onPlayerJoin(PlayerJoinEvent e) {
+		BukkitRunnable PlayerJoinTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+	            	e.getPlayer().setScoreboard(board);
+	        		if (plugin.match.isGameStarted()) {
+	        			showTeamsKillsAndTimer();
+	        		} else {
+	        			showTeamCountCapacity();
+	            }
+            }
+        };
+        PlayerJoinTask.runTaskLater(plugin, 1);
+	}
+	
+	//
+	// SETUP
+	//
 	
 	private void populateObjectives() {
-		plugin.CONFIG.rawobjectiveslist.forEach(objective -> {
-			String objname = objective.get("name").toString();
-			String objcriteria = objective.get("criteria").toString();
-			String objdisplayslot = objective.get("displayslot").toString();
-			
-			if (objcriteria != null && isValidDisplaySlot(objdisplayslot)) {
-				board.registerNewObjective(objname.toUpperCase(), objcriteria).setDisplaySlot(DisplaySlot.valueOf(objdisplayslot));
-				OBJECTIVES.put(objname.toUpperCase(), board.getObjective(objname.toUpperCase()));
-			}
-		});
+		board.registerNewObjective("DEATHS", Criterias.DEATHS);
+		board.registerNewObjective("KILLS", Criterias.TOTAL_KILLS);
+		board.registerNewObjective("HEALTH", Criterias.HEALTH).setDisplaySlot(DisplaySlot.PLAYER_LIST);
+		board.registerNewObjective("HEALTHBELOWNAME", Criterias.HEALTH).setDisplaySlot(DisplaySlot.BELOW_NAME);
+		board.getObjective("HEALTHBELOWNAME").setDisplayName(ChatColor.RED + "❤");
+		board.registerNewObjective("main", "dummy").setDisplayName(ChatColor.BOLD + "NerdUHC");
 	}
 	
-	
-	private void setFormattingHealthBelowName() {
-		List<Objective> healthobj = board.getObjectives()
-											.stream()
-											.filter(obj -> obj.getDisplaySlot().equals(DisplaySlot.BELOW_NAME)
-														&& obj.getCriteria().equals(Criterias.HEALTH))
-											.collect(Collectors.toList());
+	// PRE-GAME ONLY
+	public void showTeamCountCapacity() {
 		
-		if (healthobj == null) return;
+		if (plugin.match.isGameStarted()) return;
 		
-		healthobj.get(0).setDisplayName(ChatColor.RED + "❤");
-	}
-	
-	
-	private void checkForDeathObjective() {
-		List<Objective> deathobj = board.getObjectives()
-										.stream()
-										.filter(obj -> obj.getCriteria().equals(Criterias.DEATHS))
-										.collect(Collectors.toList());
+		board.getObjective("main").unregister();
+		Objective o = board.registerNewObjective("main", "dummy");
+		o.setDisplayName(ChatColor.BOLD + "NerdUHC");
+		o.setDisplaySlot(DisplaySlot.SIDEBAR);
+		int currteams = plugin.match.getTeams().size();
+		
+		o.getScore( "----------------").setScore(currteams + 1);
+		o.getScore("Team (Curr./Max)").setScore(currteams);
+		for (int i=0; i < currteams; i++) {
+			Team team = (Team) plugin.match.getTeams().toArray()[i];
+			o.getScore(team.getColor() + team.getName() + " " + ChatColor.WHITE + " (" + (team.getSize()-1) + "/" + plugin.CONFIG.MAX_TEAM_SIZE + ")").setScore(i);
+		}
 
-		if (deathobj.isEmpty()) {
-			board.registerNewObjective("DEATHS", "deathCount");
-			plugin.CONFIG.DEATH_OBJECTIVE_NAME = "DEATHS";
-			OBJECTIVES.put("DEATHS", board.getObjective("DEATHS"));
-		} else {
-			plugin.CONFIG.DEATH_OBJECTIVE_NAME = deathobj.get(0).getName();
+	}
+	
+	// DURING GAME ONLY
+	public void showTeamsKillsAndTimer() {
+		
+		if (!plugin.match.isGameStarted()) return;
+		
+		board.getObjective("main").unregister();
+		Objective o = board.registerNewObjective("main", "dummy");
+		o.setDisplayName(ChatColor.BOLD + "NerdUHC");
+		o.setDisplaySlot(DisplaySlot.SIDEBAR);
+		int currteams = plugin.match.getTeams().size();
+		
+		int i = 1;
+		o.getScore(ChatColor.WHITE + "----------------").setScore(currteams + 1);
+		String alive = "";
+		String dead = "";
+		for (UHCTeam team : plugin.match.getTeams()) {
+			int aliveplayers = team.getAlivePlayers();
+			for (int j = 0; j < aliveplayers; j++) {
+				alive.concat("❤");
+			}
+			int deadplayers = team.getSize() - aliveplayers;
+			for (int k = 0; k < deadplayers; k++) {
+				dead.concat("\u2620");
+			}
+			o.getScore(team.getColor() + team.getName() + " " + ChatColor.WHITE + " (" + aliveplayers + "/" + (team.getSize()-1) + ")").setScore(i);
+			i++;
 		}
 	}
 	
+	public BukkitRunnable MatchTimer = new BukkitRunnable() {
+		
+		String timedisplay;
+		ChatColor color = ChatColor.WHITE;
+		long nexttime;
+		
+        @Override
+        public void run() {
+        	
+        		if (!plugin.match.isGameStarted()) this.cancel();
+        		if (plugin.match.arePlayersFrozen()) plugin.match.extendTime(1);
+        		
+        		nexttime = plugin.match.getTimeEnd() - System.currentTimeMillis();
+        		timedisplay = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(nexttime),
+        	            TimeUnit.MILLISECONDS.toMinutes(nexttime) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(nexttime)),
+        	            TimeUnit.MILLISECONDS.toSeconds(nexttime) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(nexttime)));
+        		
+        		if (nexttime <= 600000) color = ChatColor.RED;
+        		
+        		try {
+        			board.getObjective(ChatColor.BOLD + "NerdUHC").setDisplayName(color + "" + ChatColor.BOLD + timedisplay);
+        			if (TimeUnit.MILLISECONDS.toSeconds(nexttime) == 10) {
+        				plugin.match.stopUHC();	// 10 second countdown
+        			}
+        		} catch(Exception e) {
+        			// small hiccup, objective just happened to get unregistered
+        		}
+        		
+        		
+        }
+    };
 	
 	public void forceHealthUpdates() {
 		Bukkit.getOnlinePlayers().forEach(player -> player.setHealth(player.getHealth()));
 	}
 	
-
-	private void createTeams() {
-		switch (uhcgamemode) {
-			default:
-			case SOLO:
-				TEAMS.put(plugin.CONFIG.ALIVE_TEAM_NAME.toUpperCase(), board.registerNewTeam(plugin.CONFIG.ALIVE_TEAM_NAME));
-				TEAMS.put(plugin.CONFIG.DEAD_TEAM_NAME.toUpperCase(), board.registerNewTeam(plugin.CONFIG.DEAD_TEAM_NAME));
-				break;
-			case TEAM:
-				plugin.CONFIG.rawteamlist.forEach(team -> {
-					String teamname = team.get("name").toString().toUpperCase();
-					String teamcolor = team.get("color").toString().toUpperCase();
-					
-					board.registerNewTeam(teamname);
-					TEAMS.put(teamname, board.getTeam(teamname));
-					ChatColor color;
-					
-					try {
-						color = ChatColor.valueOf(teamcolor);
-						board.getTeam(teamname).setColor(color);
-						board.getTeam(teamname).setPrefix(color + "");
-						board.getTeam(teamname).setSuffix(ChatColor.WHITE + "");
-					} catch (Exception f) {
-						color = ChatColor.STRIKETHROUGH;
-						board.getTeam(teamname).setColor(color);
-						plugin.getLogger().info("Config error: Invalid color option for team " + teamname);
-					}
-				});
-				break;
-		}
-
-	}
-
-	public Set<String> getTeams() {
-		return TEAMS.keySet();
+	public void forceKillsUpdates(UUID player) {
+		String playername = Bukkit.getPlayer(player).getName();
+		board.getObjective("KILLS").getScore(playername).setScore(0);
 	}
 	
-	public boolean chooseTeamForPlayer(UUID player) {
-		Player p = Bukkit.getPlayer(player);
-		Optional<Team> foundteam = board.getTeams().stream().
-													filter(team -> team.getSize() < plugin.CONFIG.MAX_TEAM_SIZE).
-													findFirst();
-		
-		if (foundteam.orElse(null) != null) {
-			String t = foundteam.get().getName();
-			
-			setPlayerTeam(player, t);
-			p.sendMessage(ChatColor.GRAY + "Team set to " + t);
-			return true;
-		} else {
-			p.sendMessage(ChatColor.GRAY + "Sorry, there are no available teams to join.");
-			return false;
-		}
+	//
+	// TEAMS
+	//
+	
+	public void registerTeam(UHCTeam team) {
+		board.registerNewTeam(team.getName());
 	}
 	
-	public boolean teamExists(String team) {
-		return TEAMS.containsKey(team) ? true : false;
-	}
-	
-	public boolean isTeamFull(String team) {
-		return (getTeamSize(team) >= plugin.CONFIG.MAX_TEAM_SIZE) ? true : false;
-	}
-	
-	public void setPlayerTeam(UUID player, String team) {
-		Player p = Bukkit.getPlayer(player);
-		board.getTeam(team).addEntry(p.getName());
-	}
-	
-	public void removePlayerTeam(Player player) {
-		board.getEntryTeam(player.getName()).removeEntry(player.getName());
-		player.setDisplayName(ChatColor.WHITE + player.getName());
-		player.setPlayerListName(ChatColor.WHITE + player.getName());
-	}
-
-	public int getTeamSize(String team) {
-		return board.getTeam(team).getSize();
-	}
-	
-	public ChatColor getTeamColor(String team) {
-		return board.getTeam(team).getColor();
-	}
-
-	public void setPlayerBoard(UUID player) {
-		Player p = Bukkit.getPlayer(player);
-		p.setScoreboard(board);
-	}
+	//
+	// SCOREBOARD (meta)
+	//
 
 	public void clearBoards() {
 		board.getEntries().forEach(entry -> board.resetScores(entry));
 		board.getTeams().forEach(team -> team.unregister());
 		board.getObjectives().forEach(objective -> objective.unregister());
-		
-		TEAMS.clear();
-		OBJECTIVES.clear();
 	}
 	
 	public boolean isValidDisplaySlot(String slot) {
@@ -198,6 +182,19 @@ public class ScoreboardHandler {
 		} catch (Exception f) {
 			return false;
 		}
+	}
+	
+	public void refreshScoreboard() {
+		this.board = manager.getNewScoreboard();
+		populateObjectives();
+	}
+	
+	public void hideSidebar() {
+		board.getObjective(DisplaySlot.SIDEBAR).setDisplaySlot(null);
+	}
+	
+	public void showSidebar() {
+		board.getObjective(ChatColor.BOLD + "NerdUHC").setDisplaySlot(DisplaySlot.SIDEBAR);
 	}
 
 }

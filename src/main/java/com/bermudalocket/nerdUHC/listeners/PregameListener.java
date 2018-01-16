@@ -11,7 +11,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.modules.Match.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.UHCGameMode;
 
 public class PregameListener implements Listener {
 	
@@ -38,9 +38,7 @@ public class PregameListener implements Listener {
 		
 		p.sendMessage(LIB_WELCOME);
 		
-		if (plugin.match.playerExists(player)) {
-			plugin.match.getPlayer(player).unite();
-		} else {
+		if (!plugin.match.playerExists(player)) {
 			if (mode.equals(UHCGameMode.SOLO)) {
 				p.sendMessage(LIB_SOLO_JOIN);
 				p.sendMessage(LIB_SPEC);
@@ -57,5 +55,4 @@ public class PregameListener implements Listener {
 	public void onMobSpawn(CreatureSpawnEvent e) {
 		if (!plugin.match.isGameStarted()) e.setCancelled(true);
 	}
-
 }

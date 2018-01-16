@@ -10,7 +10,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
@@ -64,6 +63,7 @@ public class UHCDoppel {
 		});
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public LivingEntity getEntity() {
 		Optional doppel = plugin.match.getWorld().getLivingEntities().stream().filter(entity -> entity.getUniqueId().equals(_doppel)).findFirst();
 		if (doppel.isPresent()) {

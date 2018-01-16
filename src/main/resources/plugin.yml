@@ -5,15 +5,6 @@ permissions:
   nerduhc.gamemaster:
     description: Full permissions
     default: op
-  nerduhc.reload:
-    description: Permission to reload nerdUHC configuration.
-    default: op
-  nerduhc.startpausestop:
-    description: Permission to start, pause, and stop UHCs.
-    default: op
-  nerduhc.barrier:
-    description: Permission to enable and disable the spawn barrier.
-    default: op
   nerduhc.basic:
     description: Base permission level for nerdUHC.
     default: true
@@ -21,22 +12,17 @@ commands:
   barrier:
     description: Enables and disables the barrier around world's spawnpoint.
     usage: /barrier [on|off]
-    permission: nerduhc.barrier
-    permission-message: y u do that
-  uhc:
-    description: Command which controls starting, pausing, and stopping of current round
-    usage: /uhc [start|pause|unpause|stop]
     permission: nerduhc.gamemaster
     permission-message: y u do that
-  uhcreload:
-    description: Reloads nerdUHC configuration
-    usage: /uhcreload
-    permission: nerduhc.reload
+  uhc:
+    description: Command which controls current round
+    usage: /uhc [start|stop|mode|reload]
+    permission: nerduhc.gamemaster
     permission-message: y u do that
-  uhcmode:
-    description: Changes the current or upcoming UHC's mode
-    usage: /uhcmode [mode]
-    permission: nerduhc.reload
+  freeze:
+    description: Freeze players in place (toggle)
+    usage: /freeze
+    permission: nerduhc.gamemaster
     permission-message: y u do that
   join:
     description: Join a team.

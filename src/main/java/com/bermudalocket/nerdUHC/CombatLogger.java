@@ -11,7 +11,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 
-import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCDoppel;
 import com.bermudalocket.nerdUHC.modules.UHCPlayer;
 

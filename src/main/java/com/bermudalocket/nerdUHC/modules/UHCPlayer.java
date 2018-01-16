@@ -4,109 +4,93 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
-
-import com.bermudalocket.nerdUHC.NerdUHC;
 
 public class UHCPlayer {
 	
-	private NerdUHC plugin;
-	
 	private Player p;
 	
-	private UUID _player;
-	private UUID _doppel;
-	private String _name;
-	private String _team;
-	private ChatColor _color;
-	private long _combattag = 0;
-	private boolean _alive;
-	private boolean _doppeldeath = false;
+	private UUID player;
+	private UUID doppel;
+	private String name;
+	private UHCTeam team;
+	private ChatColor color;
+	private long combattag = 0;
+	private boolean alive;
+	private boolean doppeldeath = false;
 	
-	public UHCPlayer(UUID player, NerdUHC plugin) {
-		this._player = player;
+	public UHCPlayer(UUID player) {
+		this.player = player;
 		this.p = Bukkit.getPlayer(player);
-		this._name = p.getName();
-		this.plugin = plugin;
+		this.name = p.getName();
 	}
 	
-	public void unite() {
-		p = Bukkit.getPlayer(_player);
-		plugin.scoreboardHandler.setPlayerBoard(_player);
-		p.setDisplayName(_color + _name + ChatColor.WHITE);
-		p.setPlayerListName(_color + _name + ChatColor.WHITE);
-		if (_team.equalsIgnoreCase("SPECTATOR")) {
-			p.setGameMode(GameMode.SPECTATOR);
-		}
+	public UHCPlayer(UUID player, UHCTeam team) {
+		this.player = player;
+		this.p = Bukkit.getPlayer(player);
+		this.name = p.getName();
+		this.team = team;
+		this.color = team.getColor();
 	}
 	
 	public Player bukkitPlayer() {
-		return Bukkit.getPlayer(_player);
+		return Bukkit.getPlayer(player);
 	}
 	
-	public void setTeam(String team) {
-		if (team == null) {
-			plugin.scoreboardHandler.removePlayerTeam(p);
-			_team = null;
-			_color = ChatColor.WHITE;
-		} else if (team.equalsIgnoreCase("SPECTATOR")) {
-			_team = team;
-			_color = ChatColor.ITALIC;
-		} else {
-			plugin.scoreboardHandler.setPlayerTeam(_player, team);
-			_team = team;
-			_color = plugin.scoreboardHandler.getTeamColor(team);
-		}
-		unite();
+	public void setTeam(UHCTeam team) {
+		this.team = team;
 	}
 	
-	public String getTeam() {
-		return _team;
+	public UHCTeam getTeam() {
+		return team;
+	}
+	
+	public boolean hasTeam() {
+		return (team != null);
 	}
 	
 	public void setColor(ChatColor color) {
-		this._color = color;
+		this.color = color;
 	}
 	
 	public ChatColor getColor() {
-		return _color;
+		return color;
 	}
 	
 	public String getName() {
-		return _name;
+		return name;
 	}
 	
 	public void setCombatTag(long combattag) {
-		this._combattag = combattag;
+		this.combattag = combattag;
 	}
 	
 	public long getCombatTag() {
-		return this._combattag;
+		return this.combattag;
 	}
 	
 	public void setDoppel(UUID doppel) {
-		_doppel = doppel;
+		this.doppel = doppel;
 	}
 	
 	public UUID getDoppel() {
-		return _doppel;
+		return doppel;
 	}
 	
 	public void setDoppelDeath(boolean state) {
-		_doppeldeath = state;
+		doppeldeath = state;
 	}
 	
 	public boolean isDoppelDeath() {
-		return _doppeldeath;
+		return doppeldeath;
 	}
 	
 	public void setAlive(boolean state) {
-		_alive = state;
+		alive = state;
 	}
 	
 	public boolean isAlive() {
-		return _alive;
+		return alive;
 	}
 	
 	public void kill() {

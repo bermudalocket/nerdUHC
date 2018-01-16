@@ -8,7 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 
-import com.bermudalocket.nerdUHC.modules.Match.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.UHCGameMode;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -22,9 +22,11 @@ public class Configuration {
 	
 	private NerdUHC plugin;
 	
+	public List<MatchHandler> matches;
+
 	public boolean DEBUG;
 
-	public boolean LET_PLAYERS_PICK_TEAMS;
+	public int MATCH_DURATION;
 	public boolean FORCE_EVEN_TEAMS;
 	public String ALIVE_TEAM_NAME;
 	public String DEAD_TEAM_NAME;
@@ -43,7 +45,12 @@ public class Configuration {
 	public boolean SPREAD_RESPECT_TEAMS;
 	public List<Map<?, ?>> GAMERULES = new ArrayList<>();
 	public String DEATH_OBJECTIVE_NAME;
+	public int DEATHMATCH_DIST_BTWN_PLAYERS;
+	public int DEATHMATCH_SPREAD_DIST_FROM_SPAWN;
+	public boolean DO_DEATHMATCH;
+	public boolean ALLOW_FRIENDLY_FIRE;
 	
+	List<Map<?, ?>> rawmatchlist = new ArrayList<Map<?, ?>>();
 	List<Map<?, ?>> rawteamlist = new ArrayList<Map<?, ?>>();
 	List<Map<?, ?>> rawobjectiveslist = new ArrayList<Map<?, ?>>();
 	
@@ -58,17 +65,6 @@ public class Configuration {
 		plugin.saveDefaultConfig();
 	}
 	
-	/////////////////////////////////////////////////////////////////////////////
-	//
-	//	Reload config
-	//
-	//
-	
-	// ********************************************
-	// converts raw gamerules to GAMERULES map and
-	// then sets each gamerule
-	// ********************************************
-	
 	public void reload() {
 		
 		plugin.reloadConfig();
@@ -76,15 +72,11 @@ public class Configuration {
 		
 		DEBUG = config.getBoolean("debug", false);
 		
-		// ********************************************
-		// GAME MODE CONFIG
-		// ********************************************
 		String getgamemode = config.getString("default-uhc-mode", "SOLO");
 		DEFAULT_UHC_MODE = isValidGameMode(getgamemode) ? UHCGameMode.valueOf(getgamemode) : UHCGameMode.SOLO;
 		
-		// ********************************************
-		// SPAWNPOINT and BARRIER CONFIG
-		// ********************************************
+		MATCH_DURATION = config.getInt("match-duration-in-minutes", 180);
+		
 		SPAWN_X = config.getInt("spawn-x", 0);
 		SPAWN_Y = config.getInt("spawn-y", 65);
 		SPAWN_Z = config.getInt("spawn-z", 0);
@@ -96,19 +88,13 @@ public class Configuration {
 			SPAWN_BARRIER_BLOCK = Material.BARRIER;
 			plugin.getLogger().info(ChatColor.RED + "Value of SPAWN_BARRIER_BLOCK_ID in config is invalid");
 		}
-		
-		// ********************************************
-		// TEAMS CONFIG
-		// ********************************************
-		LET_PLAYERS_PICK_TEAMS = config.getBoolean("let-players-pick-teams", true);
+
 		FORCE_EVEN_TEAMS = config.getBoolean("force-even-teams", true);
 		MAX_TEAM_SIZE = config.getInt("max-team-size", 3);
 		ALIVE_TEAM_NAME = config.getString("alive-team-name", "Alive");
 		DEAD_TEAM_NAME = config.getString("dead-team-name", "Dead");
-		
-		// ********************************************
-		// CombatLogging CONFIG
-		// ********************************************
+		ALLOW_FRIENDLY_FIRE = config.getBoolean("allow-friendly-fire", false);
+
 		PLAYER_COMBAT_TAG_TIME = config.getInt("player-combat-tag-time-in-sec", 30);
 		try {
 			COMBAT_TAG_DOPPEL = EntityType.valueOf(config.getString("combat-tag-doppel"));
@@ -116,20 +102,20 @@ public class Configuration {
 			COMBAT_TAG_DOPPEL = EntityType.CHICKEN;
 			plugin.getLogger().info(ChatColor.RED + "Value of COMBAT_TAG_DOPPEL in config is invalid!");
 		}
-		
-		// ********************************************
-		// spreadplayers CONFIG
-		// ********************************************
+
 		SPREAD_DIST_BTWN_PLAYERS = config.getInt("spread-distance-between-players", 200);
 		SPREAD_DIST_FROM_SPAWN = config.getDouble("spread-distance-from-spawn", 950);
 		SPREAD_RESPECT_TEAMS = config.getBoolean("spread-respect-teams", true);
 		
-		// ********************************************
-		// Get raw maps and lists
-		// ********************************************
+		DO_DEATHMATCH = config.getBoolean("do-deathmatch", true);
+		DEATHMATCH_DIST_BTWN_PLAYERS = config.getInt("deathmatch-distance-between-players", 20);
+		DEATHMATCH_SPREAD_DIST_FROM_SPAWN = config.getInt("deathmatch-distance-from-spawn", 100);
+
 		GAMERULES = config.getMapList("gamerules");
 		rawteamlist = config.getMapList("teams");
 		rawobjectiveslist = config.getMapList("objectives");
+		rawmatchlist = plugin.getConfig().getMapList("matches");
+		
 	}
 	
 	public boolean isValidGameMode(String gameMode) {
@@ -139,6 +125,14 @@ public class Configuration {
 		} catch (Exception f) {
 			return false;
 		}
+	}
+	
+	public List<Map<?, ?>> getRawTeamList() {
+		return rawteamlist;
+	}
+	
+	public List<Map<?, ?>> getRawObjectivesList() {
+		return rawobjectiveslist;
 	}
 
 }

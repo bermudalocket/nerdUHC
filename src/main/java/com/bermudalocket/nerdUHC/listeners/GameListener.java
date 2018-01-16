@@ -14,6 +14,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -40,8 +41,6 @@ public class GameListener implements Listener {
 		if (plugin.match.playerExists(player)) {
 			UHCPlayer p = plugin.match.getPlayer(player);
 			
-			p.unite();
-			
 			if (e.getPlayer().isDead()) return;
 
 			if (!(p.getDoppel() == null)) {
@@ -54,7 +53,7 @@ public class GameListener implements Listener {
 					task.runTaskLater(plugin, 1);
 			}
 		} else {
-			plugin.match.registerPlayer(player, "SPECTATOR");
+			plugin.match.registerPlayer(player, plugin.match.getSpectatorTeam());
 		}
 	}
 	
@@ -81,7 +80,7 @@ public class GameListener implements Listener {
 			e.setDroppedExp(0);
 		}
 		
-		p.setTeam("SPECTATOR");
+		// set to spectator but preserve team
 		p.bukkitPlayer().setGameMode(GameMode.SPECTATOR);
 		p.setAlive(false);
 	}
@@ -131,6 +130,15 @@ public class GameListener implements Listener {
 				ArrayList<ItemStack> i = d.getDrops();
 				i.forEach(item -> e.getDrops().add(item));
 				e.setDroppedExp(Math.round(d.getXP()));
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent e) {
+		if (plugin.match.arePlayersFrozen() && plugin.match.playerExists(e.getPlayer().getUniqueId())) {
+			if (!e.getFrom().toVector().equals(e.getTo().toVector())) {
+				e.getTo().setDirection(e.getFrom().toVector());
 			}
 		}
 	}
