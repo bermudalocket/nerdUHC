@@ -7,6 +7,7 @@ import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
 public class MatchStateChangeEvent extends Event {
 	
+	private static final HandlerList handlers = new HandlerList();
 	private UHCMatchState state = null;
 	private UHCMatchState laststate = null;
 
@@ -16,8 +17,13 @@ public class MatchStateChangeEvent extends Event {
 			this.laststate = state;
 			this.state = placeholder;
 		} else {
-			this.laststate = this.state;
-			this.state = state;
+			if (this.state == null) {
+				this.laststate = UHCMatchState.PREGAME;
+				this.state = state;
+			} else {
+				this.laststate = this.state;
+				this.state = state;
+			}
 		}
 	}
 	
@@ -29,10 +35,21 @@ public class MatchStateChangeEvent extends Event {
 		return this.laststate;
 	}
 	
+	public boolean isTransitioning() {
+		return (this.state.equals(UHCMatchState.TRANSITION));
+	}
+	
+	public boolean hasTransitioned() {
+		return (this.laststate.equals(UHCMatchState.TRANSITION));
+	}
+	
 	@Override
 	public HandlerList getHandlers() {
-		// TODO Auto-generated method stub
-		return null;
+		return handlers;
+	}
+	
+	public static HandlerList getHandlerList() {
+		return handlers;
 	}
 	
 }

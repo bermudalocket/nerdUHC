@@ -78,8 +78,6 @@ public class ScoreboardHandler implements Listener {
 		if (e.getState().equals(UHCMatchState.DEATHMATCH)) {
 			board.getObjective("main").setDisplayName(ChatColor.BOLD + "" + ChatColor.RED + "Deathmatch");
 		} else if (e.getState().equals(UHCMatchState.INPROGRESS)) {
-		    showSidebar();
-		    showTeamsKillsAndTimer();
 		}
 	}
 	
@@ -104,13 +102,13 @@ public class ScoreboardHandler implements Listener {
 		o.setDisplaySlot(DisplaySlot.SIDEBAR);
 		int currteams = plugin.match.getTeams().size();
 		
-		o.getScore( "----------------").setScore(currteams + 1);
+		o.getScore( "----------------").setScore(currteams);
 		o.getScore("Team (Curr./Max)").setScore(currteams);
-		for (int i=0; i < currteams; i++) {
-			UHCTeam team = (UHCTeam) plugin.match.getTeams().toArray()[i];
-			o.getScore(team.getColor() + team.getName() + " " + ChatColor.WHITE + " (" + team.getSize() + "/" + team.getMaxSize() + ")").setScore(i);
+		int i = 0;
+		for (UHCTeam t : plugin.match.getTeams()) {
+			o.getScore(t.getColor() + t.getName() + " " + ChatColor.WHITE + " (" + t.getSize() + "/" + t.getMaxSize() + ")").setScore(i);
+			i++;
 		}
-
 	}
 	
 	// DURING GAME ONLY
@@ -120,28 +118,34 @@ public class ScoreboardHandler implements Listener {
 		o.setDisplayName(ChatColor.BOLD + "NerdUHC");
 		o.setDisplaySlot(DisplaySlot.SIDEBAR);
 		int currteams = plugin.match.getTeams().size();
-		int i = 1;
-		o.getScore(ChatColor.WHITE + "----------------").setScore(currteams + 1);
-		String alive = "";
-		String dead = "";
+		int i = 0;
+		o.getScore(ChatColor.WHITE + "----------------").setScore(currteams);
 		for (UHCTeam team : plugin.match.getTeams()) {
+			StringBuilder alive = new StringBuilder();
+			StringBuilder dead = new StringBuilder();
 			int aliveplayers = team.getAlivePlayers();
 			for (int j = 0; j < aliveplayers; j++) {
-				alive += "❤ ";
+				alive.append("❤ ");
 			}
 			int deadplayers = team.getSize() - aliveplayers;
 			for (int k = 0; k < deadplayers; k++) {
-				dead += "X ";
+				dead.append("X ");
 			}
-			o.getScore(team.getColor() + team.getName() + ": " + ChatColor.WHITE + alive + dead).setScore(i);
+			o.getScore(team.getColor() + team.getName() + ": " + ChatColor.WHITE + alive.toString() + dead.toString()).setScore(i);
 			i++;
-			alive = "";
-			dead = "";
 		}
 	}
 
 	public void forceHealthUpdates() {
 		Bukkit.getOnlinePlayers().forEach(player -> player.setHealth(player.getHealth()));
+	}
+	
+	public void hideSidebar() {
+		board.getObjective(DisplaySlot.SIDEBAR).setDisplaySlot(null);
+	}
+	
+	public void showSidebar() {
+		board.getObjective("main").setDisplaySlot(DisplaySlot.SIDEBAR);
 	}
 	
 	//
@@ -173,14 +177,6 @@ public class ScoreboardHandler implements Listener {
 		} catch (Exception f) {
 			return false;
 		}
-	}
-	
-	public void hideSidebar() {
-		board.getObjective(DisplaySlot.SIDEBAR).setDisplaySlot(null);
-	}
-	
-	public void showSidebar() {
-		board.getObjective("main").setDisplaySlot(DisplaySlot.SIDEBAR);
 	}
 
 }

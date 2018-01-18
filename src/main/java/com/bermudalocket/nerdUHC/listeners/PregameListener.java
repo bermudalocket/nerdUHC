@@ -12,10 +12,17 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
 public class PregameListener implements Listener {
 	
 	private NerdUHC plugin;
+	
+	private final String LIB_WELCOME = ChatColor.GOLD + "Welcome to nerdUHC. The next round will be a %t round.";
+	private final String LIB_SOLO_JOIN = ChatColor.GOLD + "To join, run " + ChatColor.WHITE + "/join";
+	private final String LIB_SPEC = ChatColor.GOLD + "To spectate, run " + ChatColor.WHITE + "/join spectator";
+	private final String LIB_TEAM_LIST = ChatColor.GOLD + "To view a list of teams, run " + ChatColor.WHITE + "/teamlist";
+	private final String LIB_TEAM_JOIN = ChatColor.GOLD + "To join a team, run " + ChatColor.WHITE + "/join [team]";
 	
 	public PregameListener(NerdUHC plugin) {
 		this.plugin = plugin;
@@ -28,17 +35,11 @@ public class PregameListener implements Listener {
 		Player p = Bukkit.getPlayer(player);
 		UHCGameMode mode = plugin.match.getGameMode();
 		
-		String LIB_WELCOME = ChatColor.GRAY + "Welcome to nerdUHC. The next round will be a " + mode.toString() + " round.";
-		String LIB_SOLO_JOIN = ChatColor.GRAY + "To join, run " + ChatColor.WHITE + "/join";
-		String LIB_SPEC = ChatColor.GRAY + "To spectate, run " + ChatColor.WHITE + "/join spectator";
-		String LIB_TEAM_LIST = ChatColor.GRAY + "To view a list of teams, run " + ChatColor.WHITE + "/teamlist";
-		String LIB_TEAM_JOIN = ChatColor.GRAY + "To join a team, run " + ChatColor.WHITE + "/join [team]";
+		if (!plugin.match.getMatchState().equals(UHCMatchState.PREGAME)) return;
 		
-		if (plugin.match.isGameStarted()) return;
+		p.teleport(plugin.CONFIG.SPAWN);
 		
-		p.teleport(plugin.match.getSpawn());
-		
-		p.sendMessage(LIB_WELCOME);
+		p.sendMessage(LIB_WELCOME.replace("%t", mode.toString()));
 		
 		if (!plugin.match.playerExists(player)) {
 			if (mode.equals(UHCGameMode.SOLO)) {

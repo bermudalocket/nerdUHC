@@ -2,14 +2,14 @@ package com.bermudalocket.nerdUHC.match;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.events.MatchStateChangeEvent;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
+import com.bermudalocket.nerdUHC.modules.UHCSound;
 
-public class TransitionTimer {
+public class TransitionTimer extends BukkitRunnable {
 	
 	private NerdUHC plugin;
 	
@@ -21,14 +21,6 @@ public class TransitionTimer {
 		TransitionTimer.runTaskTimer(plugin, 0, 20);
 	}
 	
-	public void cancel() {
-		TransitionTimer.cancel();
-	}
-	
-	public boolean isCancelled() {
-		return TransitionTimer.isCancelled();
-	}
-	
 	BukkitRunnable TransitionTimer = new BukkitRunnable() {
 		int countfrom = 10;
 		ChatColor color = ChatColor.WHITE;
@@ -36,11 +28,10 @@ public class TransitionTimer {
         @Override
         public void run() {
         		if (countfrom == 0) {
-        			//plugin.match.setPVP(false);
+        			plugin.CONFIG.WORLD.setPVP(false);
         			plugin.match.freezePlayers(true);
-        		    Bukkit.getOnlinePlayers().forEach(player -> 
-		    				player.playSound(player.getLocation(), Sound.ENTITY_ENDERDRAGON_DEATH, 10, 1));
-        		    if (plugin.CONFIG.DO_DEATHMATCH) {
+        		    UHCSound.MATCHEND.playSound();
+        		    if (plugin.CONFIG.DO_DEATHMATCH && plugin.match.numberOfAlivePlayers() > 1) {
         		    		plugin.call(new MatchStateChangeEvent(UHCMatchState.DEATHMATCH));
         		    } else {
         		    		plugin.call(new MatchStateChangeEvent(UHCMatchState.END));

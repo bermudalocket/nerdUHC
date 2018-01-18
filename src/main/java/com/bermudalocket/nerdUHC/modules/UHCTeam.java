@@ -45,6 +45,10 @@ public class UHCTeam {
 		return color;
 	}
 	
+	public String getDisplayName() {
+		return getColor() + getName() + ChatColor.WHITE;
+	}
+	
 	public List<UHCPlayer> getPlayers() {
 		return players;
 	}

@@ -7,6 +7,7 @@ public enum UHCMatchState {
 	DEATHMATCH(),
 	END(),
 	FROZEN(),
+	TRANSITION(),
 	LAST();
 	
 }

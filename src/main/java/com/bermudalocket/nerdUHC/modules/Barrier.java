@@ -12,11 +12,12 @@ public class Barrier {
 	
 	public Barrier(NerdUHC plugin) {
 		this.plugin = plugin;
+		drawBarrier(true);
 	}
 	
 	public void drawBarrier(boolean draw) {
-
-		World world = plugin.match.getWorld();
+		
+		World world = plugin.CONFIG.WORLD;
 		
 		int x = plugin.CONFIG.SPAWN_X;
 		int y = plugin.CONFIG.SPAWN_Y;

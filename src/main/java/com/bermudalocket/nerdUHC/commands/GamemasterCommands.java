@@ -14,6 +14,17 @@ public class GamemasterCommands implements CommandExecutor {
 
 	private NerdUHC plugin;
 	
+	static final String LIB_UPDATED = ChatColor.GRAY + "Game mode updated!";
+	static final String LIB_UHC_STOPPED = ChatColor.GRAY + "Stopping the UHC...";
+	static final String LIB_CONF_RELOADED = ChatColor.GRAY + "Config reloaded!";
+	static final String LIB_FROZEN = ChatColor.GRAY + "Players have been " + ChatColor.AQUA + "frozen" + ChatColor.GRAY + ".";
+	static final String LIB_UNFROZEN = ChatColor.GRAY + "Players have been unfrozen.";
+	
+	static final String LIB_ERR_INVALID = ChatColor.RED + "Invalid game mode!";
+	static final String LIB_ERR_UHC_RUNNING = ChatColor.RED + "A UHC is already in progress!";
+	static final String LIB_ERR_NO_UHC_RUNNING = ChatColor.RED + "A UHC is not currently running!";
+	static final String LIB_ERR_STARTED = ChatColor.RED + "You can't reload the config while a UHC is in session.";
+	
 	public GamemasterCommands(NerdUHC plugin) {
 		this.plugin = plugin;
 		plugin.getCommand("barrier").setExecutor(this);
@@ -22,17 +33,6 @@ public class GamemasterCommands implements CommandExecutor {
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		
-		String LIB_UPDATED = ChatColor.GRAY + "Game mode updated!";
-		String LIB_UHC_STOPPED = ChatColor.GRAY + "Stopping the UHC...";
-		String LIB_CONF_RELOADED = ChatColor.GRAY + "Config reloaded!";
-		String LIB_FROZEN = ChatColor.GRAY + "Players have been " + ChatColor.AQUA + "frozen" + ChatColor.GRAY + ".";
-		String LIB_UNFROZEN = ChatColor.GRAY + "Players have been unfrozen.";
-		
-		String LIB_ERR_INVALID = ChatColor.RED + "Invalid game mode!";
-		String LIB_ERR_UHC_RUNNING = ChatColor.RED + "A UHC is already in progress!";
-		String LIB_ERR_NO_UHC_RUNNING = ChatColor.RED + "A UHC is not currently running!";
-		String LIB_ERR_STARTED = ChatColor.RED + "You can't reload the config while a UHC is in session.";
 		
 		if (cmd.getName().equalsIgnoreCase("freeze")) {
 			Boolean frozen = plugin.match.arePlayersFrozen();
@@ -87,7 +87,11 @@ public class GamemasterCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("uhc")) {
 			if (args.length == 1) {
 				if (args[0].equalsIgnoreCase("stop")) {
-					sender.sendMessage(plugin.match.stopUHC() ? LIB_UHC_STOPPED : LIB_ERR_NO_UHC_RUNNING);
+					if (plugin.match.getMatchState().equals(UHCMatchState.INPROGRESS) || plugin.match.getMatchState().equals(UHCMatchState.DEATHMATCH)) {
+						plugin.call(new MatchStateChangeEvent(UHCMatchState.END));
+					} else {
+						sender.sendMessage(LIB_ERR_UHC_RUNNING);
+					}
 					return true;
 				}
 			}

@@ -18,8 +18,11 @@ public class MatchTimerTickEvent extends Event {
 		return cancelled;
 	}
 	
-	@Override
 	public HandlerList getHandlers() {
+		return handlers;
+	}
+	
+	public static HandlerList getHandlerList() {
 		return handlers;
 	}
 
