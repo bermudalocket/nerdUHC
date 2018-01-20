@@ -77,7 +77,9 @@ public class ScoreboardHandler implements Listener {
 	
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent e) {
-		showTeamsKillsAndTimer();
+		if (plugin.match.isGameStarted()) {
+			showTeamsKillsAndTimer();
+		}
 	}
 	
 	@EventHandler
