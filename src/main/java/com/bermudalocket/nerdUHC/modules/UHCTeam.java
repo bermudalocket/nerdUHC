@@ -25,6 +25,10 @@ public class UHCTeam {
 		this.players = new ArrayList<UHCPlayer>();
 	}
 	
+	public void reset() {
+		this.players.clear();
+	}
+	
 	public void add(UHCPlayer p) {
 		players.add(p);
 	}

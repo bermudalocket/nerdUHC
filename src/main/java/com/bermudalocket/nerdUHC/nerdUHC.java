@@ -6,9 +6,7 @@ import org.bukkit.event.Listener;
 
 import com.bermudalocket.nerdUHC.listeners.PregameListener;
 import com.bermudalocket.nerdUHC.match.MatchHandler;
-import com.bermudalocket.nerdUHC.match.TransitionTimer;
 import com.bermudalocket.nerdUHC.modules.Barrier;
-import com.bermudalocket.nerdUHC.scoreboards.ScoreboardTimer;
 import com.bermudalocket.nerdUHC.scoreboards.ScoreboardHandler;
 import com.bermudalocket.nerdUHC.commands.GamemasterCommands;
 import com.bermudalocket.nerdUHC.commands.PlayerCommands;
@@ -21,9 +19,6 @@ public class NerdUHC extends JavaPlugin {
 	public MatchHandler match;
 	public Barrier barrier;
 
-	public ScoreboardTimer matchTimer;
-	public TransitionTimer transitionTimer;
-
 	@SuppressWarnings("unused")
 	@Override
 	public void onEnable() {
@@ -32,14 +27,11 @@ public class NerdUHC extends JavaPlugin {
 		CONFIG.reload();
 
 		match = new MatchHandler(this);
-		scoreboardHandler = new ScoreboardHandler(this, match);
+		scoreboardHandler = new ScoreboardHandler(this);
 		barrier = new Barrier(this);
 
 		GamemasterCommands gamemastercmd = new GamemasterCommands(this);
 		PlayerCommands playercmd = new PlayerCommands(this);
-
-		matchTimer = new ScoreboardTimer(this);
-		transitionTimer = new TransitionTimer(this);
 		
 		Listener PregameListener = new PregameListener(this);
 
@@ -47,20 +39,15 @@ public class NerdUHC extends JavaPlugin {
 		getServer().getPluginManager().registerEvents(match, this);
 		getServer().getPluginManager().registerEvents(scoreboardHandler, this);
 		getServer().getPluginManager().registerEvents(combatLogger, this);
-		getServer().getPluginManager().registerEvents(matchTimer, this);
 	}
 
 	@Override
 	public void onDisable() {
-		combatLogger.clearDoppels();
-		scoreboardHandler.clearBoards();
+		scoreboardHandler.configureNewScoreboard(true);
 	}
 
 	public void call(Event e) {
 		getServer().getPluginManager().callEvent(e);
 	}
-
-	public void getNewScoreboardHandler() {
-		this.scoreboardHandler = new ScoreboardHandler(this, match);
-	}
+	
 }

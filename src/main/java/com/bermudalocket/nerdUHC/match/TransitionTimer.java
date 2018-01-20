@@ -29,9 +29,8 @@ public class TransitionTimer extends BukkitRunnable {
         public void run() {
         		if (countfrom == 0) {
         			plugin.CONFIG.WORLD.setPVP(false);
-        			plugin.match.freezePlayers(true);
-        		    UHCSound.MATCHEND.playSound();
-        		    if (plugin.CONFIG.DO_DEATHMATCH && plugin.match.numberOfAlivePlayers() > 1) {
+        		    UHCSound.DEATHMATCHSTART.playSound();
+        		    if (!plugin.match.isForceStopping() && plugin.CONFIG.DO_DEATHMATCH && plugin.match.numberOfAlivePlayers() > 1) {
         		    		plugin.call(new MatchStateChangeEvent(UHCMatchState.DEATHMATCH));
         		    } else {
         		    		plugin.call(new MatchStateChangeEvent(UHCMatchState.END));

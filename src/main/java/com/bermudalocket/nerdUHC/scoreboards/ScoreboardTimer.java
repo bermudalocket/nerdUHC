@@ -3,15 +3,12 @@ package com.bermudalocket.nerdUHC.scoreboards;
 import java.util.concurrent.TimeUnit;
 
 import org.bukkit.ChatColor;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.events.MatchStateChangeEvent;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
-public class ScoreboardTimer implements Listener {
+public class ScoreboardTimer  {
 
 	private NerdUHC plugin;
 	private boolean cancelled;
@@ -20,23 +17,16 @@ public class ScoreboardTimer implements Listener {
 		this.plugin = plugin;
 	}
 
-	@EventHandler
-	public void onMatchStateChangeEvent(MatchStateChangeEvent e) {
-		UHCMatchState state = e.getState();
-
-		if (state.equals(UHCMatchState.END) || state.equals(UHCMatchState.DEATHMATCH)) {
-			if (!cancelled) this.cancel();
-		}
-	}
-
 	public void run() {
-		MatchTimer.runTaskTimer(plugin, 0, 20);
 		this.cancelled = false;
+		MatchTimer.runTaskTimer(plugin, 0, 20);
 	}
 
 	public void cancel() {
-		MatchTimer.cancel();
-		this.cancelled = true;
+		try {
+			this.cancelled = true;
+		} catch (Exception f) {
+		}
 	}
 
 	public boolean isCancelled() {
@@ -48,9 +38,12 @@ public class ScoreboardTimer implements Listener {
 		String timedisplay;
 		ChatColor color = ChatColor.WHITE;
 		long nexttime;
+		long sec;
 
 		@Override
 		public void run() {
+			
+			if (cancelled || plugin.match.getMatchState() == UHCMatchState.PREGAME) return;
 
 			if (plugin.match.arePlayersFrozen())
 				plugin.match.extendTime(1);
@@ -66,10 +59,10 @@ public class ScoreboardTimer implements Listener {
 				color = ChatColor.RED;
 
 			try {
-				long sec = TimeUnit.MILLISECONDS.toSeconds(nexttime);
+				sec = TimeUnit.MILLISECONDS.toSeconds(nexttime);
 				plugin.scoreboardHandler.getObjective("main").setDisplayName(color + "" + ChatColor.BOLD + timedisplay);
 				if (sec == 10) {
-					plugin.transitionTimer.run();
+					plugin.match.transitionTimer.run();
 				} else if (sec == 0 || sec < 0) {
 					this.cancel();
 				}

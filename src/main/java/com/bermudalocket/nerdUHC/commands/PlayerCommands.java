@@ -2,6 +2,7 @@ package com.bermudalocket.nerdUHC.commands;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -24,11 +25,20 @@ public class PlayerCommands implements CommandExecutor {
 		plugin.getCommand("join").setExecutor(this);
 		plugin.getCommand("teamlist").setExecutor(this);
 		plugin.getCommand("t").setExecutor(this);
+		plugin.getCommand("fixme").setExecutor(this);
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		
 		UHCPlayer p = plugin.match.getPlayer(((Player) sender).getUniqueId());
+		
+		if (cmd.getName().equalsIgnoreCase("fixme")) {
+			if (p.bukkitPlayer().getGameMode() == GameMode.SPECTATOR) {
+				p.bukkitPlayer().teleport(plugin.CONFIG.SPAWNFIXME);
+				p.bukkitPlayer().setFlying(true);
+			}
+			return true;
+		}
 		
 		if (cmd.getName().equalsIgnoreCase("t")) {
 			if (p.hasTeam()) {
@@ -62,8 +72,7 @@ public class PlayerCommands implements CommandExecutor {
 				if (args.length == 1) {
 					String team = args[0].toString();
 					if (teamIsJoinable(team)) {
-						PlayerChangeTeamEvent e = new PlayerChangeTeamEvent(p, plugin.match.getTeam(team));
-						Bukkit.getServer().getPluginManager().callEvent(e);
+						plugin.call(new PlayerChangeTeamEvent(p, plugin.match.getTeam(team)));
 					} else {
 						sender.sendMessage(ChatColor.RED + "That team is either full or doesn't exist!");
 						UHCSound.OOPS.playSound(p);

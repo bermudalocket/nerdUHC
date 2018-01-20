@@ -34,6 +34,17 @@ public class UHCPlayer {
 		if (team != null) this.color = team.getColor();
 	}
 	
+	public void reset() {
+		this.doppel = null;
+		this.displayname = name;
+		this.team = null;
+		this.color = ChatColor.RESET;
+		this.combattag = 0;
+		this.alive = true;
+		this.dropinventory = true;
+		setDisplayName();
+	}
+	
 	public Player bukkitPlayer() {
 		return Bukkit.getPlayer(player);
 	}
@@ -44,6 +55,8 @@ public class UHCPlayer {
 		} else {
 			this.displayname = this.name;
 		}
+		bukkitPlayer().setDisplayName(displayname);
+		bukkitPlayer().setPlayerListName(displayname);
 	}
 	
 	public String getDisplayName() {
@@ -52,7 +65,10 @@ public class UHCPlayer {
 	
 	public void setTeam(UHCTeam team) {
 		this.team = team;
-		if (team != null) this.color = team.getColor();
+		if (team != null) { 
+			this.color = team.getColor();
+			setDisplayName();
+		}
 	}
 	
 	public UHCTeam getTeam() {

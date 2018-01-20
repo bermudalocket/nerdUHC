@@ -69,6 +69,7 @@ public class GamemasterCommands implements CommandExecutor {
 					if (plugin.CONFIG.isValidGameMode(mode)) {					
 						plugin.match.setGameMode(UHCGameMode.valueOf(mode));
 						plugin.CONFIG.reload();
+						plugin.scoreboardHandler.configureNewScoreboard(false);
 						sender.sendMessage(LIB_UPDATED);
 					} else {
 						sender.sendMessage(LIB_ERR_INVALID);
@@ -97,7 +98,8 @@ public class GamemasterCommands implements CommandExecutor {
 			if (args.length == 1) {
 				if (args[0].equalsIgnoreCase("stop")) {
 					if (plugin.match.getMatchState().equals(UHCMatchState.INPROGRESS) || plugin.match.getMatchState().equals(UHCMatchState.DEATHMATCH)) {
-						plugin.call(new MatchStateChangeEvent(UHCMatchState.END));
+						plugin.match.transitionTimer.run();
+						plugin.match.scoreboardTimer.cancel();
 					} else {
 						sender.sendMessage(LIB_ERR_UHC_RUNNING);
 						UHCSound.OOPS.playSound((Player) sender);
@@ -125,7 +127,6 @@ public class GamemasterCommands implements CommandExecutor {
 			return false;
 		} else {
 			plugin.CONFIG.reload();
-			plugin.getNewScoreboardHandler();
 			return true;
 		}
 	}

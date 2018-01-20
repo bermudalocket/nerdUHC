@@ -34,6 +34,11 @@ commands:
     usage: /t [msg]
     permission: nerduhc.basic
     permission-message: y u do that
+  fixme:
+    description: Self-help command for players glitching out in spectator mode
+    usage: /fixme
+    permission: nerduhc.basic
+    permission-message: y u do that
   teamlist:
     description: List the current UHC teams.
     usage: /teamlist
