@@ -23,7 +23,11 @@ public class MatchEndTimer {
 	public void run(List<UHCPlayer> winners) {
 		
 		this.winnerlist = winners;
-		this.winnerdisplaytime = Math.floorDiv(300, winnerlist.size()) - 20;
+		if (winnerlist.size() > 0) {
+			this.winnerdisplaytime = Math.floorDiv(300, winnerlist.size()) - 20;
+		} else {
+			this.winnerdisplaytime = 200;
+		}
 		
 		TimesUp.runTask(plugin);
 		

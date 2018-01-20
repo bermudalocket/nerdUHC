@@ -33,9 +33,10 @@ public class PlayerCommands implements CommandExecutor {
 		UHCPlayer p = plugin.match.getPlayer(((Player) sender).getUniqueId());
 		
 		if (cmd.getName().equalsIgnoreCase("fixme")) {
-			if (p.bukkitPlayer().getGameMode() == GameMode.SPECTATOR) {
-				p.bukkitPlayer().teleport(plugin.CONFIG.SPAWNFIXME);
-				p.bukkitPlayer().setFlying(true);
+			Player player = (Player) sender;
+			if (player.getGameMode() == GameMode.SPECTATOR) {
+				player.teleport(plugin.CONFIG.SPAWNFIXME);
+				player.setFlying(true);
 			}
 			return true;
 		}

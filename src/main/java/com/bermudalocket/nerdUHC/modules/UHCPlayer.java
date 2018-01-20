@@ -12,7 +12,6 @@ public class UHCPlayer {
 	private UUID player;
 	private UHCDoppel doppel;
 	private String name;
-	private String displayname;
 	private UHCTeam team;
 	private ChatColor color;
 	private long combattag;
@@ -31,14 +30,17 @@ public class UHCPlayer {
 		this.alive = true;
 		this.combattag = 0;
 		this.dropinventory = true;
-		if (team != null) this.color = team.getColor();
+		if (team != null) { 
+			this.color = team.getColor();
+		} else {
+			this.color = ChatColor.WHITE;
+		}
 	}
 	
 	public void reset() {
 		this.doppel = null;
-		this.displayname = name;
 		this.team = null;
-		this.color = ChatColor.RESET;
+		this.color = ChatColor.WHITE;
 		this.combattag = 0;
 		this.alive = true;
 		this.dropinventory = true;
@@ -50,17 +52,12 @@ public class UHCPlayer {
 	}
 	
 	public void setDisplayName() {
-		if (team != null) {
-			this.displayname = team.getColor() + name + ChatColor.RESET;
-		} else {
-			this.displayname = this.name;
-		}
-		bukkitPlayer().setDisplayName(displayname);
-		bukkitPlayer().setPlayerListName(displayname);
+		bukkitPlayer().setDisplayName(color + name);
+		bukkitPlayer().setPlayerListName(color + name);
 	}
 	
 	public String getDisplayName() {
-		return this.displayname;
+		return color + name;
 	}
 	
 	public void setTeam(UHCTeam team) {
@@ -77,14 +74,6 @@ public class UHCPlayer {
 	
 	public boolean hasTeam() {
 		return (team != null);
-	}
-	
-	public void setColor(ChatColor color) {
-		this.color = color;
-	}
-	
-	public ChatColor getColor() {
-		return color;
 	}
 	
 	public String getName() {

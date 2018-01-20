@@ -24,6 +24,7 @@ public class PregameListener implements Listener {
 	private final String LIB_TEAM_LIST = ChatColor.GOLD + "To view a list of teams, run " + ChatColor.WHITE
 			+ "/teamlist";
 	private final String LIB_TEAM_JOIN = ChatColor.GOLD + "To join a team, run " + ChatColor.WHITE + "/join [team]";
+	private final String LIB_TEAM_CHAT = ChatColor.GOLD + "Chat with your team by using " + ChatColor.WHITE + "/t [msg]";
 
 	public PregameListener(NerdUHC plugin) {
 		this.plugin = plugin;
@@ -48,6 +49,7 @@ public class PregameListener implements Listener {
 		} else {
 			p.sendMessage(LIB_TEAM_LIST);
 			p.sendMessage(LIB_TEAM_JOIN);
+			p.sendMessage(LIB_TEAM_CHAT);
 			p.sendMessage(LIB_SPEC);
 		}
 	}

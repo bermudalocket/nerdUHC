@@ -2,6 +2,7 @@ package com.bermudalocket.nerdUHC.scoreboards;
 
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.scoreboard.Team;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.events.MatchStateChangeEvent;
@@ -32,16 +33,22 @@ public class ScoreboardHandler implements Listener {
 	private ScoreboardManager manager;
 	private List<Scoreboard> boards = new ArrayList<Scoreboard>();
 	
+	// ------------------------------------------------------------------------
+	/**
+	 * The constructor for ScoreboardHandler
+	 * @param plugin
+	 */
 	public ScoreboardHandler(NerdUHC plugin) {
 		this.plugin = plugin;
 		manager = Bukkit.getScoreboardManager();
 		configureNewScoreboard(false);
 	}
 	
-	//
-	// LISTENERS
-	//
-	
+	// ------------------------------------------------------------------------
+	/**
+	 * Sets player's scoreboard upon player join, then displays it
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e) {
 		BukkitRunnable PlayerJoinTask = new BukkitRunnable() {
@@ -58,6 +65,10 @@ public class ScoreboardHandler implements Listener {
         PlayerJoinTask.runTaskLater(plugin, 1);
 	}
 	
+	/**
+	 * Updates the scoreboard and health displays when a player changes team
+	 * @param e
+	 */
 	@EventHandler
 	public void onPlayerChangeTeam(PlayerChangeTeamEvent e) {
 		if (!plugin.match.isGameStarted()) showTeamCountCapacity();
@@ -165,8 +176,10 @@ public class ScoreboardHandler implements Listener {
 		boards.get(0).getObjective("main").setDisplaySlot(DisplaySlot.SIDEBAR);
 	}
 	
-	public void registerTeam(UHCTeam team) {
-		boards.get(0).registerNewTeam(team.getName());
+	public Team registerTeam(UHCTeam team) {
+		Team t = boards.get(0).registerNewTeam(team.getName());
+		t.setColor(team.getColor());
+		return t;
 	}
 	
 	protected Objective getObjective(String name) {

@@ -80,7 +80,7 @@ public class Configuration {
 		SPAWN_Y = config.getInt("spawn-y", 65);
 		SPAWN_Z = config.getInt("spawn-z", 0);
 		SPAWN = new Location(WORLD, SPAWN_X, SPAWN_Y, SPAWN_Z);
-		SPAWNFIXME = new Location(WORLD, SPAWN_X, 255, SPAWN_Z);
+		SPAWNFIXME = new Location(WORLD, SPAWN_X, 150, SPAWN_Z);
 		if (SPAWN_X > WORLD.getWorldBorder().getSize()/2) {
 			plugin.getLogger().info(ChatColor.RED + "SPAWN_X coordinate is outside world border. Are you sure?");
 		}

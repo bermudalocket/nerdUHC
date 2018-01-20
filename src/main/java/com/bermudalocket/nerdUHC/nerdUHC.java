@@ -26,8 +26,8 @@ public class NerdUHC extends JavaPlugin {
 		CONFIG = new Configuration(this);
 		CONFIG.reload();
 
-		match = new MatchHandler(this);
 		scoreboardHandler = new ScoreboardHandler(this);
+		match = new MatchHandler(this);
 		barrier = new Barrier(this);
 
 		GamemasterCommands gamemastercmd = new GamemasterCommands(this);

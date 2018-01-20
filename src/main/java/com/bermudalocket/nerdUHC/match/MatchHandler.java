@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -58,8 +57,7 @@ public class MatchHandler implements Listener {
 	/**
 	 * The constructor for MatchHandler.
 	 * 
-	 * @param plugin
-	 *            - the NerdUHC plugin instance
+	 * @param plugin the NerdUHC plugin instance
 	 */
 	public MatchHandler(NerdUHC plugin) {
 		this.plugin = plugin;
@@ -94,8 +92,7 @@ public class MatchHandler implements Listener {
 	/**
 	 * Handles match state changes.
 	 * 
-	 * @param e
-	 *            the MatchStateChangeEvent
+	 * @param e the MatchStateChangeEvent
 	 */
 	@EventHandler
 	public void onMatchStateChange(MatchStateChangeEvent e) {
@@ -120,16 +117,15 @@ public class MatchHandler implements Listener {
 	 * list. If the player does exist, this reconfigures their team colors, which
 	 * are not saved across a log in/out.
 	 * 
-	 * @param e
-	 *            the PlayerJoinEvent
+	 * @param e the PlayerJoinEvent
 	 */
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e) {
 		Player player = e.getPlayer();
-		if (playerExists(player)) {
-			UHCPlayer p = getPlayer(player);
-			player.setPlayerListName(p.getColor() + p.getName());
-			player.setDisplayName(p.getColor() + p.getName() + ChatColor.WHITE);
+		if (playerExists(player.getUniqueId())) {
+			UHCPlayer p = getPlayer(player.getUniqueId());
+			player.setPlayerListName(p.getDisplayName());
+			player.setDisplayName(p.getDisplayName());
 		} else {
 			UUID p = player.getUniqueId();
 			player.setGameMode(GameMode.SURVIVAL);
@@ -140,8 +136,7 @@ public class MatchHandler implements Listener {
 	/**
 	 * Handles a player changing their team
 	 * 
-	 * @param e
-	 *            the PlayerChangeTeamEvent
+	 * @param e the PlayerChangeTeamEvent
 	 */
 	@EventHandler
 	public void onPlayerChangeTeam(PlayerChangeTeamEvent e) {
@@ -215,15 +210,6 @@ public class MatchHandler implements Listener {
 
 	// ------------------------------------------------------------------------
 	/**
-	 * Gets the current match state.
-	 * 
-	 * @return the current UHCMatchState
-	 */
-	public UHCMatchState getMatchState() {
-		return state;
-	}
-
-	/**
 	 * A method to create teams based on the current UHCGameMode.
 	 */
 	private void createTeams() {
@@ -234,6 +220,8 @@ public class MatchHandler implements Listener {
 					plugin.CONFIG.MAX_TEAM_SIZE, plugin.CONFIG.ALLOW_FRIENDLY_FIRE);
 			UHCTeam dead = new UHCTeam(this, plugin.CONFIG.DEAD_TEAM_NAME, ChatColor.GRAY, plugin.CONFIG.MAX_TEAM_SIZE,
 					false);
+			plugin.scoreboardHandler.registerTeam(alive);
+			plugin.scoreboardHandler.registerTeam(dead);
 			teamlist.put(plugin.CONFIG.ALIVE_TEAM_NAME, alive);
 			teamlist.put(plugin.CONFIG.DEAD_TEAM_NAME, dead);
 			break;
@@ -248,68 +236,16 @@ public class MatchHandler implements Listener {
 					color = ChatColor.STRIKETHROUGH;
 					plugin.getLogger().info("Config error: Invalid color option for team " + teamname);
 				}
-				teamlist.put(teamname, new UHCTeam(this, teamname, color, plugin.CONFIG.MAX_TEAM_SIZE,
-						plugin.CONFIG.ALLOW_FRIENDLY_FIRE));
+				UHCTeam t = new UHCTeam(this, teamname, color, plugin.CONFIG.MAX_TEAM_SIZE, plugin.CONFIG.ALLOW_FRIENDLY_FIRE);
+				plugin.scoreboardHandler.registerTeam(t);
+				teamlist.put(teamname, t);
 			});
 			break;
 		}
 		this.spectator = new UHCTeam(this, "SPECTATOR", ChatColor.GRAY, 999, false);
 		teamlist.put("SPECTATOR", spectator);
 	}
-
-	public void forceStop() {
-		this.forcestopping = true;
-	}
-
-	public boolean isForceStopping() {
-		return forcestopping;
-	}
-
-	/*
-	 * Players
-	 */
-
-	public void registerPlayer(UUID player) {
-		playerlist.put(player, new UHCPlayer(player));
-	}
-
-	public void registerPlayer(UUID player, UHCTeam team) {
-		playerlist.put(player, new UHCPlayer(player, team));
-	}
-
-	public boolean playerExists(UUID player) {
-		return playerlist.containsKey(player);
-	}
-
-	public boolean playerExists(Player player) {
-		return playerExists(player.getUniqueId());
-	}
-
-	public UHCPlayer getPlayer(UUID player) {
-		return playerlist.get(player);
-	}
-
-	public UHCPlayer getPlayer(String player) {
-		return playerlist.values().stream().filter(p -> p.getName().equalsIgnoreCase(player))
-				.collect(Collectors.toList()).get(0);
-	}
-
-	public UHCPlayer getPlayer(Player player) {
-		return getPlayer(player.getUniqueId());
-	}
-
-	public void freezePlayers(boolean state) {
-		playersfrozen = state;
-	}
-
-	public boolean arePlayersFrozen() {
-		return playersfrozen;
-	}
-
-	/*
-	 * Gamerules and other match parameters
-	 */
-
+	
 	public void setGameRules() {
 		plugin.CONFIG.GAMERULES.forEach(gamerule -> {
 			String rule = gamerule.keySet().toArray()[0].toString();
@@ -318,51 +254,130 @@ public class MatchHandler implements Listener {
 		});
 	}
 
-	public void setGameMode(UHCGameMode mode) {
-		this.mode = mode;
-	}
-
-	public UHCGameMode getGameMode() {
-		return mode;
-	}
-
-	public boolean isGameStarted() {
-		return (this.state.equals(UHCMatchState.INPROGRESS) || this.state.equals(UHCMatchState.DEATHMATCH)) ? true
-				: false;
-	}
-
-	public long getTimeEnd() {
-		return timeend;
-	}
-
-	public void extendTime(int sec) {
-		timeend += sec * 1000;
-	}
-
-	/*
-	 * Teams
+	// ------------------------------------------------------------------------
+	/**
+	 * Force stops the current match
 	 */
+	public void forceStop() {
+		this.forcestopping = true;
+	}
 
+	/**
+	 * Checks if the current match is being force-stopped
+	 * @return true if match is being force-stopped, false if not
+	 */
+	public boolean isForceStopping() {
+		return forcestopping;
+	}
+	
+	/**
+	 * Gets the current match state.
+	 * 
+	 * @return the current UHCMatchState
+	 */
+	public UHCMatchState getMatchState() {
+		return state;
+	}
+
+	// ------------------------------------------------------------------------
+	/**
+	 * Registers a player to the current match
+	 * @param player the uuid of the player to register
+	 */
+	public void registerPlayer(UUID player) {
+		playerlist.put(player, new UHCPlayer(player));
+	}
+
+	/**
+	 * Registers a player to the current match
+	 * @param player the uuid of the player to register
+	 * @param team the team which the player is on
+	 */
+	public void registerPlayer(UUID player, UHCTeam team) {
+		playerlist.put(player, new UHCPlayer(player, team));
+	}
+	
+	/**
+	 * Checks if the player exists in the current match
+	 * @param player the uuid of the player to check
+	 * @return true if player is in match, false if not
+	 */
+	public boolean playerExists(UUID player) {
+		return playerlist.containsKey(player);
+	}
+
+	/**
+	 * Gets a players UHCPlayer instance by uuid
+	 * @param player the player's uuid
+	 * @return the UHCPlayer instance of the player
+	 */
+	public UHCPlayer getPlayer(UUID player) {
+		return playerlist.get(player);
+	}
+
+	/**
+	 * Freezes or unfreezes all of the players in the match
+	 * @param state whether to freeze or not
+	 */
+	public void freezePlayers(boolean state) {
+		playersfrozen = state;
+	}
+
+	/**
+	 * Returns if the players in the match are currently frozen
+	 * @return true if yes, false if no
+	 */
+	public boolean arePlayersFrozen() {
+		return playersfrozen;
+	}
+
+	// ------------------------------------------------------------------------
+	/**
+	 * Get a UHCTeam instance by team name
+	 * @param team the name of the team
+	 * @return the team's UHCTeam instance
+	 */
 	public UHCTeam getTeam(String team) {
 		return teamlist.get(team.toUpperCase());
 	}
 
+	/**
+	 * Gets a collection of all current teams
+	 * @return collection of all current teams
+	 */
 	public Collection<UHCTeam> getTeams() {
 		return teamlist.values();
 	}
 
+	/**
+	 * Checks if a team is registered to this match
+	 * @param team the team name to check
+	 * @return true if yes, false if no
+	 */
 	public boolean teamExists(String team) {
 		return teamlist.containsKey(team.toUpperCase());
 	}
 
+	/**
+	 * Check if current match mode allows teaming
+	 * @return true if yes, false if no
+	 */
 	public boolean allowTeams() {
 		return mode.equals(UHCGameMode.TEAM);
 	}
 
+	/**
+	 * Get the UHCTeam instance of the spectator team
+	 * @return the UHCTeam instance of the spectator team
+	 */
 	public UHCTeam getSpectatorTeam() {
 		return this.spectator;
 	}
 	
+	/**
+	 * Gets the number of currently alive players in this match
+	 * @return
+	 */
 	public int numberOfAlivePlayers() {
 		int i = 0;
 		for (UHCPlayer p : playerlist.values()) {
@@ -372,6 +387,10 @@ public class MatchHandler implements Listener {
 		return i;
 	}
 	
+	/**
+	 * Checks if a team is the last team standing
+	 * @return a UHCTeam instance if it is the last team standing, null if multiple teams are left
+	 */
 	public UHCTeam getLastTeamStanding() {
 		int i = 0;
 		UHCTeam hold = null;
@@ -387,10 +406,51 @@ public class MatchHandler implements Listener {
 		return null;
 	}
 
-	/*
-	 * Start, stop
+	// ------------------------------------------------------------------------
+	/**
+	 * Sets the gamemode of the current match
+	 * @param mode the gamemode to set
 	 */
+	public void setGameMode(UHCGameMode mode) {
+		this.mode = mode;
+	}
 
+	/**
+	 * Gets the current match gamemode
+	 * @return
+	 */
+	public UHCGameMode getGameMode() {
+		return mode;
+	}
+
+	/**
+	 * Checks if the current match has started
+	 * @return
+	 */
+	public boolean isGameStarted() {
+		return (this.state.equals(UHCMatchState.INPROGRESS) || this.state.equals(UHCMatchState.DEATHMATCH)) ? true
+				: false;
+	}
+
+	/**
+	 * Gets when the current match will end
+	 * @return
+	 */
+	public long getTimeEnd() {
+		return timeend;
+	}
+
+	/**
+	 * Extends the current match duration by sec seconds
+	 * @param sec number of seconds to extend the match by
+	 */
+	public void extendTime(int sec) {
+		timeend += sec * 1000;
+	}
+	
+	/**
+	 * Sets up and starts the DEATHMATCH state
+	 */
 	public void startDeathmatch() {
 		String target = "";
 		for (UHCPlayer p : playerlist.values()) {
@@ -415,6 +475,9 @@ public class MatchHandler implements Listener {
 		freezePlayers(false);
 	}
 
+	/**
+	 * Sets up and starts the match
+	 */
 	public void startUHC() {
 		timeend = System.currentTimeMillis() + plugin.CONFIG.MATCH_DURATION * 60 * 1000;
 
@@ -448,6 +511,9 @@ public class MatchHandler implements Listener {
 		plugin.scoreboardHandler.showSidebar();
 	}
 
+	/**
+	 * Stops the match and cleans up
+	 */
 	public void stopUHC() {
 		for (UHCPlayer p : playerlist.values()) {
 			p.reset();
