@@ -1,8 +1,11 @@
-default-uhc-mode: SOLO
+world-name: world
+uhc-game-mode: TEAM
+match-duration: 180
 
 spawn-x: 0
 spawn-y: 65
 spawn-z: 0
+
 spawn-barrier-radius: 6
 spawn-barrier-block-name: BARRIER
 
@@ -12,40 +15,32 @@ spread-respect-teams: TRUE
 
 let-players-pick-teams: TRUE
 force-even-teams: TRUE
-teams-max-size: 3
+max-team-size: 3
 alive-team-name: ALIVE
 dead-team-name: DEAD
-teams:
-  - name: 'Mooshroom Red'
-    color: 'RED'
-  - name: 'Guardian Orange'
-    color: 'ORANGE'
-  - name: 'Blaze Yellow'
-    color: 'YELLOW'
-  - name: 'Creeper Green'
-    color: 'GREEN'
-  - name: 'Vex Blue'
-    color: 'BLUE'
-  - name: 'Enderman Purple'
-    color: 'PURPLE'
+allow-friendly-fire: FALSE
 
 player-combat-tag-time-in-sec: 30
 combat-tag-doppel: CHICKEN
 
+do-deathmatch: TRUE
+deathmatch-distance-between-players: 20
+deathmatch-distance-from-spawn: 100
+
+teams:
+  - name: 'Sapphlings'
+    color: 'RED'
+  - name: 'Guardians'
+    color: 'GOLD'
+  - name: 'Blazes'
+    color: 'YELLOW'
+  - name: 'Creepers'
+    color: 'GREEN'
+  - name: 'Vexes'
+    color: 'BLUE'
+  - name: 'Endermen'
+    color: 'DARK_PURPLE'
+
 gamerules:
   - doDaylightCycle: TRUE
   - NaturalRegeneration: FALSE
-
-objectives:
-  - name: 'kills'
-    criteria: 'playerKillCount'
-    displayslot: 'SIDEBAR'
-  - name: 'deaths'
-    criteria: 'deathCount'
-    displayslot: 'none'
-  - name: 'health'
-    criteria: 'health'
-    displayslot: 'PLAYER_LIST'
-  - name: 'hp'
-    criteria: 'health'
-    displayslot: 'BELOW_NAME'

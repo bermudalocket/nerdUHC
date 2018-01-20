@@ -9,15 +9,15 @@ import org.bukkit.entity.Player;
 public class UHCPlayer {
 	
 	private Player p;
-	
 	private UUID player;
-	private UUID doppel;
+	private UHCDoppel doppel;
 	private String name;
+	private String displayname;
 	private UHCTeam team;
 	private ChatColor color;
-	private long combattag = 0;
-	private boolean alive = true;
-	private boolean doppeldeath = false;
+	private long combattag;
+	private boolean alive;
+	private boolean dropinventory;
 	
 	public UHCPlayer(UUID player) {
 		this(player, null);
@@ -28,6 +28,9 @@ public class UHCPlayer {
 		this.p = Bukkit.getPlayer(player);
 		this.name = p.getName();
 		this.team = team;
+		this.alive = true;
+		this.combattag = 0;
+		this.dropinventory = true;
 		if (team != null) this.color = team.getColor();
 	}
 	
@@ -35,8 +38,21 @@ public class UHCPlayer {
 		return Bukkit.getPlayer(player);
 	}
 	
+	public void setDisplayName() {
+		if (team != null) {
+			this.displayname = team.getColor() + name + ChatColor.RESET;
+		} else {
+			this.displayname = this.name;
+		}
+	}
+	
+	public String getDisplayName() {
+		return this.displayname;
+	}
+	
 	public void setTeam(UHCTeam team) {
 		this.team = team;
+		if (team != null) this.color = team.getColor();
 	}
 	
 	public UHCTeam getTeam() {
@@ -67,20 +83,24 @@ public class UHCPlayer {
 		return this.combattag;
 	}
 	
-	public void setDoppel(UUID doppel) {
-		this.doppel = doppel;
+	public void setDoppel(UHCDoppel d) {
+		this.doppel = d;
 	}
 	
-	public UUID getDoppel() {
+	public UHCDoppel getDoppel() {
 		return doppel;
 	}
 	
-	public void setDoppelDeath(boolean state) {
-		doppeldeath = state;
+	public void setInvDrop(boolean state) {
+		this.dropinventory = state;
 	}
 	
-	public boolean isDoppelDeath() {
-		return doppeldeath;
+	public boolean dropInventory() {
+		return this.dropinventory;
+	}
+	
+	public boolean isDoppelDead() {
+		return doppel.bukkitEntity().isDead();
 	}
 	
 	public void setAlive(boolean state) {

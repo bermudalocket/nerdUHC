@@ -2,7 +2,6 @@ package com.bermudalocket.nerdUHC.commands;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,6 +12,8 @@ import com.bermudalocket.nerdUHC.events.PlayerChangeTeamEvent;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 import com.bermudalocket.nerdUHC.modules.UHCPlayer;
+import com.bermudalocket.nerdUHC.modules.UHCSound;
+import com.bermudalocket.nerdUHC.modules.UHCTeam;
 
 public class PlayerCommands implements CommandExecutor {
 
@@ -22,11 +23,31 @@ public class PlayerCommands implements CommandExecutor {
 		this.plugin = plugin;
 		plugin.getCommand("join").setExecutor(this);
 		plugin.getCommand("teamlist").setExecutor(this);
+		plugin.getCommand("t").setExecutor(this);
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		
 		UHCPlayer p = plugin.match.getPlayer(((Player) sender).getUniqueId());
+		
+		if (cmd.getName().equalsIgnoreCase("t")) {
+			if (p.hasTeam()) {
+				UHCTeam t = p.getTeam();
+				StringBuilder msg = new StringBuilder();
+				msg.append("[");
+				msg.append(t.getDisplayName());
+				msg.append("] <");
+				msg.append(p.getName());
+				msg.append("> ");
+				for (int i = 0; i < args.length; i++) {
+					msg.append(args[i] + " ");
+				}
+				for (UHCPlayer teammate : t.getPlayers()) {
+					teammate.bukkitPlayer().sendMessage(msg.toString());
+				}
+			}
+			return true;
+		}
 		
 		if (cmd.getName().equalsIgnoreCase("join")) {
 			if (plugin.match.getGameMode().equals(UHCGameMode.SOLO)) {
@@ -35,7 +56,7 @@ public class PlayerCommands implements CommandExecutor {
 					Bukkit.getServer().getPluginManager().callEvent(e);
 				} else {
 					sender.sendMessage(ChatColor.RED + "You're already registered!");
-					playSound(Sound.BLOCK_ANVIL_HIT, p.bukkitPlayer());
+					UHCSound.OOPS.playSound(p);
 				}
 			} else if (plugin.match.getGameMode().equals(UHCGameMode.TEAM)) {
 				if (args.length == 1) {
@@ -45,11 +66,11 @@ public class PlayerCommands implements CommandExecutor {
 						Bukkit.getServer().getPluginManager().callEvent(e);
 					} else {
 						sender.sendMessage(ChatColor.RED + "That team is either full or doesn't exist!");
-						playSound(Sound.BLOCK_ANVIL_HIT, p.bukkitPlayer());
+						UHCSound.OOPS.playSound(p);
 					}
 				} else {
 					sender.sendMessage(ChatColor.RED + "Invalid syntax: /join [team].");
-					playSound(Sound.BLOCK_ANVIL_HIT, p.bukkitPlayer());
+					UHCSound.OOPS.playSound(p);
 				}
 			}
 			return true;
@@ -83,19 +104,6 @@ public class PlayerCommands implements CommandExecutor {
 			return true;
 		}
 		return false;
-	}
-	
-	public void playSound(Sound sound) {
-		playSound(sound, null);
-	}
-	
-	public void playSound(Sound sound, Player p) {
-		if (p == null) {
-		    Bukkit.getOnlinePlayers().forEach(player -> 
-    				player.playSound(player.getLocation(), sound, 10, 1));
-		} else {
-			p.playSound(p.getLocation(), sound, 10, 1);
-		}
 	}
 	
 }

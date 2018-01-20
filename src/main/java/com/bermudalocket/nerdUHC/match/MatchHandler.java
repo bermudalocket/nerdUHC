@@ -18,16 +18,16 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.events.MatchStateChangeEvent;
 import com.bermudalocket.nerdUHC.events.MatchTimerTickEvent;
 import com.bermudalocket.nerdUHC.events.PlayerChangeTeamEvent;
-import com.bermudalocket.nerdUHC.modules.Barrier;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 import com.bermudalocket.nerdUHC.modules.UHCPlayer;
@@ -39,61 +39,62 @@ public class MatchHandler implements Listener {
 
 	private NerdUHC plugin;
 	private ConsoleCommandSender console;
-	
+
 	private long timeend;
 	private boolean playersfrozen;
-	private boolean pvpenabled;
 
 	private UHCMatchState state;
 	private UHCGameMode mode;
-	private Barrier barrier;
 	private UHCTeam spectator;
 
 	private HashMap<UUID, UHCPlayer> playerlist = new HashMap<UUID, UHCPlayer>();
 	private HashMap<String, UHCTeam> teamlist = new HashMap<String, UHCTeam>();
 	private List<UHCPlayer> winnerlist = new ArrayList<UHCPlayer>();
-	
+
 	private ScoreboardTimer scoreboardTimer;
 	private MatchStartCountdownTimer matchStartCountdownTimer;
 	private MatchEndTimer matchEndTimer;
-	
+
 	// ------------------------------------------------------------------------
 	/**
 	 * The constructor for MatchHandler.
-	 * @param plugin - the NerdUHC plugin instance
+	 * 
+	 * @param plugin
+	 *            - the NerdUHC plugin instance
 	 */
 	public MatchHandler(NerdUHC plugin) {
 		this.plugin = plugin;
 		this.console = Bukkit.getConsoleSender();
-		
+
 		this.timeend = 0;
 		this.playersfrozen = false;
-		this.pvpenabled = false;
-	
+
 		this.state = UHCMatchState.PREGAME;
 		this.mode = plugin.CONFIG.UHC_GAME_MODE;
-		this.barrier = new Barrier(plugin);
-		
+
 		this.scoreboardTimer = new ScoreboardTimer(plugin);
 		this.matchStartCountdownTimer = new MatchStartCountdownTimer(plugin);
 		this.matchEndTimer = new MatchEndTimer(plugin);
-		
+
 		createTeams();
 	}
-	
+
 	// ------------------------------------------------------------------------
 	/**
 	 * Plays a sound every time a timer ticks
+	 * 
 	 * @param e
 	 */
 	@EventHandler
 	public void onTimerTick(MatchTimerTickEvent e) {
 		playSound(UHCSound.TIMERTICK.sound());
 	}
-	
+
 	/**
 	 * Handles match state changes.
-	 * @param e the MatchStateChangeEvent
+	 * 
+	 * @param e
+	 *            the MatchStateChangeEvent
 	 */
 	@EventHandler
 	public void onMatchStateChange(MatchStateChangeEvent e) {
@@ -105,37 +106,41 @@ public class MatchHandler implements Listener {
 		} else if (state.equals(UHCMatchState.DEATHMATCH)) {
 			startDeathmatch();
 		} else if (state.equals(UHCMatchState.END)) {
-			plugin.getLogger().info(playerlist.toString());
 			for (UHCPlayer p : playerlist.values()) {
-				if (p.isAlive()) winnerlist.add(p);
+				if (p.isAlive())
+					winnerlist.add(p);
 			}
 			matchEndTimer.run(winnerlist);
 		}
 	}
 
 	/**
-	 * Upon player join, registers the player if they do not exist in the
-	 * match list. If the player does exist, this reconfigures their team
-	 * colors, which are not saved across a log in/out.
-	 * @param e the PlayerJoinEvent
+	 * Upon player join, registers the player if they do not exist in the match
+	 * list. If the player does exist, this reconfigures their team colors, which
+	 * are not saved across a log in/out.
+	 * 
+	 * @param e
+	 *            the PlayerJoinEvent
 	 */
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e) {
-		UUID player = e.getPlayer().getUniqueId();
+		Player player = e.getPlayer();
 		if (playerExists(player)) {
 			UHCPlayer p = getPlayer(player);
-			Player pl = Bukkit.getPlayer(player);
-			pl.setPlayerListName(p.getColor() + p.getName());
-			pl.setDisplayName(p.getColor() + p.getName() + ChatColor.WHITE);
+			player.setPlayerListName(p.getColor() + p.getName());
+			player.setDisplayName(p.getColor() + p.getName() + ChatColor.WHITE);
 		} else {
-			Bukkit.getPlayer(player).setGameMode(GameMode.SURVIVAL);
-			registerPlayer(player);
+			UUID p = player.getUniqueId();
+			player.setGameMode(GameMode.SURVIVAL);
+			playerlist.put(p, new UHCPlayer(p));
 		}
 	}
-	
+
 	/**
 	 * Handles a player changing their team
-	 * @param e the PlayerChangeTeamEvent
+	 * 
+	 * @param e
+	 *            the PlayerChangeTeamEvent
 	 */
 	@EventHandler
 	public void onPlayerChangeTeam(PlayerChangeTeamEvent e) {
@@ -151,7 +156,6 @@ public class MatchHandler implements Listener {
 
 		if (e.getOldTeam() != null) {
 			e.getOldTeam().remove(p);
-
 			if (e.getOldTeam().getName().equalsIgnoreCase("SPECTATOR")) {
 				p.bukkitPlayer().setGameMode(GameMode.SURVIVAL);
 			}
@@ -159,11 +163,13 @@ public class MatchHandler implements Listener {
 		p.bukkitPlayer().sendMessage("You joined the " + newteam.getDisplayName() + " team!");
 		playSound(UHCSound.JOINTEAM.sound(), p.bukkitPlayer());
 	}
-	
+
 	/**
-	 * Handles a player's death by announcing it, setting their Alive boolean to false,
-	 * and switching their gamemode to SPECTATOR
-	 * @param e the PlayerDeathEvent
+	 * Handles a player's death by announcing it, setting their Alive boolean to
+	 * false, and switching their gamemode to SPECTATOR
+	 * 
+	 * @param e
+	 *            the PlayerDeathEvent
 	 */
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent e) {
@@ -186,7 +192,9 @@ public class MatchHandler implements Listener {
 
 	/**
 	 * Freezes a player's position if the frozen state is currently true
-	 * @param e	the PlayerMoveEvent
+	 * 
+	 * @param e
+	 *            the PlayerMoveEvent
 	 */
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent e) {
@@ -197,21 +205,11 @@ public class MatchHandler implements Listener {
 		}
 	}
 
-	/**
-	 * Stops damage-taking if a player is involved and PvP is off
-	 * @param e the EntityDamageByEntityEvent
-	 */
-	@EventHandler
-	public void attemptPVP(EntityDamageByEntityEvent e) {
-		if (e.getEntity() instanceof Player || e.getDamager() instanceof Player) {
-			if (!pvpenabled) e.setCancelled(true);
-		}
-	}
-
 	// ------------------------------------------------------------------------
 
 	/**
 	 * Gets the current match state.
+	 * 
 	 * @return the current UHCMatchState
 	 */
 	public UHCMatchState getMatchState() {
@@ -267,6 +265,10 @@ public class MatchHandler implements Listener {
 	public boolean playerExists(UUID player) {
 		return playerlist.containsKey(player);
 	}
+	
+	public boolean playerExists(Player player) {
+		return playerExists(player.getUniqueId());
+	}
 
 	public UHCPlayer getPlayer(UUID player) {
 		return playerlist.get(player);
@@ -275,6 +277,10 @@ public class MatchHandler implements Listener {
 	public UHCPlayer getPlayer(String player) {
 		return playerlist.values().stream().filter(p -> p.getName().equalsIgnoreCase(player))
 				.collect(Collectors.toList()).get(0);
+	}
+	
+	public UHCPlayer getPlayer(Player player) {
+		return getPlayer(player.getUniqueId());
 	}
 
 	public void freezePlayers(boolean state) {
@@ -366,13 +372,13 @@ public class MatchHandler implements Listener {
 		plugin.getServer().dispatchCommand(console, spreadplayerscmd);
 
 		Bukkit.getOnlinePlayers().forEach(player -> player.sendTitle(ChatColor.RED + "Deathmatch!", null, 15, 60, 15));
-		
+
 		freezePlayers(false);
 	}
 
 	public void startUHC() {
 		timeend = System.currentTimeMillis() + plugin.CONFIG.MATCH_DURATION * 60 * 1000;
-		
+
 		String target = "@a[x=" + plugin.CONFIG.SPAWN_X + ",y=" + plugin.CONFIG.SPAWN_Y + ",z=" + plugin.CONFIG.SPAWN_Z
 				+ ",r=" + plugin.CONFIG.SPAWN_BARRIER_RADIUS + "]";
 
@@ -386,26 +392,28 @@ public class MatchHandler implements Listener {
 		final String spreadplayerscmd = spreadplayers + target;
 
 		for (UHCPlayer p : playerlist.values()) {
-			p.bukkitPlayer().setHealth(20);
-			p.bukkitPlayer().setSaturation(20);
+			p.bukkitPlayer().addPotionEffect(new PotionEffect(PotionEffectType.HEAL, 20*1, 100, true));
+			p.bukkitPlayer().addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 20*1, 100, true));
+			p.bukkitPlayer().addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20*60, 100, true));
 		}
-		
-		plugin.CONFIG.WORLD.setTime(6000);
+
+		plugin.CONFIG.WORLD.setTime(0);
 		plugin.CONFIG.WORLD.setStorm(false);
 		plugin.CONFIG.WORLD.setDifficulty(Difficulty.NORMAL);
 		plugin.CONFIG.WORLD.setPVP(true);
 
 		plugin.getServer().dispatchCommand(console, spreadplayerscmd);
 		UHCSound.MATCHSTART.playSound();
-		barrier.drawBarrier(false);
+		plugin.barrier.drawBarrier(false);
 		this.scoreboardTimer.run();
 		plugin.scoreboardHandler.showSidebar();
 	}
-	
+
 	public int numberOfAlivePlayers() {
 		int i = 0;
 		for (UHCPlayer p : playerlist.values()) {
-			if (p.isAlive()) i++;
+			if (p.isAlive())
+				i++;
 		}
 		return i;
 	}

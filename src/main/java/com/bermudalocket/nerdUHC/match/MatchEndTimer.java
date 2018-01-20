@@ -64,7 +64,7 @@ public class MatchEndTimer {
 		@Override
 		public void run() {
 			players = Bukkit.getOnlinePlayers();
-			players.forEach(p -> p.sendTitle(currentwinner.getColor() + currentwinner.getName(), null, 10, winnerdisplaytime, 10));
+			players.forEach(p -> p.sendTitle(currentwinner.getName(), null, 10, winnerdisplaytime, 10));
 		}
 	};
 

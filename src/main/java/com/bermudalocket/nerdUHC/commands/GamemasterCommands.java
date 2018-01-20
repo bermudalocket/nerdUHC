@@ -4,11 +4,13 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.events.MatchStateChangeEvent;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
+import com.bermudalocket.nerdUHC.modules.UHCSound;
 
 public class GamemasterCommands implements CommandExecutor {
 
@@ -19,6 +21,8 @@ public class GamemasterCommands implements CommandExecutor {
 	static final String LIB_CONF_RELOADED = ChatColor.GRAY + "Config reloaded!";
 	static final String LIB_FROZEN = ChatColor.GRAY + "Players have been " + ChatColor.AQUA + "frozen" + ChatColor.GRAY + ".";
 	static final String LIB_UNFROZEN = ChatColor.GRAY + "Players have been unfrozen.";
+	static final String LIB_BARRIER_DRAWN = ChatColor.GRAY + "Barrier drawn!";
+	static final String LIB_BARRIER_REM = ChatColor.GRAY + "Barrier removed!";
 	
 	static final String LIB_ERR_INVALID = ChatColor.RED + "Invalid game mode!";
 	static final String LIB_ERR_UHC_RUNNING = ChatColor.RED + "A UHC is already in progress!";
@@ -38,8 +42,10 @@ public class GamemasterCommands implements CommandExecutor {
 			Boolean frozen = plugin.match.arePlayersFrozen();
 			if (frozen) {
 				plugin.call(new MatchStateChangeEvent(UHCMatchState.LAST));
+				sender.sendMessage(LIB_UNFROZEN);
 			} else {
 				plugin.call(new MatchStateChangeEvent(UHCMatchState.FROZEN));
+				sender.sendMessage(LIB_FROZEN);
 			}
 			plugin.match.freezePlayers(!frozen);
 			sender.sendMessage((frozen) ? LIB_UNFROZEN : LIB_FROZEN);
@@ -48,9 +54,10 @@ public class GamemasterCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("barrier")) {
 			if (args.length == 1 && args[0].equalsIgnoreCase("on")) {
 				plugin.barrier.drawBarrier(true);
+				sender.sendMessage(LIB_BARRIER_DRAWN);
 			} else if (args.length == 1 && args[0].equalsIgnoreCase("off")) {
-				plugin.getLogger().info("barrier turning off");
 				plugin.barrier.drawBarrier(false);
+				sender.sendMessage(LIB_BARRIER_REM);
 			}
 			return true;
 		}
@@ -65,6 +72,7 @@ public class GamemasterCommands implements CommandExecutor {
 						sender.sendMessage(LIB_UPDATED);
 					} else {
 						sender.sendMessage(LIB_ERR_INVALID);
+						UHCSound.OOPS.playSound((Player) sender);
 					}
 					return true;
 				}
@@ -78,6 +86,7 @@ public class GamemasterCommands implements CommandExecutor {
 						plugin.call(new MatchStateChangeEvent(UHCMatchState.INPROGRESS));
 					} else {
 						sender.sendMessage(LIB_ERR_UHC_RUNNING);
+						UHCSound.OOPS.playSound((Player) sender);
 					}
 					return true;
 				}
@@ -91,6 +100,7 @@ public class GamemasterCommands implements CommandExecutor {
 						plugin.call(new MatchStateChangeEvent(UHCMatchState.END));
 					} else {
 						sender.sendMessage(LIB_ERR_UHC_RUNNING);
+						UHCSound.OOPS.playSound((Player) sender);
 					}
 					return true;
 				}

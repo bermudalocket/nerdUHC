@@ -29,9 +29,9 @@ commands:
     usage: /join [team]
     permission: nerduhc.basic
     permission-message: y u do that
-  leave:
-    description: Join a team.
-    usage: /join [team]
+  t:
+    description: Team chat
+    usage: /t [msg]
     permission: nerduhc.basic
     permission-message: y u do that
   teamlist:

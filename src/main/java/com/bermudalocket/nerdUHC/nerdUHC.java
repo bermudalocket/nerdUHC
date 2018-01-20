@@ -33,6 +33,7 @@ public class NerdUHC extends JavaPlugin {
 
 		match = new MatchHandler(this);
 		scoreboardHandler = new ScoreboardHandler(this, match);
+		barrier = new Barrier(this);
 
 		GamemasterCommands gamemastercmd = new GamemasterCommands(this);
 		PlayerCommands playercmd = new PlayerCommands(this);

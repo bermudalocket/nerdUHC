@@ -33,7 +33,7 @@ public class PregameListener implements Listener {
 			
 		UUID player = e.getPlayer().getUniqueId();
 		Player p = Bukkit.getPlayer(player);
-		UHCGameMode mode = plugin.match.getGameMode();
+		UHCGameMode mode = plugin.CONFIG.UHC_GAME_MODE;
 		
 		if (!plugin.match.getMatchState().equals(UHCMatchState.PREGAME)) return;
 		
