@@ -5,7 +5,7 @@ import org.bukkit.entity.Player;
 
 public enum UHCLibrary {
 	
-	// Gamemaster Commands
+	// Gamemaster Command Messages
 	LIB_UPDATED("Game mode updated!"),
 	LIB_UHC_STOPPED("Stopping the UHC..."),
 	LIB_CONF_RELOADED("Config reloaded!" + ChatColor.GRAY + " This will take effect in the next match."),
@@ -14,7 +14,7 @@ public enum UHCLibrary {
 	LIB_BARRIER_DRAWN("Barrier drawn!"),
 	LIB_BARRIER_REM("Barrier removed!"),
 	
-	// Gamemaster Errors
+	// Gamemaster Command Errors
 	LIB_ERR_INVALID("Invalid game mode!"),
 	LIB_ERR_UHC_RUNNING("A UHC is already in progress!"),
 	LIB_ERR_NO_UHC_RUNNING("A UHC is not currently running!"),
@@ -27,7 +27,10 @@ public enum UHCLibrary {
 	LIB_TEAM_LIST("To view a list of teams, run " + ChatColor.WHITE + "/teamlist"),
 	LIB_TEAM_JOIN("To join a team, run " + ChatColor.WHITE + "/join [team]"),
 	LIB_TEAM_CHAT("Chat with your team by using " + ChatColor.WHITE + "/t [msg]"),
-	LIB_IN_PROGRESS("A round is already in progress, so you will have to spectate.");
+	LIB_IN_PROGRESS("A round is already in progress, so you will have to spectate."),
+	
+	// Player Command Errors
+	LIB_ERR_NOTEAMFORCHAT("You can't chat with your team if you're not on a team!");
 	
 
 	private String s;

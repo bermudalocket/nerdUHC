@@ -1,5 +1,6 @@
 package com.bermudalocket.nerdUHC.modules;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -9,6 +10,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
@@ -40,7 +42,7 @@ public class UHCMatch {
 	private boolean active;
 	
 	private CombatLogger combatLogger;
-	private UHCBarrier barrier;
+	private UHCUtils util;
 	
 	private PregameListener pregameListener;
 	private GameListener gameListener;
@@ -58,9 +60,6 @@ public class UHCMatch {
 		
 		players = new HashSet<UUID>();
 		if (previousmatch != null) {
-			for (UUID uuid : previousmatch.getPlayers()) {
-				if (Bukkit.getPlayer(uuid).isOnline()) players.add(uuid);
-			}
 			this.active = false;
 		} else {
 			this.active = true;
@@ -71,7 +70,7 @@ public class UHCMatch {
 		this.frozen = false;
 		
 		this.combatLogger = new CombatLogger(plugin, this);
-		this.barrier = new UHCBarrier(plugin, this);
+		this.util = new UHCUtils(plugin, this);
 		
 		pregameListener = new PregameListener(plugin);
 		plugin.getServer().getPluginManager().registerEvents(pregameListener, plugin);
@@ -85,8 +84,8 @@ public class UHCMatch {
 		return combatLogger;
 	}
 	
-	public UHCBarrier getBarrier() {
-		return barrier;
+	public UHCUtils getBarrier() {
+		return util;
 	}
 	
 	// Mode and state
@@ -149,6 +148,7 @@ public class UHCMatch {
 
 	public void addPlayer(Player p) {
 		players.add(p.getUniqueId());
+		plugin.getLogger().info("Added " + p.getName() + " " + p.getUniqueId());
 	}
 	
 	public boolean isPlayerInMatch(UUID p) {
@@ -165,6 +165,7 @@ public class UHCMatch {
 	}
 	
 	public Set<UUID> getPlayers() {
+		plugin.getLogger().info("getPlayers: " + players);
 		return players;
 	}
 
@@ -177,13 +178,15 @@ public class UHCMatch {
 		return i;
 	}
 	
+	// Deprecated method: Team#getPlayers
 	@SuppressWarnings("deprecation")
 	public Team getLastTeamStanding() {
 		Team last = null;
 		for (Team t : scoreboard.getTeams()) {
 			int i = 0;
-			for (String player : t.getEntries()) {
-				Player p = Bukkit.getPlayer(player);
+			for (OfflinePlayer player : t.getPlayers()) {
+				if (!player.isOnline()) continue;
+				Player p = (Player) player;
 				if (!p.isDead() && !p.getGameMode().equals(GameMode.SPECTATOR)) i++;
 			}
 			if (i > 0) {
@@ -195,6 +198,8 @@ public class UHCMatch {
 		}
 		return null;
 	}
+	
+	// Starters and stoppers for different phases of the match
 	
 	public void beginMatchStartCountdown() {
 		this.state = UHCMatchState.TRANSITION;
@@ -209,7 +214,10 @@ public class UHCMatch {
 		this.state = UHCMatchState.INPROGRESS;
 		this.duration = System.currentTimeMillis() + plugin.CONFIG.MATCH_DURATION*60000;
 		matchStartCountdownTimer = null;
+		
+		plugin.scoreboardHandler.cleanTeams(this);
 
+		/*
 		String spreadplayers = "spreadplayers " + getSpawn().getX();
 		spreadplayers += " " + getSpawn().getZ();
 		spreadplayers += " " + plugin.CONFIG.SPREAD_DIST_BTWN_PLAYERS;
@@ -223,36 +231,48 @@ public class UHCMatch {
 	
 		for (UUID player : players) {
 			Player p = Bukkit.getPlayer(player);
-			if (getTeamForPlayer(p) != null) spreadplayers += p.getName() + " ";
+			if (getTeamForPlayer(p) != null) {
+				spreadplayers += p.getName() + " ";
+			} else {
+				p.setGameMode(GameMode.SPECTATOR);
+			}
 		}
+		*/
 
+		ArrayList<Player> spreadlist = new ArrayList<Player>();
 		for (UUID player : players) {
 			Player p = Bukkit.getPlayer(player);
 			p.addPotionEffect(new PotionEffect(PotionEffectType.HEAL, 20 * 1, 100, true));
 			p.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 20 * 1, 100, true));
 			p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20 * 60, 100, true));
+			
+			if (getTeamForPlayer(p) != null) {
+				spreadlist.add(p);
+			} else {
+				p.setGameMode(GameMode.SPECTATOR);
+			}
 		}
+		util.spread(spreadlist);
 
 		plugin.CONFIG.WORLD.setTime(0);
 		plugin.CONFIG.WORLD.setStorm(false);
 		plugin.CONFIG.WORLD.setDifficulty(Difficulty.HARD);
 		plugin.CONFIG.WORLD.setPVP(true);
 
-		plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers);
+		//plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers);
 		
 		UHCSound.MATCHSTART.playSound();
-		barrier.drawBarrier(false);
+		util.drawBarrier(false);
 		
 		scoreboardTimer = new ScoreboardTimer(this);
 		scoreboardTimer.runTaskTimer(plugin, 0, 20);
-		
-		//getScoreboard().resetScores("Teams:");
+
 		plugin.scoreboardHandler.showKills(this);
 	}
 	
 	public void beginMatchEndTransition() {
 		this.state = UHCMatchState.TRANSITION;
-		scoreboardTimer = null;
+		scoreboardTimer.cancel();
 		if (numberOfAlivePlayers() > 1) {
 			if (plugin.CONFIG.DO_DEATHMATCH) {
 				beginDeathmatch();
@@ -284,7 +304,7 @@ public class UHCMatch {
 		}
 
 		plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers + target);
-
+		scoreboard.getObjective("main").setDisplayName(ChatColor.BOLD + "" + ChatColor.RED + "Deathmatch");
 		Bukkit.getOnlinePlayers().forEach(player -> player.sendTitle(ChatColor.RED + "Deathmatch!", null, 15, 60, 15));
 	}
 	
@@ -304,15 +324,23 @@ public class UHCMatch {
 	
 	public void next() {
 		plugin.matchHandler.nextMatch();
-		for (Player p : Bukkit.getOnlinePlayers()) {
-			p.teleport(plugin.matchHandler.getNextMatchByPosition(this).getSpawn());
-			p.getInventory().clear();
-			p.setExp(0);
-			p.setGameMode(GameMode.SURVIVAL);
+		for (UUID player : players) {
+			Player p = Bukkit.getPlayer(player);
+			if (p.isOnline()) {
+				plugin.matchHandler.getNextMatchByPosition(this).addPlayer(p);
+				p.teleport(plugin.matchHandler.getNextMatchByPosition(this).getSpawn());
+				p.setScoreboard(plugin.matchHandler.getNextMatchByPosition(this).getScoreboard());
+				p.getInventory().clear();
+				p.setExp(0);
+				p.setGameMode(GameMode.SURVIVAL);
+			}
+			players.remove(player);
 		}
 		HandlerList.unregisterAll(gameListener);
 		this.active = false;
 		plugin.matchHandler.rotate(this);
 	}
+	
+	
 	
 }

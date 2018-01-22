@@ -40,6 +40,7 @@ public class CombatLogger {
 		Long timenow = System.currentTimeMillis();
 		tagmap.put(p.getUniqueId(), timenow);
 		
+		plugin.getLogger().info("tagging " + p.getName());
 	}
 
 	public boolean isDoppel(Entity e) {
@@ -78,10 +79,15 @@ public class CombatLogger {
 		return nodroplist.contains(p.getUniqueId());
 	}
 	
+	public void removeFromNoDropList(Player p) {
+		nodroplist.remove(p.getUniqueId());
+	}
+	
 	public void addToDeathQueue(Player p) {
 		deathqueue.add(p.getUniqueId());
+		nodroplist.add(p.getUniqueId());
 	}
-
+	
 	public void spawnDoppel(Player p, Location loc) {
 		if (p.isDead() || p.getGameMode() == GameMode.SPECTATOR) return;
 		
@@ -112,15 +118,6 @@ public class CombatLogger {
 			d.remove();
 		}
 		doppellist.remove(p.getUniqueId());
-	}
-
-	public void clearDoppels() {
-		for (UUID d : doppellist.values()) {
-			for (Entity e : plugin.CONFIG.WORLD.getEntities()) {
-				if (e.getUniqueId() == d) e.remove();
-			}
-		}
-		doppellist.clear();
 	}
 
 }

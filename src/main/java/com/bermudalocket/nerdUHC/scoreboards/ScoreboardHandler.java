@@ -30,6 +30,7 @@ public class ScoreboardHandler {
 
 	private ScoreboardManager manager;
 	private HashMap<UHCMatch, Scoreboard> scoreboards = new HashMap<UHCMatch, Scoreboard>();
+	private HashMap<Player, Integer> playerkills = new HashMap<Player, Integer>();
 
 	public ScoreboardHandler(NerdUHC plugin) {
 		this.plugin = plugin;
@@ -37,25 +38,18 @@ public class ScoreboardHandler {
 	}
 
 	public void createScoreboard(UHCMatch match) {
-		Scoreboard board = configuredScoreboard(match);
+		Scoreboard board = manager.getNewScoreboard();
+
+		board.registerNewObjective("HEALTH", Criterias.HEALTH).setDisplaySlot(DisplaySlot.PLAYER_LIST);
+		board.registerNewObjective("HEALTHBELOWNAME", Criterias.HEALTH).setDisplaySlot(DisplaySlot.BELOW_NAME);
+		board.getObjective("HEALTHBELOWNAME").setDisplayName(ChatColor.RED + "❤");
+		board.registerNewObjective("main", "dummy").setDisplayName(ChatColor.BOLD + "NerdUHC");
+		
 		match.setScoreboard(board);
 		scoreboards.put(match, board);
 		
 		createTeams(match);
 		setBoardForPlayers(match);
-	}
-
-	public Scoreboard configuredScoreboard(UHCMatch match) {
-		Scoreboard board = manager.getNewScoreboard();
-
-		board.registerNewObjective("DEATHS", Criterias.DEATHS);
-		board.registerNewObjective("KILLS", Criterias.TOTAL_KILLS);
-		board.registerNewObjective("HEALTH", Criterias.HEALTH).setDisplaySlot(DisplaySlot.PLAYER_LIST);
-		board.registerNewObjective("HEALTHBELOWNAME", Criterias.HEALTH).setDisplaySlot(DisplaySlot.BELOW_NAME);
-		board.getObjective("HEALTHBELOWNAME").setDisplayName(ChatColor.RED + "❤");
-		board.registerNewObjective("main", "dummy").setDisplayName(ChatColor.BOLD + "NerdUHC");
-
-		return board;
 	}
 
 	public void setBoardForPlayers(UHCMatch match) {
@@ -94,6 +88,7 @@ public class ScoreboardHandler {
 	}
 
 	// DURING GAME ONLY
+	// Deprecated method: Team#getPlayers
 	@SuppressWarnings("deprecation")
 	public void showKills(UHCMatch match) {
 		
@@ -106,9 +101,12 @@ public class ScoreboardHandler {
 		lines.add("=-=-=-=-=-=-=-=");
 		lines.add(ChatColor.RED + "" + ChatColor.ITALIC + "Top Killers:");
 		
-		HashMap<Player, Integer> playerkills = new HashMap<Player, Integer>();
+		playerkills.clear();
 		for (UUID uuid : match.getPlayers()) {
 			Player p = Bukkit.getPlayer(uuid);
+			
+			if (p.getGameMode() == GameMode.SPECTATOR) continue;
+			
 			int kills = p.getStatistic(Statistic.PLAYER_KILLS);
 			playerkills.put(p, kills);
 		}
@@ -121,7 +119,7 @@ public class ScoreboardHandler {
 			String name = entry.getKey().getDisplayName() + ChatColor.WHITE;
 			if (entry.getKey().isDead()) {
 				name = ChatColor.STRIKETHROUGH + name;
-			}
+			} 
 			
 			lines.add(name + ": " + entry.getValue());
 			i++;
@@ -153,14 +151,6 @@ public class ScoreboardHandler {
 		Bukkit.getOnlinePlayers().forEach(player -> player.setHealth(player.getHealth()));
 	}
 
-	public void hideSidebar(UHCMatch match) {
-		match.getScoreboard().getObjective(DisplaySlot.SIDEBAR).setDisplaySlot(null);
-	}
-
-	public void showSidebar(UHCMatch match) {
-		match.getScoreboard().getObjective("main").setDisplaySlot(DisplaySlot.SIDEBAR);
-	}
-
 	public void createTeams(UHCMatch match) {
 		for (Map<?, ?> map : plugin.CONFIG.getRawTeamList()) {
 			String name = map.get("name").toString().toUpperCase();
@@ -172,9 +162,14 @@ public class ScoreboardHandler {
 			t.setDisplayName(color + name + ChatColor.WHITE);
 		}
 	}
-
-	public void startDeathmatch(UHCMatch match) {
-		match.getScoreboard().getObjective("main").setDisplayName(ChatColor.BOLD + "" + ChatColor.RED + "Deathmatch");
+	
+	public void cleanTeams(UHCMatch match) {
+		Scoreboard board = scoreboards.get(match);
+		for (Team t : board.getTeams()) {
+			if (t.getSize() == 0) {
+				t.unregister();
+			}
+		}
 	}
 
 }

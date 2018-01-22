@@ -47,8 +47,6 @@ public class PersistentListener implements Listener {
 			if (currentmatch.getMatchState() == UHCMatchState.PREGAME) {
 				currentmatch.addPlayer(p);
 				
-				plugin.getLogger().info("adding to " + currentmatch.toString());
-				
 				if (mode == UHCGameMode.SOLO) {
 					UHCLibrary.LIB_SOLO_JOIN.get(p);
 					UHCLibrary.LIB_SPEC.get(p);

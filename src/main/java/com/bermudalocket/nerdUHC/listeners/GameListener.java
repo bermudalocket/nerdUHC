@@ -161,16 +161,16 @@ public class GameListener implements Listener {
 		if (match.getCombatLogger().isDoppel(e.getEntity())) {
 			Player p = match.getCombatLogger().getPlayerFromDoppel(e.getEntity());
 			
-			e.getDrops().clear();
+			match.getCombatLogger().addToDeathQueue(p);
 			
+			e.getDrops().clear();
+			e.setDroppedExp(Math.round(p.getExp()));
 			for (ItemStack i : p.getInventory().getContents()) {
 				e.getDrops().add(i);
 			}
 			for (ItemStack i : p.getInventory().getArmorContents()) {
 				e.getDrops().add(i);
 			}
-			
-			e.setDroppedExp(Math.round(p.getExp()));
 		}
 	}
 

@@ -11,6 +11,7 @@ import org.bukkit.scoreboard.Team;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.UHCLibrary;
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 import com.bermudalocket.nerdUHC.modules.UHCSound;
@@ -25,13 +26,11 @@ public class PlayerCommands implements CommandExecutor {
 	
 	@SuppressWarnings("deprecation")
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		
 		if (!(sender instanceof Player)) return false;
 		
 		UHCMatch match = plugin.matchHandler.getMatchByPlayer((Player) sender);
-		if (match == null) {
-			plugin.getLogger().info("match is null");
-			return true;
-		}
+		if (match == null) return true;
 		
 		Player p = (Player) sender;
 		
@@ -46,6 +45,10 @@ public class PlayerCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("t")) {
 			if (match.isPlayerInMatch(p.getUniqueId())) {
 				Team t = match.getScoreboard().getEntryTeam(p.getName());
+				if (t == null) {
+					UHCLibrary.LIB_ERR_NOTEAMFORCHAT.err(p);
+					return true;
+				}
 				StringBuilder msg = new StringBuilder();
 				msg.append("[");
 				msg.append(t.getDisplayName());
@@ -58,6 +61,8 @@ public class PlayerCommands implements CommandExecutor {
 				for (String entry : t.getEntries()) {
 					Bukkit.getPlayer(entry).sendMessage(msg.toString());
 				}
+			} else {
+				plugin.getLogger().info("nope");
 			}
 			return true;
 		}
