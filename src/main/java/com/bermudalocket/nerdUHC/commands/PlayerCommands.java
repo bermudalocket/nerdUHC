@@ -7,14 +7,13 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Team;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.events.PlayerChangeTeamEvent;
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
+import com.bermudalocket.nerdUHC.modules.UHCMatch;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
-import com.bermudalocket.nerdUHC.modules.UHCPlayer;
 import com.bermudalocket.nerdUHC.modules.UHCSound;
-import com.bermudalocket.nerdUHC.modules.UHCTeam;
 
 public class PlayerCommands implements CommandExecutor {
 
@@ -22,28 +21,31 @@ public class PlayerCommands implements CommandExecutor {
 	
 	public PlayerCommands(NerdUHC plugin) {
 		this.plugin = plugin;
-		plugin.getCommand("join").setExecutor(this);
-		plugin.getCommand("teamlist").setExecutor(this);
-		plugin.getCommand("t").setExecutor(this);
-		plugin.getCommand("fixme").setExecutor(this);
 	}
 	
+	@SuppressWarnings("deprecation")
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+		if (!(sender instanceof Player)) return false;
 		
-		UHCPlayer p = plugin.match.getPlayer(((Player) sender).getUniqueId());
+		UHCMatch match = plugin.matchHandler.getMatchByPlayer((Player) sender);
+		if (match == null) {
+			plugin.getLogger().info("match is null");
+			return true;
+		}
+		
+		Player p = (Player) sender;
 		
 		if (cmd.getName().equalsIgnoreCase("fixme")) {
-			Player player = (Player) sender;
-			if (player.getGameMode() == GameMode.SPECTATOR) {
-				player.teleport(plugin.CONFIG.SPAWNFIXME);
-				player.setFlying(true);
+			if (p.getGameMode() == GameMode.SPECTATOR) {
+				p.teleport(plugin.CONFIG.SPAWNFIXME);
+				p.setFlying(true);
 			}
 			return true;
 		}
 		
 		if (cmd.getName().equalsIgnoreCase("t")) {
-			if (p.hasTeam()) {
-				UHCTeam t = p.getTeam();
+			if (match.isPlayerInMatch(p.getUniqueId())) {
+				Team t = match.getScoreboard().getEntryTeam(p.getName());
 				StringBuilder msg = new StringBuilder();
 				msg.append("[");
 				msg.append(t.getDisplayName());
@@ -53,27 +55,26 @@ public class PlayerCommands implements CommandExecutor {
 				for (int i = 0; i < args.length; i++) {
 					msg.append(args[i] + " ");
 				}
-				for (UHCPlayer teammate : t.getPlayers()) {
-					teammate.bukkitPlayer().sendMessage(msg.toString());
+				for (String entry : t.getEntries()) {
+					Bukkit.getPlayer(entry).sendMessage(msg.toString());
 				}
 			}
 			return true;
 		}
 		
 		if (cmd.getName().equalsIgnoreCase("join")) {
-			if (plugin.match.getGameMode().equals(UHCGameMode.SOLO)) {
-				if (p.getTeam() == null) {
-					PlayerChangeTeamEvent e = new PlayerChangeTeamEvent(p, plugin.match.getTeam("ALIVE"));
-					Bukkit.getServer().getPluginManager().callEvent(e);
-				} else {
-					sender.sendMessage(ChatColor.RED + "You're already registered!");
-					UHCSound.OOPS.playSound(p);
-				}
-			} else if (plugin.match.getGameMode().equals(UHCGameMode.TEAM)) {
+			if (match.getGameMode() == UHCGameMode.SOLO) {
+				//
+			} else if (match.getGameMode() == UHCGameMode.TEAM) {
 				if (args.length == 1) {
-					String team = args[0].toString();
-					if (teamIsJoinable(team)) {
-						plugin.call(new PlayerChangeTeamEvent(p, plugin.match.getTeam(team)));
+					String team = args[0].toString().toUpperCase();
+					if (teamIsJoinable(match, team)) {
+						Team t = match.getScoreboard().getTeam(team);
+						t.addEntry(p.getName());
+						sender.sendMessage("You joined the " + t.getDisplayName() + " team!");
+						p.setDisplayName(t.getColor() + p.getName());
+						plugin.scoreboardHandler.showTeamCountCapacity(match);
+						plugin.scoreboardHandler.forceHealthUpdates();
 					} else {
 						sender.sendMessage(ChatColor.RED + "That team is either full or doesn't exist!");
 						UHCSound.OOPS.playSound(p);
@@ -87,9 +88,9 @@ public class PlayerCommands implements CommandExecutor {
 		}
 		
 		if (cmd.getName().equalsIgnoreCase("teamlist")) {
-			if (plugin.match.allowTeams()) {
-				plugin.match.getTeams().forEach(t -> {
-					sender.sendMessage(t.getColor() + t.getName() + ChatColor.WHITE + "(" + t.getSize() + "/" + t.getMaxSize() + ")");
+			if (match.getGameMode() == UHCGameMode.TEAM) {
+				match.getScoreboard().getTeams().forEach(t -> {
+					sender.sendMessage(t.getDisplayName() + ChatColor.WHITE + "(" + t.getSize() + "/" + plugin.CONFIG.MAX_TEAM_SIZE + ")");
 				});
 			}
 			return true;
@@ -98,20 +99,16 @@ public class PlayerCommands implements CommandExecutor {
 		return false;
 	}
 	
-	public boolean teamIsJoinable(String team) {
-		if (plugin.match.getMatchState().equals(UHCMatchState.PREGAME)) {
-			if (plugin.match.teamExists(team)) {
-				if (!plugin.match.getTeam(team).isFull()) {
+	public boolean teamIsJoinable(UHCMatch match, String team) {
+		if (match.getMatchState() == UHCMatchState.PREGAME) {
+			try {
+				Team t = match.getScoreboard().getTeam(team);
+				if (t.getSize() < plugin.CONFIG.MAX_TEAM_SIZE) {
 					return true;
 				}
+			} catch (Exception f) {
+				return false;
 			}
-		}
-		return false;
-	}
-	
-	public boolean teamIsLeaveable(UHCPlayer p) {
-		if (p.hasTeam() && p.isAlive()) { 
-			return true;
 		}
 		return false;
 	}

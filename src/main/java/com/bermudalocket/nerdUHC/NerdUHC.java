@@ -1,25 +1,24 @@
 package com.bermudalocket.nerdUHC;
 
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.event.Event;
-import org.bukkit.event.Listener;
 
-import com.bermudalocket.nerdUHC.listeners.PregameListener;
 import com.bermudalocket.nerdUHC.match.MatchHandler;
-import com.bermudalocket.nerdUHC.modules.Barrier;
 import com.bermudalocket.nerdUHC.scoreboards.ScoreboardHandler;
 import com.bermudalocket.nerdUHC.commands.GamemasterCommands;
 import com.bermudalocket.nerdUHC.commands.PlayerCommands;
+import com.bermudalocket.nerdUHC.listeners.PersistentListener;
 
 public class NerdUHC extends JavaPlugin {
 
 	public ScoreboardHandler scoreboardHandler;
 	public Configuration CONFIG;
-	public CombatLogger combatLogger = new CombatLogger(this);
-	public MatchHandler match;
-	public Barrier barrier;
+	public MatchHandler matchHandler;
+	
+	private PersistentListener persistentListener;
+	
+	private GamemasterCommands gamemasterCommandHandler;
+	private PlayerCommands playerCommandHandler;
 
-	@SuppressWarnings("unused")
 	@Override
 	public void onEnable() {
 
@@ -27,27 +26,26 @@ public class NerdUHC extends JavaPlugin {
 		CONFIG.reload();
 
 		scoreboardHandler = new ScoreboardHandler(this);
-		match = new MatchHandler(this);
-		barrier = new Barrier(this);
-
-		GamemasterCommands gamemastercmd = new GamemasterCommands(this);
-		PlayerCommands playercmd = new PlayerCommands(this);
+		matchHandler = new MatchHandler(this);
 		
-		Listener PregameListener = new PregameListener(this);
+		persistentListener = new PersistentListener(this);
+		getServer().getPluginManager().registerEvents(persistentListener, this);
 
-		getServer().getPluginManager().registerEvents(PregameListener, this);
-		getServer().getPluginManager().registerEvents(match, this);
-		getServer().getPluginManager().registerEvents(scoreboardHandler, this);
-		getServer().getPluginManager().registerEvents(combatLogger, this);
+		this.gamemasterCommandHandler = new GamemasterCommands(this);
+		this.getCommand("barrier").setExecutor(gamemasterCommandHandler);
+		this.getCommand("uhc").setExecutor(gamemasterCommandHandler);
+		this.getCommand("freeze").setExecutor(gamemasterCommandHandler);
+		
+		this.playerCommandHandler = new PlayerCommands(this);
+		this.getCommand("join").setExecutor(playerCommandHandler);
+		this.getCommand("t").setExecutor(playerCommandHandler);
+		this.getCommand("teamlist").setExecutor(playerCommandHandler);
+		this.getCommand("fixme").setExecutor(playerCommandHandler);
 	}
 
 	@Override
 	public void onDisable() {
-		scoreboardHandler.configureNewScoreboard(true);
-	}
-
-	public void call(Event e) {
-		getServer().getPluginManager().callEvent(e);
+		
 	}
 	
 }

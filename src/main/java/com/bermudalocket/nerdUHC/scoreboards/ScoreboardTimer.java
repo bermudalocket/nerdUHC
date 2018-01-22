@@ -6,70 +6,45 @@ import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.modules.UHCMatchState;
+import com.bermudalocket.nerdUHC.modules.UHCMatch;
 
-public class ScoreboardTimer  {
+public class ScoreboardTimer extends BukkitRunnable {
+	
+	private UHCMatch match;
+	String timedisplay;
+	ChatColor color = ChatColor.WHITE;
+	long nexttime;
+	long sec;
 
-	private NerdUHC plugin;
-	private boolean cancelled;
-
-	public ScoreboardTimer(NerdUHC plugin) {
-		this.plugin = plugin;
+	public ScoreboardTimer(UHCMatch match) {
+		this.match = match;
 	}
 
+	@Override
 	public void run() {
-		this.cancelled = false;
-		MatchTimer.runTaskTimer(plugin, 0, 20);
-	}
+		
+		if (match.isFrozen()) match.extendTime(1);
 
-	public void cancel() {
+		nexttime = match.getDuration() - System.currentTimeMillis();
+		timedisplay = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(nexttime),
+				TimeUnit.MILLISECONDS.toMinutes(nexttime)
+						- TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(nexttime)),
+				TimeUnit.MILLISECONDS.toSeconds(nexttime)
+						- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(nexttime)));
+
+		if (nexttime <= 600000) color = ChatColor.RED;
+
 		try {
-			this.cancelled = true;
-		} catch (Exception f) {
-		}
-	}
-
-	public boolean isCancelled() {
-		return MatchTimer.isCancelled();
-	}
-
-	private BukkitRunnable MatchTimer = new BukkitRunnable() {
-
-		String timedisplay;
-		ChatColor color = ChatColor.WHITE;
-		long nexttime;
-		long sec;
-
-		@Override
-		public void run() {
-			
-			if (cancelled || plugin.match.getMatchState() == UHCMatchState.PREGAME) return;
-
-			if (plugin.match.arePlayersFrozen())
-				plugin.match.extendTime(1);
-
-			nexttime = plugin.match.getTimeEnd() - System.currentTimeMillis();
-			timedisplay = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(nexttime),
-					TimeUnit.MILLISECONDS.toMinutes(nexttime)
-							- TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(nexttime)),
-					TimeUnit.MILLISECONDS.toSeconds(nexttime)
-							- TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(nexttime)));
-
-			if (nexttime <= 600000)
-				color = ChatColor.RED;
-
-			try {
-				sec = TimeUnit.MILLISECONDS.toSeconds(nexttime);
-				plugin.scoreboardHandler.getObjective("main").setDisplayName(color + "" + ChatColor.BOLD + timedisplay);
-				if (sec == 10) {
-					plugin.match.transitionTimer.run();
-				} else if (sec == 0 || sec < 0) {
-					this.cancel();
-				}
-			} catch (Exception e) {
-				// small hiccup, objective just happened to get unregistered
+			sec = TimeUnit.MILLISECONDS.toSeconds(nexttime);
+			match.getScoreboard().getObjective("main").setDisplayName(color + "" + ChatColor.BOLD + timedisplay);
+			if (sec == 0 || sec < 0) {
+				match.beginMatchEndTransition();
+				this.cancel();
 			}
+		} catch (Exception e) {
+			// small hiccup, objective just happened to get unregistered
 		}
-	};
+	}
+
 
 }

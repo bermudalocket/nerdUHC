@@ -23,11 +23,7 @@ public enum UHCSound {
 	public Sound sound() {
 		return s;
 	}
-	
-	public void playSound(UHCPlayer p) {
-		p.bukkitPlayer().playSound(p.bukkitPlayer().getLocation(), s, 10, 1);
-	}
-	
+
 	public void playSound(Player p) {
 		p.playSound(p.getLocation(), s, 10, 1);
 	}

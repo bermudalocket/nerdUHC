@@ -6,18 +6,20 @@ import org.bukkit.World;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 
-public class Barrier {
+public class UHCBarrier {
 	
 	private NerdUHC plugin;
+	private UHCMatch match;
 	
-	public Barrier(NerdUHC plugin) {
+	public UHCBarrier(NerdUHC plugin, UHCMatch match) {
 		this.plugin = plugin;
+		this.match = match;
 		drawBarrier(true);
 	}
 	
 	public void drawBarrier(boolean draw) {
 		
-		World world = plugin.CONFIG.WORLD;
+		World world = match.getWorld();
 		
 		int x = plugin.CONFIG.SPAWN_X;
 		int y = plugin.CONFIG.SPAWN_Y;

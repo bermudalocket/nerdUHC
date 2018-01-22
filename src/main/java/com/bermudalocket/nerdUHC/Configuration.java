@@ -160,6 +160,11 @@ public class Configuration {
 		}
 		
 		GAMERULES = config.getMapList("gamerules");
+		GAMERULES.forEach(gamerule -> {
+			String rule = gamerule.keySet().toArray()[0].toString();
+			String value = gamerule.values().toArray()[0].toString();
+			WORLD.setGameRuleValue(rule, value);
+		});
 		
 		rawteamlist = config.getMapList("teams");
 		

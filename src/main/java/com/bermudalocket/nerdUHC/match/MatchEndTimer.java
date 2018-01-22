@@ -1,27 +1,30 @@
 package com.bermudalocket.nerdUHC.match;
 
-import java.util.List;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.modules.UHCPlayer;
+import com.bermudalocket.nerdUHC.modules.UHCMatch;
 import com.bermudalocket.nerdUHC.modules.UHCSound;
 
 public class MatchEndTimer {
 	
 	private NerdUHC plugin;
-	private List<UHCPlayer> winnerlist;
-	private int winnerdisplaytime;
-	private UHCPlayer currentwinner;
+	private UHCMatch match;
 	
-	public MatchEndTimer(NerdUHC plugin) {
+	private Set<Player> winnerlist;
+	private Player currentwinner;
+	private int winnerdisplaytime;
+	
+	public MatchEndTimer(NerdUHC plugin, UHCMatch match) {
 		this.plugin = plugin;
+		this.match = match;
 	}
 	
-	public void run(List<UHCPlayer> winners) {
-		
+	public void run(Set<Player> winners) {
 		this.winnerlist = winners;
 		if (winnerlist.size() > 0) {
 			this.winnerdisplaytime = Math.floorDiv(300, winnerlist.size()) - 20;
@@ -34,8 +37,8 @@ public class MatchEndTimer {
 		AndTheWinnerIs.runTaskLater(plugin, 100);
 		
 		int i = 0;
-		for (UHCPlayer w : winnerlist) {
-			currentwinner = w;
+		for (Player p : winnerlist) {
+			currentwinner = p;
 			Winner.runTaskLater(plugin, (200 + (i*winnerdisplaytime)));
 			i++;
 		}
@@ -74,7 +77,7 @@ public class MatchEndTimer {
 		public void run() {
 			winnerlist.clear();
 			currentwinner = null;
-			plugin.match.stopUHC();
+			match.next();
 		}
 	};
 
