@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -148,7 +149,20 @@ public class GameListener implements Listener {
 	
 		UHCMatch match = plugin.matchHandler.getMatchByPlayer(p);
 		if (match == null || match != this.match) return;
+		
+		if (match.isFrozen() || !match.allowPVP()) e.setCancelled(true);
 		match.getCombatLogger().combatLog(p);
+	}
+	
+	@EventHandler
+	public void onEntityDamage(EntityDamageEvent e) {
+		if (e.getEntity() == null) return;
+		if (!(e.getEntity() instanceof Player)) return;
+	
+		Player p = (Player) e.getEntity();
+		UHCMatch match = plugin.matchHandler.getMatchByPlayer(p);
+		if (match == null || match != this.match) return;
+		if (match.isFrozen() || !match.allowPVP()) e.setCancelled(true);
 	}
 	
 	@EventHandler

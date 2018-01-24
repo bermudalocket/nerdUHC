@@ -1,8 +1,11 @@
 package com.bermudalocket.nerdUHC.listeners;
 
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
@@ -14,6 +17,16 @@ public class PregameListener implements Listener {
 	
 	public PregameListener(NerdUHC plugin) {
 		this.plugin = plugin;
+	}
+	
+	@EventHandler
+	public void onEntityDamage(EntityDamageEvent e) {
+		if (e.getEntity() instanceof Player) e.setCancelled(true);
+	}
+	
+	@EventHandler
+	public void onEntityDamageEntity(EntityDamageByEntityEvent e) {
+		if (e.getEntity() instanceof Player) e.setCancelled(true);
 	}
 
 	@EventHandler

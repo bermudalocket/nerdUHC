@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
@@ -23,12 +24,13 @@ public class MatchStartCountdownTimer extends BukkitRunnable {
 	
 	public void tick(int i) {
 		for (UUID uuid : players) {
-			Bukkit.getPlayer(uuid).sendTitle(ChatColor.RED + "The UHC starts in", i + " seconds", 2, 16, 2);
+			Player p = Bukkit.getPlayer(uuid);
+			if (p == null) continue;
+			p.sendTitle(ChatColor.RED + "The UHC starts in", i + " seconds", 2, 16, 2);
 		}
 		UHCSound.TIMERTICK.playSound();
 	}
 
-	@Override
 	public void run() {
 		if (i == 0) {
 			match.beginMatch();

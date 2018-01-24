@@ -1,5 +1,8 @@
 package com.bermudalocket.nerdUHC.commands;
 
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,6 +29,15 @@ public class GamemasterCommands implements CommandExecutor {
 		Player p = (Player) sender;
 		UHCMatch match = plugin.matchHandler.getMatchByPlayer(p);
 		if (match == null) return true;
+		
+		if (cmd.getName().equalsIgnoreCase("sb-all")) {
+			for (UUID uuid : match.getPlayers()) {
+				Player player = Bukkit.getPlayer(uuid);
+				if (player == null) continue;
+				player.setScoreboard(match.getScoreboard());
+				UHCLibrary.LIB_SCOREBOARD_ALL_REFRESHED.get(p);
+			}
+		}
 		
 		if (cmd.getName().equalsIgnoreCase("freeze")) {
 			if (match.getMatchState() == UHCMatchState.INPROGRESS || match.getMatchState() == UHCMatchState.DEATHMATCH) {

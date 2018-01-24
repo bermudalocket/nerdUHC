@@ -35,12 +35,14 @@ public class NerdUHC extends JavaPlugin {
 		this.getCommand("barrier").setExecutor(gamemasterCommandHandler);
 		this.getCommand("uhc").setExecutor(gamemasterCommandHandler);
 		this.getCommand("freeze").setExecutor(gamemasterCommandHandler);
+		this.getCommand("sb-all").setExecutor(gamemasterCommandHandler);
 		
 		this.playerCommandHandler = new PlayerCommands(this);
 		this.getCommand("join").setExecutor(playerCommandHandler);
 		this.getCommand("t").setExecutor(playerCommandHandler);
 		this.getCommand("teamlist").setExecutor(playerCommandHandler);
 		this.getCommand("fixme").setExecutor(playerCommandHandler);
+		this.getCommand("sb").setExecutor(playerCommandHandler);
 	}
 
 	@Override

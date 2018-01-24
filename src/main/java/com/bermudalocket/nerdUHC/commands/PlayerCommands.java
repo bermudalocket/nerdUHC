@@ -28,16 +28,21 @@ public class PlayerCommands implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		
 		if (!(sender instanceof Player)) return false;
+		Player p = (Player) sender;
 		
-		UHCMatch match = plugin.matchHandler.getMatchByPlayer((Player) sender);
+		UHCMatch match = plugin.matchHandler.getMatchByPlayer(p);
 		if (match == null) return true;
 		
-		Player p = (Player) sender;
+		if (cmd.getName().equalsIgnoreCase("sb")) {
+			p.setScoreboard(match.getScoreboard());
+			UHCLibrary.LIB_SCOREBOARD_REFRESHED.get(p);
+		}
 		
 		if (cmd.getName().equalsIgnoreCase("fixme")) {
 			if (p.getGameMode() == GameMode.SPECTATOR) {
-				p.teleport(plugin.CONFIG.SPAWNFIXME);
+				p.setAllowFlight(true);
 				p.setFlying(true);
+				p.teleport(match.getSpawn());
 			}
 			return true;
 		}

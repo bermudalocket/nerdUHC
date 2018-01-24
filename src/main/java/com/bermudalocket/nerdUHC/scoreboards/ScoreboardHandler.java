@@ -49,13 +49,11 @@ public class ScoreboardHandler {
 		scoreboards.put(match, board);
 		
 		createTeams(match);
-		setBoardForPlayers(match);
-	}
-
-	public void setBoardForPlayers(UHCMatch match) {
+		
 		for (UUID uuid : match.getPlayers()) {
 			Player p = Bukkit.getPlayer(uuid);
-			p.setScoreboard(match.getScoreboard());
+			if (p == null) continue;
+			p.setScoreboard(board);
 		}
 	}
 
@@ -105,6 +103,7 @@ public class ScoreboardHandler {
 		for (UUID uuid : match.getPlayers()) {
 			Player p = Bukkit.getPlayer(uuid);
 			
+			if (p == null) continue;
 			if (p.getGameMode() == GameMode.SPECTATOR) continue;
 			
 			int kills = p.getStatistic(Statistic.PLAYER_KILLS);
@@ -117,9 +116,9 @@ public class ScoreboardHandler {
 			if (i >= 5) return;
 			
 			String name = entry.getKey().getDisplayName() + ChatColor.WHITE;
-			if (entry.getKey().isDead()) {
-				name = ChatColor.STRIKETHROUGH + name;
-			} 
+			Player p = entry.getKey();
+			if (p == null) continue;
+			if (p.isDead()) name = ChatColor.STRIKETHROUGH + name;
 			
 			lines.add(name + ": " + entry.getValue());
 			i++;
@@ -132,6 +131,7 @@ public class ScoreboardHandler {
 			int j = 0;
 			for (OfflinePlayer e : t.getPlayers()) {
 				Player p = e.getPlayer();
+				if (p == null) continue;
 				if (p.isOnline() && p.getGameMode() == GameMode.SURVIVAL) {
 					j++;
 				}
@@ -163,7 +163,7 @@ public class ScoreboardHandler {
 		}
 	}
 	
-	public void cleanTeams(UHCMatch match) {
+	public void pruneTeams(UHCMatch match) {
 		Scoreboard board = scoreboards.get(match);
 		for (Team t : board.getTeams()) {
 			if (t.getSize() == 0) {

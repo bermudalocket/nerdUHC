@@ -1,6 +1,5 @@
 package com.bermudalocket.nerdUHC.modules;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -40,6 +39,7 @@ public class UHCMatch {
 	private long duration;
 	private boolean frozen;
 	private boolean active;
+	private boolean allowPVP;
 	
 	private CombatLogger combatLogger;
 	private UHCUtils util;
@@ -56,7 +56,6 @@ public class UHCMatch {
 		this.state = UHCMatchState.PREGAME;
 		this.mode = plugin.CONFIG.UHC_GAME_MODE;
 		this.world = plugin.CONFIG.WORLD; // tba
-		this.world.setPVP(false);
 		
 		players = new HashSet<UUID>();
 		if (previousmatch != null) {
@@ -68,6 +67,7 @@ public class UHCMatch {
 		
 		this.duration = 0;
 		this.frozen = false;
+		this.allowPVP = false;
 		
 		this.combatLogger = new CombatLogger(plugin, this);
 		this.util = new UHCUtils(plugin, this);
@@ -137,18 +137,27 @@ public class UHCMatch {
 	}
 	
 	public void freeze() {
-		frozen = !frozen;
+		if (frozen) {
+			frozen = false;
+			allowPVP = true;
+		} else {
+			frozen = true;
+			allowPVP = false;
+		}
 	}
 	
 	public boolean isFrozen() {
 		return frozen;
 	}
 	
+	public boolean allowPVP() {
+		return allowPVP;
+	}
+	
 	// Teams and players
 
 	public void addPlayer(Player p) {
 		players.add(p.getUniqueId());
-		plugin.getLogger().info("Added " + p.getName() + " " + p.getUniqueId());
 	}
 	
 	public boolean isPlayerInMatch(UUID p) {
@@ -165,7 +174,6 @@ public class UHCMatch {
 	}
 	
 	public Set<UUID> getPlayers() {
-		plugin.getLogger().info("getPlayers: " + players);
 		return players;
 	}
 
@@ -215,9 +223,8 @@ public class UHCMatch {
 		this.duration = System.currentTimeMillis() + plugin.CONFIG.MATCH_DURATION*60000;
 		matchStartCountdownTimer = null;
 		
-		plugin.scoreboardHandler.cleanTeams(this);
+		plugin.scoreboardHandler.pruneTeams(this);
 
-		/*
 		String spreadplayers = "spreadplayers " + getSpawn().getX();
 		spreadplayers += " " + getSpawn().getZ();
 		spreadplayers += " " + plugin.CONFIG.SPREAD_DIST_BTWN_PLAYERS;
@@ -228,40 +235,31 @@ public class UHCMatch {
 			spreadplayers += !plugin.CONFIG.SPREAD_RESPECT_TEAMS;
 		}
 		spreadplayers += " ";
-	
+
 		for (UUID player : players) {
 			Player p = Bukkit.getPlayer(player);
+			if (p == null) continue;
+			
 			if (getTeamForPlayer(p) != null) {
 				spreadplayers += p.getName() + " ";
 			} else {
 				p.setGameMode(GameMode.SPECTATOR);
 			}
-		}
-		*/
-
-		ArrayList<Player> spreadlist = new ArrayList<Player>();
-		for (UUID player : players) {
-			Player p = Bukkit.getPlayer(player);
 			p.addPotionEffect(new PotionEffect(PotionEffectType.HEAL, 20 * 1, 100, true));
 			p.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 20 * 1, 100, true));
 			p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20 * 60, 100, true));
-			
-			if (getTeamForPlayer(p) != null) {
-				spreadlist.add(p);
-			} else {
-				p.setGameMode(GameMode.SPECTATOR);
-			}
 		}
-		util.spread(spreadlist);
 
 		plugin.CONFIG.WORLD.setTime(0);
 		plugin.CONFIG.WORLD.setStorm(false);
 		plugin.CONFIG.WORLD.setDifficulty(Difficulty.HARD);
-		plugin.CONFIG.WORLD.setPVP(true);
+		
+		allowPVP = true;
 
-		//plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers);
+		plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers);
 		
 		UHCSound.MATCHSTART.playSound();
+		
 		util.drawBarrier(false);
 		
 		scoreboardTimer = new ScoreboardTimer(this);
@@ -272,6 +270,9 @@ public class UHCMatch {
 	
 	public void beginMatchEndTransition() {
 		this.state = UHCMatchState.TRANSITION;
+		freeze();
+		allowPVP = false;
+		
 		scoreboardTimer.cancel();
 		if (numberOfAlivePlayers() > 1) {
 			if (plugin.CONFIG.DO_DEATHMATCH) {
@@ -284,6 +285,8 @@ public class UHCMatch {
 	
 	public void beginDeathmatch() {
 		this.state = UHCMatchState.DEATHMATCH;
+		
+		allowPVP = true;
 		
 		String target = "";
 		for (UUID player : players) {
@@ -311,6 +314,7 @@ public class UHCMatch {
 	public void endMatch() {
 		this.state = UHCMatchState.END;
 		matchEndTimer = new MatchEndTimer(plugin, this);
+		allowPVP = false;
 		
 		Set<Player> winners = new HashSet<Player>();
 		for (Player p : Bukkit.getOnlinePlayers()) {

@@ -13,6 +13,8 @@ public enum UHCLibrary {
 	LIB_UNFROZEN("Players have been unfrozen."),
 	LIB_BARRIER_DRAWN("Barrier drawn!"),
 	LIB_BARRIER_REM("Barrier removed!"),
+	LIB_SCOREBOARD_REFRESHED("Your scoreboard has been refreshed."),
+	LIB_SCOREBOARD_ALL_REFRESHED("Scoreboard refreshed for all players in this match."),
 	
 	// Gamemaster Command Errors
 	LIB_ERR_INVALID("Invalid game mode!"),

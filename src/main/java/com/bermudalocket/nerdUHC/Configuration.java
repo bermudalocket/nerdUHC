@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -12,8 +13,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 
 import com.bermudalocket.nerdUHC.modules.UHCGameMode;
-
-import net.md_5.bungee.api.ChatColor;
 
 public class Configuration {
 
@@ -32,7 +31,6 @@ public class Configuration {
 	public Material SPAWN_BARRIER_BLOCK;
 	public int SPAWN_BARRIER_RADIUS;
 	public Location SPAWN;
-	public Location SPAWNFIXME;
 	public int SPAWN_X;
 	public int SPAWN_Y;
 	public int SPAWN_Z;
@@ -80,7 +78,6 @@ public class Configuration {
 		SPAWN_Y = config.getInt("spawn-y", 65);
 		SPAWN_Z = config.getInt("spawn-z", 0);
 		SPAWN = new Location(WORLD, SPAWN_X, SPAWN_Y, SPAWN_Z);
-		SPAWNFIXME = new Location(WORLD, SPAWN_X, 150, SPAWN_Z);
 		if (SPAWN_X > WORLD.getWorldBorder().getSize()/2) {
 			plugin.getLogger().info(ChatColor.RED + "SPAWN_X coordinate is outside world border. Are you sure?");
 		}

@@ -34,13 +34,7 @@ public class MatchHandler {
 	public UHCMatch getMatchByPlayer(Player p) {
 		for (UHCMatch m : matches) {
 			for (UUID player : m.getPlayers()) {
-				plugin.getLogger().info(player + " == " + p.getUniqueId());
-				if (player.equals(p.getUniqueId())) {
-					plugin.getLogger().info("true");
-					return m;
-				} else {
-					plugin.getLogger().info("false");
-				}
+				if (player.equals(p.getUniqueId())) return m;
 			}
 		}
 		return null;
