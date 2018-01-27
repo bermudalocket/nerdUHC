@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
@@ -39,7 +40,15 @@ public class PersistentListener implements Listener {
 			
 			p.teleport(currentmatch.getSpawn());
 			p.setGameMode(GameMode.SURVIVAL);
-			p.setScoreboard(currentmatch.getScoreboard());
+			
+			BukkitRunnable setScoreboardTask = new BukkitRunnable() {
+				@Override
+				public void run() {
+					p.setScoreboard(currentmatch.getScoreboard());
+				}
+			};
+			setScoreboardTask.runTaskLater(plugin, 1);
+			
 			plugin.getLogger().info(p.getName() + " logged in. Assigning scoreboard " + currentmatch.getScoreboard().toString());
 			plugin.scoreboardHandler.showTeamCountCapacity(currentmatch);
 

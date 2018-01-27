@@ -13,12 +13,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-import com.bermudalocket.nerdUHC.modules.UHCMatch;
-
 public class CombatLogger {
 
 	private NerdUHC plugin;
-	private UHCMatch match;
 
 	// doppellist<Player UUID, Entity UUID>
 	private HashMap<	UUID, UUID> doppellist = new HashMap<UUID, UUID>();
@@ -32,9 +29,8 @@ public class CombatLogger {
 	// nodroplist<UUID>
 	private Set<UUID> nodroplist = new HashSet<UUID>();
 
-	public CombatLogger(NerdUHC plugin, UHCMatch match) {
+	public CombatLogger(NerdUHC plugin) {
 		this.plugin = plugin;
-		this.match = match;
 	}
 
 	public void combatLog(Player p) {

@@ -69,7 +69,7 @@ public class UHCMatch {
 		this.frozen = false;
 		this.allowPVP = false;
 		
-		this.combatLogger = new CombatLogger(plugin, this);
+		this.combatLogger = new CombatLogger(plugin);
 		this.util = new UHCUtils(plugin, this);
 		
 		pregameListener = new PregameListener(plugin);
