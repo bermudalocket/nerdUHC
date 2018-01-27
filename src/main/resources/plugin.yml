@@ -1,6 +1,6 @@
 name: nerdUHC
 main: com.bermudalocket.nerdUHC.NerdUHC
-version: {$project.version}
+version: ${project.version}
 permissions:
   nerduhc.gamemaster:
     description: Full permissions
