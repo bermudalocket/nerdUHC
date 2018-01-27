@@ -15,9 +15,12 @@ public class MatchHandler {
 	private ArrayList<UHCMatch> matches;
 
 	public MatchHandler(NerdUHC plugin) {
+		plugin.getLogger().info("Creating a new match...");
 		this.plugin = plugin;
 		this.matches = new ArrayList<UHCMatch>();
-		matches.add(new UHCMatch(plugin));
+		UHCMatch match = new UHCMatch(plugin);
+		matches.add(match);
+		plugin.getLogger().info("New match created with ID " + match.toString());
 	}
 	
 	public UHCMatch getMatch() {

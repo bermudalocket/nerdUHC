@@ -35,10 +35,13 @@ public class ScoreboardHandler {
 	public ScoreboardHandler(NerdUHC plugin) {
 		this.plugin = plugin;
 		manager = Bukkit.getScoreboardManager();
+		plugin.getLogger().info("... done.");
 	}
 
 	public void createScoreboard(UHCMatch match) {
+		plugin.getLogger().info("Creating new scoreboard for match " + match.toString());
 		Scoreboard board = manager.getNewScoreboard();
+		plugin.getLogger().info("New scoreboard created with ID " + board.toString());
 
 		board.registerNewObjective("HEALTH", Criterias.HEALTH).setDisplaySlot(DisplaySlot.PLAYER_LIST);
 		board.registerNewObjective("HEALTHBELOWNAME", Criterias.HEALTH).setDisplaySlot(DisplaySlot.BELOW_NAME);
@@ -54,7 +57,9 @@ public class ScoreboardHandler {
 			Player p = Bukkit.getPlayer(uuid);
 			if (p == null) continue;
 			p.setScoreboard(board);
+			plugin.getLogger().info("createScoreboard - set " + p.getName() + "'s scoreboard to " + board.toString());
 		}
+		plugin.getLogger().info("createScoreboard() Done");
 	}
 
 	// PRE-GAME ONLY

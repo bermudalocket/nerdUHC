@@ -164,8 +164,6 @@ public class Configuration {
 		});
 		
 		rawteamlist = config.getMapList("teams");
-		
-		rawobjectiveslist = config.getMapList("objectives");
 	}
 
 	public boolean isValidGameMode(String gameMode) {
@@ -179,10 +177,6 @@ public class Configuration {
 
 	public List<Map<?, ?>> getRawTeamList() {
 		return rawteamlist;
-	}
-
-	public List<Map<?, ?>> getRawObjectivesList() {
-		return rawobjectiveslist;
 	}
 
 }

@@ -80,7 +80,7 @@ public class UHCUtils {
 	// Second: spread() checks a 7x7 area centered at the block with isValidPosition()
 	// Last: spread() teleports the player (and, if applicable, their teammates) to the position
 
-	public ArrayList<Vector> layNodes(int nodes, double radius, Vector center) {
+	public ArrayList<Vector> layNodes(int nodes, int radius, Vector center) {
 
 		// List of nodes
 		ArrayList<Vector> vectors = new ArrayList<Vector>();
@@ -98,9 +98,9 @@ public class UHCUtils {
 
 		// Iterate over the rest of the circle
 		for (int i = 1; i < nodes; i++) {
-			int nextX = (int) Math.cos(i * angle);
-			int nextY = world.getHighestBlockYAt((int) x, (int) z);
-			int nextZ = (int) Math.sin(i * angle + Math.asin(y / radius));
+			int nextX = (int) Math.cos(i * angle) * radius;
+			int nextZ = (int) Math.sin(i * angle) * radius;
+			int nextY = world.getHighestBlockYAt(nextX, nextZ);
 			vectors.add(new Vector(nextX, nextY, nextZ));
 		}
 
@@ -112,11 +112,11 @@ public class UHCUtils {
 	public void spread(ArrayList<Player> players) {
 
 		int nodes = players.size();
-		double radius = world.getWorldBorder().getSize() / 2 - 200;
+		int radius = (int) world.getWorldBorder().getSize() / 2 - 200;
 		Vector center = world.getSpawnLocation().toVector();
 
-		vectorSearch:
 			for (Vector v : layNodes(nodes, radius, center)) {
+				placeGrid:
 				for (int x = v.getBlockX() - 3; x <= v.getBlockX() + 3; x++) {
 					for (int z = v.getBlockZ() - 3; z <= v.getBlockZ() + 3; z++) {
 						Block pos = world.getHighestBlockAt(x, z);
@@ -135,7 +135,7 @@ public class UHCUtils {
 									}
 								}
 							}
-							continue vectorSearch;
+							break placeGrid;
 						}
 					}
 				}

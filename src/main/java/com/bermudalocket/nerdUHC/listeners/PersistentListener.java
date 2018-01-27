@@ -40,6 +40,7 @@ public class PersistentListener implements Listener {
 			p.teleport(currentmatch.getSpawn());
 			p.setGameMode(GameMode.SURVIVAL);
 			p.setScoreboard(currentmatch.getScoreboard());
+			plugin.getLogger().info(p.getName() + " logged in. Assigning scoreboard " + currentmatch.getScoreboard().toString());
 			plugin.scoreboardHandler.showTeamCountCapacity(currentmatch);
 
 			UHCLibrary.LIB_WELCOME.rep(p, "%t", mode.toString());

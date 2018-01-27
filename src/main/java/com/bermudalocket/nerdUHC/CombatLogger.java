@@ -18,6 +18,7 @@ import com.bermudalocket.nerdUHC.modules.UHCMatch;
 public class CombatLogger {
 
 	private NerdUHC plugin;
+	private UHCMatch match;
 
 	// doppellist<Player UUID, Entity UUID>
 	private HashMap<	UUID, UUID> doppellist = new HashMap<UUID, UUID>();
@@ -33,14 +34,11 @@ public class CombatLogger {
 
 	public CombatLogger(NerdUHC plugin, UHCMatch match) {
 		this.plugin = plugin;
+		this.match = match;
 	}
 
 	public void combatLog(Player p) {
-
-		Long timenow = System.currentTimeMillis();
-		tagmap.put(p.getUniqueId(), timenow);
-		
-		plugin.getLogger().info("tagging " + p.getName());
+		tagmap.put(p.getUniqueId(), System.currentTimeMillis());
 	}
 
 	public boolean isDoppel(Entity e) {
@@ -58,11 +56,7 @@ public class CombatLogger {
 	public Player getPlayerFromDoppel(Entity e) {
 		for (Map.Entry<UUID, UUID> entry : doppellist.entrySet()) {
 			if (entry.getValue() == e.getUniqueId()) {
-				Player p = Bukkit.getPlayer(entry.getKey());
-				if (p == null) {
-					p = (Player) Bukkit.getOfflinePlayer(entry.getKey());
-				}
-				return p;
+				return Bukkit.getPlayer(entry.getKey());
 			}
 		}
 		return null;

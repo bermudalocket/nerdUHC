@@ -37,6 +37,7 @@ public class GamemasterCommands implements CommandExecutor {
 				player.setScoreboard(match.getScoreboard());
 				UHCLibrary.LIB_SCOREBOARD_ALL_REFRESHED.get(p);
 			}
+			return true;
 		}
 		
 		if (cmd.getName().equalsIgnoreCase("freeze")) {

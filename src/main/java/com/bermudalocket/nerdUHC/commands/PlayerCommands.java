@@ -36,6 +36,7 @@ public class PlayerCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("sb")) {
 			p.setScoreboard(match.getScoreboard());
 			UHCLibrary.LIB_SCOREBOARD_REFRESHED.get(p);
+			return true;
 		}
 		
 		if (cmd.getName().equalsIgnoreCase("fixme")) {

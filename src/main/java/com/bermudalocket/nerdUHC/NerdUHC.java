@@ -22,12 +22,17 @@ public class NerdUHC extends JavaPlugin {
 	@Override
 	public void onEnable() {
 
+		getLogger().info("Loading config...");
 		CONFIG = new Configuration(this);
 		CONFIG.reload();
 
+		getLogger().info("Creating scoreboard handler...");
 		scoreboardHandler = new ScoreboardHandler(this);
+		
+		getLogger().info("Creating match handler...");
 		matchHandler = new MatchHandler(this);
 		
+		getLogger().info("Creating listeners and command handlers...");
 		persistentListener = new PersistentListener(this);
 		getServer().getPluginManager().registerEvents(persistentListener, this);
 
@@ -43,6 +48,8 @@ public class NerdUHC extends JavaPlugin {
 		this.getCommand("teamlist").setExecutor(playerCommandHandler);
 		this.getCommand("fixme").setExecutor(playerCommandHandler);
 		this.getCommand("sb").setExecutor(playerCommandHandler);
+		
+		getLogger().info("Done.");
 	}
 
 	@Override
