@@ -55,14 +55,15 @@ public class UHCMatch {
 		this.plugin = plugin;
 		this.state = UHCMatchState.PREGAME;
 		this.mode = plugin.CONFIG.UHC_GAME_MODE;
-		this.world = plugin.CONFIG.WORLD; // tba
+		this.world = plugin.CONFIG.WORLD;
+		this.players = new HashSet<UUID>();
 		
-		players = new HashSet<UUID>();
 		if (previousmatch != null) {
 			this.active = false;
 		} else {
 			this.active = true;
 		}
+		
 		plugin.scoreboardHandler.createScoreboard(this);
 		
 		this.duration = 0;
@@ -72,7 +73,7 @@ public class UHCMatch {
 		this.combatLogger = new CombatLogger(plugin);
 		this.util = new UHCUtils(plugin, this);
 		
-		pregameListener = new PregameListener(plugin);
+		this.pregameListener = new PregameListener(plugin);
 		plugin.getServer().getPluginManager().registerEvents(pregameListener, plugin);
 	}
 	
@@ -158,6 +159,7 @@ public class UHCMatch {
 
 	public void addPlayer(Player p) {
 		players.add(p.getUniqueId());
+		p.setScoreboard(this.scoreboard);
 	}
 	
 	public boolean isPlayerInMatch(UUID p) {

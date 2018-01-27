@@ -8,8 +8,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
@@ -34,27 +32,21 @@ public class PersistentListener implements Listener {
 			return;
 
 		UHCMatch match = plugin.matchHandler.getMatchByPlayer(p);
-		Scoreboard board;
 
 		if (match == null) {
 			UHCMatch currentmatch = plugin.matchHandler.getMatch();
-			UHCGameMode mode = currentmatch.getGameMode();
 
 			p.teleport(currentmatch.getSpawn());
 			p.setGameMode(GameMode.SURVIVAL);
 
-			board = currentmatch.getScoreboard();
-
-			plugin.getLogger()
-					.info(p.getName() + " logged in. Assigning scoreboard " + currentmatch.getScoreboard().toString());
 			plugin.scoreboardHandler.showTeamCountCapacity(currentmatch);
 
-			UHCLibrary.LIB_WELCOME.rep(p, "%t", mode.toString());
+			UHCLibrary.LIB_WELCOME.rep(p, "%t", currentmatch.getGameMode().toString());
 
 			if (currentmatch.getMatchState() == UHCMatchState.PREGAME) {
 				currentmatch.addPlayer(p);
 
-				if (mode == UHCGameMode.SOLO) {
+				if (currentmatch.getGameMode() == UHCGameMode.SOLO) {
 					UHCLibrary.LIB_SOLO_JOIN.get(p);
 					UHCLibrary.LIB_SPEC.get(p);
 				} else {
@@ -68,17 +60,9 @@ public class PersistentListener implements Listener {
 				UHCLibrary.LIB_IN_PROGRESS.get(p);
 			}
 		} else {
-			board = match.getScoreboard();
+			p.setScoreboard(match.getScoreboard());
 			plugin.scoreboardHandler.showTeamCountCapacity(match);
 		}
-		
-		BukkitRunnable setScoreboardTask = new BukkitRunnable() {
-			@Override
-			public void run() {
-				p.setScoreboard(board);
-			}
-		};
-		setScoreboardTask.runTaskLater(plugin, 1);
 	}
 
 	@EventHandler
