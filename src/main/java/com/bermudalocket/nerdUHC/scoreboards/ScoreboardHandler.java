@@ -15,7 +15,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
@@ -35,14 +34,12 @@ public class ScoreboardHandler {
 	public ScoreboardHandler(NerdUHC plugin) {
 		this.plugin = plugin;
 		manager = Bukkit.getScoreboardManager();
-		plugin.getLogger().info("... done.");
 	}
 
 	public void createScoreboard(UHCMatch match) {
-		plugin.getLogger().info("Creating new scoreboard for match " + match.toString());
 		Scoreboard board = manager.getNewScoreboard();
-		plugin.getLogger().info("New scoreboard created with ID " + board.toString());
 
+		board.registerNewObjective("KILLS", Criterias.PLAYER_KILLS);
 		board.registerNewObjective("HEALTH", Criterias.HEALTH).setDisplaySlot(DisplaySlot.PLAYER_LIST);
 		board.registerNewObjective("HEALTHBELOWNAME", Criterias.HEALTH).setDisplaySlot(DisplaySlot.BELOW_NAME);
 		board.getObjective("HEALTHBELOWNAME").setDisplayName(ChatColor.RED + "❤");
@@ -57,9 +54,7 @@ public class ScoreboardHandler {
 			Player p = Bukkit.getPlayer(uuid);
 			if (p == null) continue;
 			p.setScoreboard(board);
-			plugin.getLogger().info("createScoreboard - set " + p.getName() + "'s scoreboard to " + board.toString());
 		}
-		plugin.getLogger().info("createScoreboard() Done");
 	}
 
 	// PRE-GAME ONLY
@@ -96,8 +91,8 @@ public class ScoreboardHandler {
 	public void showKills(UHCMatch match) {
 		
 		Scoreboard board = match.getScoreboard();
-		board.getObjective("main").unregister();
 		
+		board.getObjective("main").unregister();
 		Objective o = board.registerNewObjective("main", "dummy");
 		
 		ArrayList<String> lines = new ArrayList<String>();
@@ -111,7 +106,7 @@ public class ScoreboardHandler {
 			if (p == null) continue;
 			if (p.getGameMode() == GameMode.SPECTATOR) continue;
 			
-			int kills = p.getStatistic(Statistic.PLAYER_KILLS);
+			int kills = board.getObjective("KILLS").getScore(p.getName()).getScore();
 			playerkills.put(p, kills);
 		}
 		playerkills = (HashMap<Player, Integer>) sortByValue(playerkills);

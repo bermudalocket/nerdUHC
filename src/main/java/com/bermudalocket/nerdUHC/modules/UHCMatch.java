@@ -181,6 +181,7 @@ public class UHCMatch {
 		int i = 0;
 		for (UUID uuid : players) {
 			Player p = Bukkit.getPlayer(uuid);
+			if (p == null) continue;
 			if (!p.isDead() && !p.getGameMode().equals(GameMode.SPECTATOR)) i++;
 		}
 		return i;
@@ -291,6 +292,7 @@ public class UHCMatch {
 		String target = "";
 		for (UUID player : players) {
 			Player p = Bukkit.getPlayer(player);
+			if (p == null) continue;
 			if (!p.isDead()) {
 				target += p.getName() + " ";
 			}

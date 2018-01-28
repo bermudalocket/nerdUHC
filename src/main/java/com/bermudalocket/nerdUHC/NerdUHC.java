@@ -53,8 +53,6 @@ public class NerdUHC extends JavaPlugin {
 	}
 
 	@Override
-	public void onDisable() {
-		
-	}
+	public void onDisable() { }
 	
 }

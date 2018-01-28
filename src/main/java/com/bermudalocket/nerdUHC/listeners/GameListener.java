@@ -162,7 +162,8 @@ public class GameListener implements Listener {
 		Player p = (Player) e.getEntity();
 		UHCMatch match = plugin.matchHandler.getMatchByPlayer(p);
 		if (match == null || match != this.match) return;
-		if (match.isFrozen() || !match.allowPVP()) e.setCancelled(true);
+		if (match.isFrozen()) e.setCancelled(true);
+		if (!match.allowPVP()) e.setCancelled(true);
 	}
 	
 	@EventHandler
