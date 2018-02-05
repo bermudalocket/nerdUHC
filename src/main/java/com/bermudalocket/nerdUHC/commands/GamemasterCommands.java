@@ -1,7 +1,5 @@
 package com.bermudalocket.nerdUHC.commands;
 
-import java.util.UUID;
-
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,13 +25,29 @@ public class GamemasterCommands implements CommandExecutor {
 		if (!(sender instanceof Player)) return false;
 		
 		Player p = (Player) sender;
-		UHCMatch match = plugin.matchHandler.getMatchByPlayer(p);
-		if (match == null) return true;
+		UHCMatch match = plugin.matchHandler.getMatch();
+		
+		if (cmd.getName().equalsIgnoreCase("extendtime")) {
+			if (args.length != 1) return false;
+			
+			int sec = Integer.valueOf(args[0]);
+			match.getScoreboardTimer().extend(sec);
+			return true;
+		}
+		
+		if (cmd.getName().equalsIgnoreCase("togglepvp")) {
+			if (plugin.CONFIG.WORLD.getPVP()) {
+				plugin.CONFIG.WORLD.setPVP(false);
+				UHCLibrary.LIB_PVP_DISABLED.get(p);
+			} else {
+				plugin.CONFIG.WORLD.setPVP(true);
+				UHCLibrary.LIB_PVP_ENABLED.get(p);
+			}
+			return true;
+		}
 		
 		if (cmd.getName().equalsIgnoreCase("sb-all")) {
-			for (UUID uuid : match.getPlayers()) {
-				Player player = Bukkit.getPlayer(uuid);
-				if (player == null) continue;
+			for (Player player : Bukkit.getOnlinePlayers()) {
 				player.setScoreboard(match.getScoreboard());
 				UHCLibrary.LIB_SCOREBOARD_ALL_REFRESHED.get(p);
 			}
@@ -83,7 +97,9 @@ public class GamemasterCommands implements CommandExecutor {
 			if (args.length == 1) {
 				if (args[0].equalsIgnoreCase("stop")) {
 					if (match.getMatchState() != UHCMatchState.PREGAME) {
-						match.beginMatchEndTransition();
+						match.endMatch();
+						plugin.matchHandler.getNewMatch();
+						plugin.matchHandler.getMatch().migratePlayers();
 					} else {
 						UHCLibrary.LIB_ERR_UHC_RUNNING.err(p);
 						UHCSound.OOPS.playSound(p);

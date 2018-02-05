@@ -2,19 +2,13 @@ package com.bermudalocket.nerdUHC.scoreboards;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
+import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
@@ -26,40 +20,45 @@ import org.bukkit.scoreboard.Objective;
 public class ScoreboardHandler {
 
 	private NerdUHC plugin;
-
+	private UHCMatch match;
+	
 	private ScoreboardManager manager;
-	private HashMap<UHCMatch, Scoreboard> scoreboards = new HashMap<UHCMatch, Scoreboard>();
-	private HashMap<Player, Integer> playerkills = new HashMap<Player, Integer>();
+	private Scoreboard board;
 
-	public ScoreboardHandler(NerdUHC plugin) {
+	public ScoreboardHandler(NerdUHC plugin, UHCMatch match) {
 		this.plugin = plugin;
+		this.match = match;
 		manager = Bukkit.getScoreboardManager();
 	}
 
-	public void createScoreboard(UHCMatch match) {
-		Scoreboard board = manager.getNewScoreboard();
+	public void createScoreboard() {
+		board = manager.getNewScoreboard();
+		
+		match.setScoreboard(board);
 
 		board.registerNewObjective("KILLS", Criterias.PLAYER_KILLS);
 		board.registerNewObjective("HEALTH", Criterias.HEALTH).setDisplaySlot(DisplaySlot.PLAYER_LIST);
 		board.registerNewObjective("HEALTHBELOWNAME", Criterias.HEALTH).setDisplaySlot(DisplaySlot.BELOW_NAME);
 		board.getObjective("HEALTHBELOWNAME").setDisplayName(ChatColor.RED + "❤");
 		board.registerNewObjective("main", "dummy").setDisplayName(ChatColor.BOLD + "NerdUHC");
-		
-		match.setScoreboard(board);
-		scoreboards.put(match, board);
-		
-		createTeams(match);
-		
-		for (UUID uuid : match.getPlayers()) {
-			Player p = Bukkit.getPlayer(uuid);
-			if (p == null) continue;
-			p.setScoreboard(board);
+
+		createTeams();
+	}
+	
+	public void refresh() {
+		UHCMatch match = plugin.matchHandler.getMatch();
+		String title = board.getObjective("main").getDisplayName();
+		if (match.getMatchState() == UHCMatchState.PREGAME) {
+			showTeamCountCapacity();
+		} else {
+			showTeamsLeft();
 		}
+		forceHealthUpdates();
+		board.getObjective("main").setDisplayName(title);
 	}
 
 	// PRE-GAME ONLY
-	public void showTeamCountCapacity(UHCMatch match) {
-		Scoreboard board = match.getScoreboard();
+	public void showTeamCountCapacity() {
 		board.getObjective("main").unregister();
 		Objective o = board.registerNewObjective("main", "dummy");
 		o.setDisplayName(ChatColor.BOLD + "NerdUHC");
@@ -72,73 +71,29 @@ public class ScoreboardHandler {
 			o.getScore(line).setScore(0);
 		}
 	}
-	
-	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-	    return map.entrySet()
-	              .stream()
-	              .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
-	              .collect(Collectors.toMap(
-	                Map.Entry::getKey, 
-	                Map.Entry::getValue, 
-	                (e1, e2) -> e1, 
-	                LinkedHashMap::new
-	              ));
-	}
 
 	// DURING GAME ONLY
-	// Deprecated method: Team#getPlayers
-	@SuppressWarnings("deprecation")
-	public void showKills(UHCMatch match) {
-		
-		Scoreboard board = match.getScoreboard();
-		
+	public void showTeamsLeft() {
+		ArrayList<String> lines = new ArrayList<String>();
+
 		board.getObjective("main").unregister();
 		Objective o = board.registerNewObjective("main", "dummy");
 		
-		ArrayList<String> lines = new ArrayList<String>();
-		lines.add("=-=-=-=-=-=-=-=");
-		lines.add(ChatColor.RED + "" + ChatColor.ITALIC + "Top Killers:");
-		
-		playerkills.clear();
-		for (UUID uuid : match.getPlayers()) {
-			Player p = Bukkit.getPlayer(uuid);
-			
-			if (p == null) continue;
-			if (p.getGameMode() == GameMode.SPECTATOR) continue;
-			
-			int kills = board.getObjective("KILLS").getScore(p.getName()).getScore();
-			playerkills.put(p, kills);
-		}
-		playerkills = (HashMap<Player, Integer>) sortByValue(playerkills);
-		
-		int i = 0;
-		for (Map.Entry<Player, Integer> entry : playerkills.entrySet()) {
-			if (i >= 5) return;
-			
-			String name = entry.getKey().getDisplayName() + ChatColor.WHITE;
-			Player p = entry.getKey();
-			if (p == null) continue;
-			if (p.isDead()) name = ChatColor.STRIKETHROUGH + name;
-			
-			lines.add(name + ": " + entry.getValue());
-			i++;
+		if (match.getMatchState() == UHCMatchState.DEATHMATCH) {
+			o.setDisplayName(ChatColor.RED + "" + ChatColor.BOLD + "" + ChatColor.ITALIC + "Deathmatch");
 		}
 		
 		lines.add(ChatColor.WHITE + "=-=-=-=-=-=-=-=");
 		lines.add(ChatColor.AQUA + "" + ChatColor.ITALIC + "Teams Left:");
 		
-		for (Team t : board.getTeams()) {
-			int j = 0;
-			for (OfflinePlayer e : t.getPlayers()) {
-				Player p = e.getPlayer();
-				if (p == null) continue;
-				if (p.isOnline() && p.getGameMode() == GameMode.SURVIVAL) {
-					j++;
+		if (board.getTeams().size() > 0) {
+			for (Team t : board.getTeams()) {
+				if (t.getSize() > 0) {
+					lines.add(t.getDisplayName() + ": " + t.getSize());
 				}
 			}
-			if (j > 0) {
-				lines.add(t.getDisplayName() + ": " + j);
-			}
+		} else {
+			lines.add(ChatColor.GRAY + "" + ChatColor.ITALIC + "None!");
 		}
 		
 		for (int k = 0; k < lines.size(); k++) {
@@ -148,14 +103,16 @@ public class ScoreboardHandler {
 	}
 
 	public void forceHealthUpdates() {
-		Bukkit.getOnlinePlayers().forEach(player -> player.setHealth(player.getHealth()));
+		Bukkit.getOnlinePlayers().forEach(player -> {
+			if (player.getHealth() != 0) player.setHealth(player.getHealth());
+		});
 	}
 
-	public void createTeams(UHCMatch match) {
+	public void createTeams() {
 		for (Map<?, ?> map : plugin.CONFIG.getRawTeamList()) {
 			String name = map.get("name").toString().toUpperCase();
 			ChatColor color = ChatColor.valueOf(map.get("color").toString());
-			Team t = match.getScoreboard().registerNewTeam(name);
+			Team t = board.registerNewTeam(name);
 			t.setColor(color);
 			t.setPrefix(color + "");
 			t.setSuffix("" + ChatColor.WHITE);
@@ -163,13 +120,17 @@ public class ScoreboardHandler {
 		}
 	}
 	
-	public void pruneTeams(UHCMatch match) {
-		Scoreboard board = scoreboards.get(match);
+	public void pruneTeams() {
 		for (Team t : board.getTeams()) {
 			if (t.getSize() == 0) {
 				t.unregister();
 			}
 		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	public boolean isPlayerOnBoard(Player p) {
+		return board.getPlayerTeam(p) != null;
 	}
 
 }

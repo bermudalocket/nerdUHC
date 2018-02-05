@@ -44,10 +44,20 @@ commands:
     usage: /sb-all
     permission: nerduhc.gamemaster
     permission-message: y u do that
+  togglepvp:
+    description: Toggle PVP
+    usage: /togglepvp
+    permission: nerduhc.gamemaster
+    permission-message: y u do that
   fixme:
     description: Self-help command for players glitching out in spectator mode
     usage: /fixme
     permission: nerduhc.basic
+    permission-message: y u do that
+  extendtime:
+    description: Extends the current match duration by n seconds
+    usage: /extendtime [n]
+    permission: nerduhc.gamemaster
     permission-message: y u do that
   teamlist:
     description: List the current UHC teams.

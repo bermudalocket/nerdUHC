@@ -3,6 +3,7 @@ package com.bermudalocket.nerdUHC.commands;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -30,8 +31,7 @@ public class PlayerCommands implements CommandExecutor {
 		if (!(sender instanceof Player)) return false;
 		Player p = (Player) sender;
 		
-		UHCMatch match = plugin.matchHandler.getMatchByPlayer(p);
-		if (match == null) return true;
+		UHCMatch match = plugin.matchHandler.getMatch();
 		
 		if (cmd.getName().equalsIgnoreCase("sb")) {
 			p.setScoreboard(match.getScoreboard());
@@ -49,26 +49,25 @@ public class PlayerCommands implements CommandExecutor {
 		}
 		
 		if (cmd.getName().equalsIgnoreCase("t")) {
-			if (match.isPlayerInMatch(p.getUniqueId())) {
-				Team t = match.getScoreboard().getEntryTeam(p.getName());
-				if (t == null) {
-					UHCLibrary.LIB_ERR_NOTEAMFORCHAT.err(p);
-					return true;
+			Team t = match.getScoreboard().getEntryTeam(p.getName());
+			if (t == null) {
+				UHCLibrary.LIB_ERR_NOTEAMFORCHAT.err(p);
+				return true;
+			}
+			StringBuilder msg = new StringBuilder();
+			msg.append("[");
+			msg.append(t.getDisplayName());
+			msg.append("] <");
+			msg.append(p.getName());
+			msg.append("> ");
+			for (int i = 0; i < args.length; i++) {
+				msg.append(args[i] + " ");
+			}
+			for (OfflinePlayer op : t.getPlayers()) {
+				if (op.isOnline()) {
+					Player player = Bukkit.getPlayer(op.getUniqueId());
+					player.sendMessage(msg.toString());
 				}
-				StringBuilder msg = new StringBuilder();
-				msg.append("[");
-				msg.append(t.getDisplayName());
-				msg.append("] <");
-				msg.append(p.getName());
-				msg.append("> ");
-				for (int i = 0; i < args.length; i++) {
-					msg.append(args[i] + " ");
-				}
-				for (String entry : t.getEntries()) {
-					Bukkit.getPlayer(entry).sendMessage(msg.toString());
-				}
-			} else {
-				plugin.getLogger().info("nope");
 			}
 			return true;
 		}
@@ -81,11 +80,11 @@ public class PlayerCommands implements CommandExecutor {
 					String team = args[0].toString().toUpperCase();
 					if (teamIsJoinable(match, team)) {
 						Team t = match.getScoreboard().getTeam(team);
-						t.addEntry(p.getName());
+						t.addPlayer(p);
 						sender.sendMessage("You joined the " + t.getDisplayName() + " team!");
+						UHCSound.JOINTEAM.playSound(p);
 						p.setDisplayName(t.getColor() + p.getName());
-						plugin.scoreboardHandler.showTeamCountCapacity(match);
-						plugin.scoreboardHandler.forceHealthUpdates();
+						match.getScoreboardHandler().refresh();
 					} else {
 						sender.sendMessage(ChatColor.RED + "That team is either full or doesn't exist!");
 						UHCSound.OOPS.playSound(p);

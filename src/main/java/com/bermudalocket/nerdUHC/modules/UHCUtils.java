@@ -1,33 +1,18 @@
 package com.bermudalocket.nerdUHC.modules;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Team;
-import org.bukkit.util.Vector;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 
 public class UHCUtils {
 
 	private NerdUHC plugin;
-	private UHCMatch match;
 	private World world;
-
-	private static final Set<Material> omitMaterials = new HashSet<Material>(Arrays.asList(Material.LAVA,
-			Material.WATER, Material.LEAVES, Material.END_GATEWAY, Material.PORTAL, Material.CACTUS, Material.MAGMA));
 
 	public UHCUtils(NerdUHC plugin, UHCMatch match) {
 		this.plugin = plugin;
-		this.match = match;
 		this.world = match.getWorld();
 		drawBarrier(true);
 	}
@@ -75,98 +60,52 @@ public class UHCUtils {
 	}
 
 	// Custom spreadplayers method
-	
-	// First: layNodes() maps n nodes on a circle around a specified center with a specified radius
-	// Second: spread() checks a 7x7 area centered at the block with isValidPosition()
-	// Last: spread() teleports the player (and, if applicable, their teammates) to the position
-
-	public ArrayList<Vector> layNodes(int nodes, int radius, Vector center) {
-
-		// List of nodes
-		ArrayList<Vector> vectors = new ArrayList<Vector>();
-
-		// Set up default position at 0 degrees
-		int x = (int) (center.getX() + radius);
-		int z = (int) center.getZ();
-		int y = world.getHighestBlockYAt(x, z);
-
-		// Split up the inner angle (2pi rad, aka 360 deg) into equal pieces
-		double angle = (2 * Math.PI) / nodes;
-
-		// Add the first (0 degree) node to the list
-		vectors.add(new Vector(x, y, z));
-
-		// Iterate over the rest of the circle
-		for (int i = 1; i < nodes; i++) {
-			int nextX = (int) Math.cos(i * angle) * radius;
-			int nextZ = (int) Math.sin(i * angle) * radius;
-			int nextY = world.getHighestBlockYAt(nextX, nextZ);
-			vectors.add(new Vector(nextX, nextY, nextZ));
-		}
-
-		return vectors;
-	}
-
-	// deprecated method: Team#getPlayers
+	/*
 	@SuppressWarnings("deprecation")
-	public void spread(ArrayList<Player> players) {
-
-		int nodes = players.size();
-		int radius = (int) world.getWorldBorder().getSize() / 2 - 200;
-		Vector center = world.getSpawnLocation().toVector();
-
-			for (Vector v : layNodes(nodes, radius, center)) {
-				placeGrid:
-				for (int x = v.getBlockX() - 3; x <= v.getBlockX() + 3; x++) {
-					for (int z = v.getBlockZ() - 3; z <= v.getBlockZ() + 3; z++) {
-						Block pos = world.getHighestBlockAt(x, z);
-						if (isValidPosition(pos)) {
-							Location tp = new Location(world, pos.getX(), pos.getY() + 1, pos.getZ());
-							Player p = players.get(0);
-							Team t = match.getTeamForPlayer(p);
-							if (t == null) {
-								p.teleport(tp);
-								players.remove(p);
-							} else {
-								for (OfflinePlayer player : t.getPlayers()) {
-									if (player.isOnline()) {
-										player.getPlayer().teleport(tp);
-										players.remove(player.getPlayer());
-									}
-								}
-							}
-							break placeGrid;
-						}
-					}
-				}
-			}
-	}
-
-	// Check to make sure we won't kill the player or put them somewhere ridiculous
-	private boolean isValidPosition(Block block) {
+	public void spreadPlayers(int nodes) {
 		
-		// Check if position is safe
-		if (omitMaterials.contains(block.getType()))
-			return false;
-
-		// Check around the block to make sure there's nothing bad around
-		// and that elevation doesn't make a quick change
-		for (int x = block.getX() - 1; x <= block.getX() + 1; x++) {
-			for (int z = block.getZ() - 1; z <= block.getZ(); z++) {
-				
-				Block currentposition = world.getHighestBlockAt(x, z);
-				Material type = currentposition.getType();
-
-				if (Math.abs(currentposition.getY() - block.getY()) > 6) {
-					return false;
-				}
-				if (omitMaterials.contains(type)) {
-					return false;
-				}
-				
+		int cx = plugin.CONFIG.SPAWN_X;
+		int cz = plugin.CONFIG.SPAWN_Z;
+		int radius = (int) (world.getWorldBorder().getSize() / 2);
+		int angle = (int) ((2 * Math.PI) / nodes);
+		int n = match.getScoreboard().getTeams().size();
+		double rand = 0;
+		Location node = new Location(world, 0, 0, 0);
+		
+		ArrayList<OfflinePlayer> roster = new ArrayList<OfflinePlayer>();
+		roster.addAll(match.getRoster());
+		
+		plugin.getLogger().info(roster.toString());
+		
+		HashMap<Team, Location> teamsmap = new HashMap<Team, Location>();
+		
+		int i = 0;
+		for (OfflinePlayer op : roster) {
+			if (!op.isOnline()) continue;
+			
+			Team t = match.getScoreboard().getPlayerTeam(op);
+			if (teamsmap.containsKey(t)) {
+				Location teamlocation = teamsmap.get(t);
+				Player p = Bukkit.getPlayer(op.getUniqueId());
+				p.teleport(teamlocation);
+				continue;
 			}
-		}
-		return true;
-	}
+			
+			rand = Math.random();
+			node.setX(cx + rand * (radius * Math.cos(i * angle)));
+			node.setZ(cz + (rand*400)/n + (radius * Math.sin(i * angle)));
 
+			boolean unsafe = true;
+			while (unsafe) {
+				node.setY(world.getHighestBlockYAt(node.getX(), node.getY()));
+				unsafe = (omitMaterials.contains(world.getBlockAt(node).getType()) || omitBiomes.contains(world.getBiome(x, z)));
+				if (unsafe) x--;
+			}
+			
+			teamsmap.put(t, node);
+			Bukkit.getPlayer(op.getUniqueId()).teleport(node);
+			i++;
+		}
+	}
+	*/
 }

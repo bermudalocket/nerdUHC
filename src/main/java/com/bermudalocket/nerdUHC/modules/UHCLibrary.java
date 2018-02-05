@@ -15,6 +15,8 @@ public enum UHCLibrary {
 	LIB_BARRIER_REM("Barrier removed!"),
 	LIB_SCOREBOARD_REFRESHED("Your scoreboard has been refreshed."),
 	LIB_SCOREBOARD_ALL_REFRESHED("Scoreboard refreshed for all players in this match."),
+	LIB_PVP_ENABLED("PVP has been enabled."),
+	LIB_PVP_DISABLED("PVP has been disabled."),
 	
 	// Gamemaster Command Errors
 	LIB_ERR_INVALID("Invalid game mode!"),
@@ -32,8 +34,12 @@ public enum UHCLibrary {
 	LIB_IN_PROGRESS("A round is already in progress, so you will have to spectate."),
 	
 	// Player Command Errors
-	LIB_ERR_NOTEAMFORCHAT("You can't chat with your team if you're not on a team!");
+	LIB_ERR_NOTEAMFORCHAT("You can't chat with your team if you're not on a team!"),
 	
+	// CombatLogger
+	LIB_CL_DOPPELDEAD("You combat logged and your doppel died!"),
+	LIB_CL_DMG("You combat logged and your doppel took %d damage!"),
+	LIB_CL_NODMG("You combat logged but your doppel took no damage. Lucky you!");
 
 	private String s;
 	private static ChatColor base = ChatColor.GOLD;
@@ -50,6 +56,11 @@ public enum UHCLibrary {
 	
 	public void emph(Player p) {
 		p.sendMessage(emph + s);
+	}
+	
+	public void emph(Player p, String find, String replace) {
+		String msg = emph + s.replace(find, replace);
+		p.sendMessage(msg);
 	}
 	
 	public void err(Player p) {
