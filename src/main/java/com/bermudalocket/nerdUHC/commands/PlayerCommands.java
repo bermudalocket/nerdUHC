@@ -33,6 +33,17 @@ public class PlayerCommands implements CommandExecutor {
 		
 		UHCMatch match = plugin.matchHandler.getMatch();
 		
+		if (cmd.getName().equalsIgnoreCase("kit")) {
+			if (match.getMatchState() == UHCMatchState.PREGAME) {
+				p.getInventory().clear();
+				if (p.hasPermission("nerduhc.gamemaster")) {
+					match.getGUI().giveGamemasterGUIItems(p);
+				} else {
+					match.getGUI().givePlayerGUIItems(p);
+				}
+			}
+		}
+		
 		if (cmd.getName().equalsIgnoreCase("sb")) {
 			p.setScoreboard(match.getScoreboard());
 			UHCLibrary.LIB_SCOREBOARD_REFRESHED.get(p);
@@ -79,11 +90,15 @@ public class PlayerCommands implements CommandExecutor {
 				if (args.length == 1) {
 					String team = args[0].toString().toUpperCase();
 					if (teamIsJoinable(match, team)) {
+						if (p.getGameMode() == GameMode.SPECTATOR) {
+							p.setGameMode(GameMode.SURVIVAL);
+						}
 						Team t = match.getScoreboard().getTeam(team);
 						t.addPlayer(p);
 						sender.sendMessage("You joined the " + t.getDisplayName() + " team!");
 						UHCSound.JOINTEAM.playSound(p);
 						p.setDisplayName(t.getColor() + p.getName());
+						p.setPlayerListName(t.getColor() + p.getName());
 						match.getScoreboardHandler().refresh();
 					} else {
 						sender.sendMessage(ChatColor.RED + "That team is either full or doesn't exist!");

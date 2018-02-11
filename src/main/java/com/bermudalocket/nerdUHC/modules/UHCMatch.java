@@ -7,6 +7,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -15,11 +16,11 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Scoreboard;
 
-import com.bermudalocket.nerdUHC.CombatLogger;
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.listeners.GameListener;
 import com.bermudalocket.nerdUHC.listeners.PregameListener;
 import com.bermudalocket.nerdUHC.match.MatchStartCountdownTimer;
+import com.bermudalocket.nerdUHC.match.CombatLogger;
 import com.bermudalocket.nerdUHC.scoreboards.ScoreboardHandler;
 import com.bermudalocket.nerdUHC.scoreboards.ScoreboardTimer;
 
@@ -29,15 +30,15 @@ public class UHCMatch {
 	private UHCMatchState state;
 	private UHCGameMode mode;
 	private World world;
+	private long duration;
 
 	private Scoreboard scoreboard;
-
-	private long duration = 0;
-	private boolean frozen = false;
 
 	private ScoreboardHandler scoreboardHandler;
 	private CombatLogger combatLogger;
 	private UHCUtils util;
+	
+	private UHCInventoryMenu menuGUI;
 
 	private PregameListener pregameListener;
 	private GameListener gameListener;
@@ -50,16 +51,22 @@ public class UHCMatch {
 		this.state = UHCMatchState.PREGAME;
 		this.mode = plugin.CONFIG.UHC_GAME_MODE;
 		this.world = plugin.CONFIG.WORLD;
+		this.duration = plugin.CONFIG.MATCH_DURATION * 60;
 
 		this.scoreboardHandler = new ScoreboardHandler(plugin, this);
 		this.scoreboardHandler.createScoreboard();
 		
 		this.combatLogger = new CombatLogger(plugin);
 		this.util = new UHCUtils(plugin, this);
+		
+		this.menuGUI = new UHCInventoryMenu(plugin, this);
+		plugin.getServer().getPluginManager().registerEvents(menuGUI, plugin);
 
 		pregameListener = new PregameListener(plugin);
 		plugin.getServer().getPluginManager().registerEvents(pregameListener, plugin);
 	}
+	
+	// ----------------------------------------------------------------
 	
 	public NerdUHC getPlugin() {
 		return plugin;
@@ -80,8 +87,12 @@ public class UHCMatch {
 	public ScoreboardTimer getScoreboardTimer() {
 		return scoreboardTimer;
 	}
+	
+	public UHCInventoryMenu getGUI() {
+		return menuGUI;
+	}
 
-	// WORLD
+	// ----------------------------------------------------------------
 
 	public World getWorld() {
 		return world;
@@ -89,6 +100,10 @@ public class UHCMatch {
 
 	public Location getSpawn() {
 		return plugin.CONFIG.SPAWN;
+	}
+	
+	public void setDuration(int d) {
+		this.duration = d * 60;
 	}
 	
 	// SCOREBOARD
@@ -99,16 +114,6 @@ public class UHCMatch {
 
 	public void setScoreboard(Scoreboard board) {
 		this.scoreboard = board;
-	}
-	
-	// TIMER
-
-	public long getDuration() {
-		return duration;
-	}
-
-	public void extendTime(int sec) {
-		duration += sec * 1000;
 	}
 	
 	// MATCH MODE AND STATE
@@ -125,48 +130,58 @@ public class UHCMatch {
 	
 	public void migratePlayers() {
 		Bukkit.getOnlinePlayers().forEach(player -> {
+			resetPlayer(player);
 			player.setScoreboard(scoreboard);
 			Bukkit.getPluginManager().callEvent(new PlayerJoinEvent(player, null));
 		});
 	}
 	
-	public void heal(Player p) {
+	public void resetPlayer(Player p) {
+		p.setGameMode(GameMode.SURVIVAL);
+		p.setHealth(p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue());
+		p.setSaturation(20);
+		p.getInventory().clear();
+		p.setExp(0);
+	}
+	
+	public void heal(Player p, boolean givedamageresistance) {
 		p.addPotionEffect(new PotionEffect(PotionEffectType.HEAL, 20 * 1, 100, true));
 		p.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 20 * 1, 100, true));
+		if (givedamageresistance) {
+			p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20 * 20, 100, true));
+		}
+		scoreboardHandler.forceHealthUpdates();
 	}
 
 	public void freeze() {
-		if (frozen) {
-			frozen = false;
+		if (state == UHCMatchState.FROZEN) {
+			
 			plugin.CONFIG.WORLD.setPVP(true);
 		} else {
-			frozen = true;
 			plugin.CONFIG.WORLD.setPVP(false);
 		}
 	}
 
 	public boolean isFrozen() {
-		return frozen;
+		return state == UHCMatchState.FROZEN;
 	}
 
 	// Starters and stoppers for different phases of the match
 
 	public void beginMatchStartCountdown() {
-		
 		HandlerList.unregisterAll(pregameListener);
+		HandlerList.unregisterAll(menuGUI);
 		
 		gameListener = new GameListener(this);
 		plugin.getServer().getPluginManager().registerEvents(gameListener, plugin);
 		
 		matchStartCountdownTimer = new MatchStartCountdownTimer(this);
 		matchStartCountdownTimer.runTaskTimer(plugin, 1, 20);
-		
 	}
 
 	@SuppressWarnings("deprecation")
 	public void beginMatch() {
 		this.state = UHCMatchState.INPROGRESS;
-		this.duration = System.currentTimeMillis() + plugin.CONFIG.MATCH_DURATION * 60000;
 		matchStartCountdownTimer = null;
 
 		scoreboardHandler.pruneTeams();
@@ -175,21 +190,15 @@ public class UHCMatch {
 		spreadplayers += " " + getSpawn().getZ();
 		spreadplayers += " " + plugin.CONFIG.SPREAD_DIST_BTWN_PLAYERS;
 		spreadplayers += " " + plugin.CONFIG.SPREAD_DIST_FROM_SPAWN;
-		if (mode == UHCGameMode.TEAM) {
-			spreadplayers += " " + plugin.CONFIG.SPREAD_RESPECT_TEAMS;
-		} else {
-			spreadplayers += !plugin.CONFIG.SPREAD_RESPECT_TEAMS;
-		}
-		spreadplayers += " ";
+		spreadplayers += " " + plugin.CONFIG.SPREAD_RESPECT_TEAMS;
 
 		for (Player p : Bukkit.getOnlinePlayers()) {
 			if (scoreboard.getPlayerTeam(p) != null) {
-				spreadplayers += p.getName() + " ";
-				p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20 * 20, 100, true));
+				spreadplayers += " " + p.getName();
+				resetPlayer(p);
 			} else {
 				p.setGameMode(GameMode.SPECTATOR);
 			}
-			heal(p);
 		}
 
 		plugin.CONFIG.WORLD.setTime(0);
@@ -203,14 +212,13 @@ public class UHCMatch {
 
 		util.drawBarrier(false);
 
-		scoreboardTimer = new ScoreboardTimer(this, plugin.CONFIG.MATCH_DURATION);
+		scoreboardTimer = new ScoreboardTimer(this, this.duration);
 		scoreboardTimer.runTaskTimer(plugin, 0, 20);
 
 		scoreboardHandler.refresh();
 	}
 
 	public void beginMatchEndTransition() {
-		this.state = UHCMatchState.TRANSITION;
 		if (!scoreboardTimer.isCancelled()) scoreboardTimer.cancel();
 		beginDeathmatch();
 	}
@@ -219,35 +227,35 @@ public class UHCMatch {
 	public void beginDeathmatch() {
 		this.state = UHCMatchState.DEATHMATCH;
 
-		String target = " ";
-		for (OfflinePlayer op : scoreboard.getPlayers()) {
-			if (op.isOnline()) target += op.getName() + " ";
-		}
-
 		String spreadplayers = "spreadplayers " + plugin.CONFIG.SPAWN_X;
 		spreadplayers += " " + plugin.CONFIG.SPAWN_Z;
 		spreadplayers += " " + plugin.CONFIG.DEATHMATCH_DIST_BTWN_PLAYERS;
 		spreadplayers += " " + plugin.CONFIG.DEATHMATCH_SPREAD_DIST_FROM_SPAWN;
-		
-		if (mode == UHCGameMode.TEAM) {
-			spreadplayers += " " + plugin.CONFIG.SPREAD_RESPECT_TEAMS;
-		} else {
-			spreadplayers += " " + !plugin.CONFIG.SPREAD_RESPECT_TEAMS;
+		spreadplayers += " " + plugin.CONFIG.SPREAD_RESPECT_TEAMS;
+		spreadplayers += " ";
+
+		for (OfflinePlayer op : scoreboard.getPlayers()) {
+			if (op.isOnline()) {
+				spreadplayers += op.getName() + " ";
+			}
 		}
 
-		plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers + target);
+		plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers);
 		
 		Bukkit.getOnlinePlayers().forEach(player -> player.sendTitle(ChatColor.RED + "Deathmatch!", null, 15, 60, 15));
 		
 		scoreboardHandler.refresh();
 	}
 	
-	public void transitionToEnd() {
+	public void transitionToEnd(String winmsg) {
 		this.state = UHCMatchState.END;
 		
 		freeze();
 		
-		for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(ChatColor.AQUA + "Next match in 20 seconds...");
+		for (Player p : Bukkit.getOnlinePlayers()) {
+			p.sendTitle(winmsg, null, 20, 120, 20);
+			p.sendMessage(ChatColor.AQUA + "Next match in 20 seconds...");
+		}
 		
 		BukkitRunnable endMatchTask = new BukkitRunnable() {
 			@Override

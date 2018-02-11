@@ -1,4 +1,4 @@
-package com.bermudalocket.nerdUHC;
+package com.bermudalocket.nerdUHC.match;
 
 import java.util.UUID;
 import java.util.HashMap;
@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.PlayerInventory;
 
+import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCLibrary;
 
 public class CombatLogger {

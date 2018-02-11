@@ -42,6 +42,7 @@ public class NerdUHC extends JavaPlugin {
 		this.getCommand("teamlist").setExecutor(playerCommandHandler);
 		this.getCommand("fixme").setExecutor(playerCommandHandler);
 		this.getCommand("sb").setExecutor(playerCommandHandler);
+		this.getCommand("kit").setExecutor(playerCommandHandler);
 	}
 
 	@Override

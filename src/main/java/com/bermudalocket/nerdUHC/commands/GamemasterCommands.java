@@ -30,8 +30,12 @@ public class GamemasterCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("extendtime")) {
 			if (args.length != 1) return false;
 			
-			int sec = Integer.valueOf(args[0]);
-			match.getScoreboardTimer().extend(sec);
+			try {
+				int sec = Integer.valueOf(args[0]);
+				match.getScoreboardTimer().extend(sec);
+			} catch (Exception f) {
+				return false;
+			}
 			return true;
 		}
 		

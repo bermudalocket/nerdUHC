@@ -54,6 +54,11 @@ commands:
     usage: /fixme
     permission: nerduhc.basic
     permission-message: y u do that
+  kit:
+    description: Gives player a lobby kit
+    usage: /kit
+    permission: nerduhc.basic
+    permission-message: y u do that
   extendtime:
     description: Extends the current match duration by n seconds
     usage: /extendtime [n]

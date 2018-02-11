@@ -3,11 +3,11 @@ package com.bermudalocket.nerdUHC.listeners;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
@@ -25,6 +25,19 @@ public class PersistentListener implements Listener {
 	public PersistentListener(NerdUHC plugin) {
 		this.plugin = plugin;
 	}
+	
+	@EventHandler
+	public void onGameModeChange(PlayerGameModeChangeEvent e) {
+		Player p = e.getPlayer();
+		
+		if (e.getNewGameMode() == GameMode.SPECTATOR || e.getNewGameMode() == GameMode.CREATIVE) {
+			p.setAllowFlight(true);
+			p.setFlying(true);
+		} else {
+			p.setAllowFlight(false);
+			p.setFlying(false);
+		}
+	}
 
 	@SuppressWarnings("deprecation")
 	@EventHandler
@@ -36,30 +49,27 @@ public class PersistentListener implements Listener {
 		if (!match.getScoreboardHandler().isPlayerOnBoard(p)) {
 			
 			p.teleport(match.getSpawn());
-
 			UHCLibrary.LIB_WELCOME.rep(p, "%t", match.getGameMode().toString());
 
 			if (match.getMatchState() == UHCMatchState.PREGAME) {
 				
-				p.setGameMode(GameMode.SURVIVAL);
-				p.setHealth(p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue());
-				p.setSaturation(20);
-				p.getInventory().clear();
-				p.setExp(0);
+				match.resetPlayer(p);
+				
+				match.getGUI().givePlayerGUIItems(p);
+				if (p.hasPermission("nerduhc.gamemaster")) {
+					match.getGUI().giveGamemasterGUIItems(p);
+				}
 				
 				if (match.getGameMode() == UHCGameMode.SOLO) {
-					
 					UHCLibrary.LIB_SOLO_JOIN.get(p);
 					UHCLibrary.LIB_SPEC.get(p);
-					
 				} else {
-					
 					UHCLibrary.LIB_TEAM_LIST.get(p);
 					UHCLibrary.LIB_TEAM_JOIN.get(p);
 					UHCLibrary.LIB_TEAM_CHAT.get(p);
 					UHCLibrary.LIB_SPEC.get(p);
-					
 				}
+				
 			} else {
 				
 				p.setGameMode(GameMode.SPECTATOR);
