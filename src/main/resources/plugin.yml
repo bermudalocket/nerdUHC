@@ -16,7 +16,7 @@ commands:
     permission-message: You don't have permission to do that.
   uhc:
     description: Command which controls current round
-    usage: /uhc [start|stop|mode|reload]
+    usage: /uhc [start|stop]
     permission: nerduhc.gamemaster
     permission-message: You don't have permission to do that.
   join:
