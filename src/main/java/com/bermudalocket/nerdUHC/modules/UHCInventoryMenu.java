@@ -397,13 +397,13 @@ public class UHCInventoryMenu implements Listener {
 			// changing match duration?
 			
 			if (s == "30 minutes") {
-				match.setDuration(30);
+				match.getScoreboardTimer().setDuration(30);
 			} else if (s == "1 hour") {
-				match.setDuration(60);
+				match.getScoreboardTimer().setDuration(60);
 			} else if (s == "2 hours") {
-				match.setDuration(120);
+				match.getScoreboardTimer().setDuration(120);
 			} else if (s == "3 hours") {
-				match.setDuration(180);
+				match.getScoreboardTimer().setDuration(180);
 			} else {
 				return; // that's not right
 			}

@@ -58,20 +58,6 @@ public class GamemasterCommands implements CommandExecutor {
 			return true;
 		}
 		
-		if (cmd.getName().equalsIgnoreCase("freeze")) {
-			if (match.getMatchState() == UHCMatchState.INPROGRESS || match.getMatchState() == UHCMatchState.DEATHMATCH) {
-				if (match.isFrozen()) {
-					UHCLibrary.LIB_UNFROZEN.get(p);
-				} else {
-					UHCLibrary.LIB_FROZEN.get(p);
-				}
-				match.freeze(); //unfreeze
-			} else {
-				UHCLibrary.LIB_ERR_NO_UHC_RUNNING.err(p);
-			}
-			return true;
-		}
-		
 		if (cmd.getName().equalsIgnoreCase("barrier")) {
 			if (args.length == 1 && args[0].equalsIgnoreCase("on")) {
 				match.getBarrier().drawBarrier(true);

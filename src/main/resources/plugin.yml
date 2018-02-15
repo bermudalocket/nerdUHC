@@ -13,59 +13,54 @@ commands:
     description: Enables and disables the barrier around world's spawnpoint.
     usage: /barrier [on|off]
     permission: nerduhc.gamemaster
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   uhc:
     description: Command which controls current round
     usage: /uhc [start|stop|mode|reload]
     permission: nerduhc.gamemaster
-    permission-message: y u do that
-  freeze:
-    description: Freeze players in place (toggle)
-    usage: /freeze
-    permission: nerduhc.gamemaster
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   join:
     description: Join a team.
     usage: /join [team]
     permission: nerduhc.basic
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   t:
     description: Team chat
     usage: /t [msg]
     permission: nerduhc.basic
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   sb:
     description: Refresh your scoreboard
     usage: /sb
     permission: nerduhc.basic
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   sb-all:
     description: Refresh scoreboard for all players in match
     usage: /sb-all
     permission: nerduhc.gamemaster
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   togglepvp:
     description: Toggle PVP
     usage: /togglepvp
     permission: nerduhc.gamemaster
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   fixme:
     description: Self-help command for players glitching out in spectator mode
     usage: /fixme
     permission: nerduhc.basic
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   kit:
     description: Gives player a lobby kit
     usage: /kit
     permission: nerduhc.basic
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   extendtime:
     description: Extends the current match duration by n seconds
     usage: /extendtime [n]
     permission: nerduhc.gamemaster
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.
   teamlist:
     description: List the current UHC teams.
     usage: /teamlist
     permission: nerduhc.basic
-    permission-message: y u do that
+    permission-message: You don't have permission to do that.

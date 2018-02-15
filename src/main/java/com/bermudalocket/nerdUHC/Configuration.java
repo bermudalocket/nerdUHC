@@ -88,6 +88,8 @@ public class Configuration {
 			plugin.getLogger().info(ChatColor.RED + "SPAWN_Z coordinate is outside world border. Are you sure?");
 		}
 		
+		WORLD.setSpawnLocation(SPAWN_X, SPAWN_Y, SPAWN_Z);
+		
 		SPAWN_BARRIER_RADIUS = config.getInt("spawn-barrier-radius", 6);
 		if (SPAWN_BARRIER_RADIUS < 0) {
 			SPAWN_BARRIER_RADIUS = 6;

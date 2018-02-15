@@ -11,11 +11,11 @@ import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
-public class PregameListener implements Listener {
+public class PreMatchListener implements Listener {
 
 	private NerdUHC plugin;
 	
-	public PregameListener(NerdUHC plugin) {
+	public PreMatchListener(NerdUHC plugin) {
 		this.plugin = plugin;
 	}
 	

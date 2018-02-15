@@ -21,21 +21,17 @@ import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 public class PersistentListener implements Listener {
 
 	private NerdUHC plugin;
+	private FixSpectatorRunnable fixSpectatorRunnable;
 
 	public PersistentListener(NerdUHC plugin) {
 		this.plugin = plugin;
+		this.fixSpectatorRunnable = new FixSpectatorRunnable();
 	}
 	
 	@EventHandler
 	public void onGameModeChange(PlayerGameModeChangeEvent e) {
-		Player p = e.getPlayer();
-		
-		if (e.getNewGameMode() == GameMode.SPECTATOR || e.getNewGameMode() == GameMode.CREATIVE) {
-			p.setAllowFlight(true);
-			p.setFlying(true);
-		} else {
-			p.setAllowFlight(false);
-			p.setFlying(false);
+		if (e.getPlayer() != null && e.getPlayer().isOnline()) {
+			fixSpectatorRunnable.setState(e.getPlayer(), e.getNewGameMode() == GameMode.SPECTATOR);
 		}
 	}
 
@@ -48,12 +44,12 @@ public class PersistentListener implements Listener {
 
 		if (!match.getScoreboardHandler().isPlayerOnBoard(p)) {
 			
-			p.teleport(match.getSpawn());
+			p.teleport(match.getWorld().getSpawnLocation());
 			UHCLibrary.LIB_WELCOME.rep(p, "%t", match.getGameMode().toString());
 
 			if (match.getMatchState() == UHCMatchState.PREGAME) {
 				
-				match.resetPlayer(p);
+				match.resetPlayer(p, false);
 				
 				match.getGUI().givePlayerGUIItems(p);
 				if (p.hasPermission("nerduhc.gamemaster")) {

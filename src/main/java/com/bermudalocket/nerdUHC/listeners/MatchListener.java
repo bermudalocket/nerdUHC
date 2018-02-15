@@ -13,10 +13,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Team;
@@ -27,11 +25,11 @@ import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 import com.bermudalocket.nerdUHC.modules.UHCSound;
 
 @SuppressWarnings("deprecation")
-public class GameListener implements Listener {
+public class MatchListener implements Listener {
 
 	private UHCMatch match;
 
-	public GameListener(UHCMatch match) {
+	public MatchListener(UHCMatch match) {
 		this.match = match;
 	}
 	
@@ -44,11 +42,12 @@ public class GameListener implements Listener {
 
 		if (e.getEntity() == null || e.getDamager() == null || e.getEntity() == e.getDamager()) return;
 
-		if (e.getEntity() instanceof Player) match.getCombatLogger().combatLog((Player) e.getEntity());
-
-		if (e.getDamager() instanceof Player) match.getCombatLogger().combatLog((Player) e.getDamager());
-
-		if (match.isFrozen()) e.setCancelled(true);
+		if (e.getEntity() instanceof Player) { 
+			match.getCombatLogger().combatLog((Player) e.getEntity());
+		}
+		if (e.getDamager() instanceof Player) { 
+			match.getCombatLogger().combatLog((Player) e.getDamager());
+		}
 		
 	}
 	
@@ -130,39 +129,10 @@ public class GameListener implements Listener {
 		}
 		
 	}
-
-	@EventHandler
-	public void onPlayerMove(PlayerMoveEvent e) {
-		if (e.getPlayer().hasPermission("nerduhc.gamemaster"))
-			return;
-
-		Player p = e.getPlayer();
-
-		if (match.isFrozen()) {
-			if (!p.getGameMode().equals(GameMode.SPECTATOR)) {
-				if (!e.getFrom().toVector().equals(e.getTo().toVector())) {
-					e.getTo().setDirection(e.getFrom().toVector());
-				}
-			}
-		}
-	}
 	
 	//
 	// Other entity stuff
 	//
-
-	@EventHandler
-	public void onEntityDamage(EntityDamageEvent e) {
-		
-		if (e.getEntity() == null || !(e.getEntity() instanceof Player)) {
-			return;
-		}
-		
-		if (match.isFrozen()) {
-			e.setCancelled(true);
-		}
-		
-	}
 
 	@EventHandler
 	public void onEntityDeath(EntityDeathEvent e) {

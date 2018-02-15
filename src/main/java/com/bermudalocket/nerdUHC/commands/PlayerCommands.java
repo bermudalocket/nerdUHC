@@ -54,7 +54,7 @@ public class PlayerCommands implements CommandExecutor {
 			if (p.getGameMode() == GameMode.SPECTATOR) {
 				p.setAllowFlight(true);
 				p.setFlying(true);
-				p.teleport(match.getSpawn());
+				p.teleport(match.getWorld().getSpawnLocation());
 			}
 			return true;
 		}

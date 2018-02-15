@@ -10,31 +10,36 @@ import com.bermudalocket.nerdUHC.modules.UHCMatch;
 public class ScoreboardTimer extends BukkitRunnable {
 
 	private UHCMatch match;
-	String timedisplay;
-	ChatColor color = ChatColor.WHITE;
-	long nexttime;
-	long sec;
 
-	long duration;
-	long h;
-	long m;
-	long s;
+	private long duration;
+	private long h;
+	private long m;
+	private long s;
+	
+	private String title;
+	private ChatColor color = ChatColor.WHITE;
+	
+	// -------------------------------------------------------------------------------
 
 	public ScoreboardTimer(UHCMatch match, long duration) {
 		this.match = match;
 		this.duration = duration;
 	}
+	
+	// -------------------------------------------------------------------------------
 
 	public void extend(int sec) {
 		duration += sec;
+	}
+	
+	public void setDuration(int sec) {
+		this.duration = sec * 60;
 	}
 
 	@Override
 	public void run() {
 
 		if (this.isCancelled())
-			return;
-		if (match.isFrozen())
 			return;
 
 		duration--;
@@ -53,7 +58,7 @@ public class ScoreboardTimer extends BukkitRunnable {
 			color = ChatColor.WHITE;
 		}
 
-		String title = null;
+		title = null;
 
 		switch (match.getMatchState()) {
 		case DEATHMATCH:
