@@ -43,7 +43,7 @@ These commands are only usable by those with the `nerduhc.gamemaster` permission
 
 * `world-name` Name of the world which to use for the matches.
 * `uhc-game-mode` The game mode of the matches.
-* `match-duration` Duration of the math in minutes.
+* :white_check_mark: `match-duration` Duration of the math in minutes.
 
 * `spawn-x` x-coordinate of the spawn location.
 * `spawn-y` y-coordinate of the spawn location.
@@ -61,7 +61,7 @@ These commands are only usable by those with the `nerduhc.gamemaster` permission
 * `max-team-size` Maximum number of players per team.
 * `alive-team-name` Name of the alive team (for solo mode only).
 * `dead-team-name` Name of the dead team (for solo mode only).
-* `allow-friendly-fire` Whether or not to allow friendly fire within teams.
+* :white_check_mark: `allow-friendly-fire` Whether or not to allow friendly fire within teams.
 
 * `player-combat-tag-time-in-sec` Number of seconds after attacking (or taking damage) for which the player should spawn a doppel upon logout.
 * `combat-tag-doppel` Type of LivingEntity to use for doppels.
