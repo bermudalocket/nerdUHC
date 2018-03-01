@@ -4,11 +4,11 @@ import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import com.bermudalocket.nerdUHC.modules.UHCSound;
+import org.bukkit.*;
+import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
@@ -19,11 +19,18 @@ import org.bukkit.scoreboard.Objective;
 
 public class ScoreboardHandler {
 
-	private NerdUHC plugin;
-	private UHCMatch match;
+	private final NerdUHC plugin;
+	private final UHCMatch match;
 	
-	private ScoreboardManager manager;
+	private final ScoreboardManager manager;
 	private Scoreboard board;
+
+	private final Random random = new Random();
+	private static final ArrayList<Biome> excludedBiomes = new ArrayList<>(Arrays.asList(
+			Biome.OCEAN, Biome.DEEP_OCEAN, Biome.FROZEN_OCEAN));
+	private static final ArrayList<Material> excludedBlocks = new ArrayList<>(Arrays.asList(
+			Material.LAVA, Material.STATIONARY_LAVA, Material.WATER, Material.STATIONARY_WATER,
+			Material.LEAVES, Material.LEAVES_2, Material.CACTUS));
 
 	public ScoreboardHandler(NerdUHC plugin, UHCMatch match) {
 		this.plugin = plugin;
@@ -46,7 +53,6 @@ public class ScoreboardHandler {
 	}
 	
 	public void refresh() {
-		UHCMatch match = plugin.matchHandler.getMatch();
 		String title = board.getObjective("main").getDisplayName();
 		if (match.getMatchState() == UHCMatchState.PREGAME) {
 			showTeamCountCapacity();
@@ -58,7 +64,7 @@ public class ScoreboardHandler {
 	}
 
 	// PRE-GAME ONLY
-	public void showTeamCountCapacity() {
+	private void showTeamCountCapacity() {
 		board.getObjective("main").unregister();
 		Objective o = board.registerNewObjective("main", "dummy");
 		o.setDisplayName(ChatColor.BOLD + "NerdUHC");
@@ -73,8 +79,8 @@ public class ScoreboardHandler {
 	}
 
 	// DURING GAME ONLY
-	public void showTeamsLeft() {
-		ArrayList<String> lines = new ArrayList<String>();
+	private void showTeamsLeft() {
+		ArrayList<String> lines = new ArrayList<>();
 
 		board.getObjective("main").unregister();
 		Objective o = board.registerNewObjective("main", "dummy");
@@ -108,7 +114,7 @@ public class ScoreboardHandler {
 		});
 	}
 
-	public void createTeams() {
+	private void createTeams() {
 		for (Map<?, ?> map : plugin.CONFIG.getRawTeamList()) {
 			String name = map.get("name").toString().toUpperCase();
 			ChatColor color = ChatColor.valueOf(map.get("color").toString());
@@ -117,6 +123,7 @@ public class ScoreboardHandler {
 			t.setPrefix(color + "");
 			t.setSuffix("" + ChatColor.WHITE);
 			t.setDisplayName(color + name + ChatColor.WHITE);
+			t.setAllowFriendlyFire(plugin.CONFIG.ALLOW_FRIENDLY_FIRE);
 		}
 	}
 	
@@ -126,11 +133,75 @@ public class ScoreboardHandler {
 				t.unregister();
 			}
 		}
+		refresh();
 	}
-	
-	@SuppressWarnings("deprecation")
-	public boolean isPlayerOnBoard(Player p) {
-		return board.getPlayerTeam(p) != null;
+
+	public void addPlayerToTeam(Player p, String teamName) {
+		Team t = board.getTeam(teamName);
+		if (t == null) return;
+
+		t.addEntry(p.getName());
+		refresh();
+
+		p.setDisplayName(t.getColor() + p.getName());
+		p.setPlayerListName(t.getColor() + p.getName());
+
+		UHCSound.JOINTEAM.playSound(p);
+		p.sendMessage("You joined the " + t.getDisplayName() + " team!");
+	}
+
+	public void spreadPlayers() {
+		HashMap<Team, Location> teamLocations = new HashMap<>();
+
+		for (Player p : Bukkit.getOnlinePlayers()) {
+
+			Team t = board.getEntryTeam(p.getName());
+
+			if (teamLocations.containsKey(t)) {
+				p.teleport(teamLocations.get(t));
+				continue;
+			}
+
+			if (t == null) {
+				p.setGameMode(GameMode.SPECTATOR);
+				continue;
+			}
+
+			if (match.getMatchState() != UHCMatchState.DEATHMATCH) {
+				match.resetPlayer(p, true);
+			}
+
+			int multiplier; // inverse
+			if (match.getMatchState() == UHCMatchState.DEATHMATCH) {
+				multiplier = 20;
+			} else {
+				multiplier = 2;
+			}
+
+			World world = match.getWorld();
+			int maxDistance = (int) world.getWorldBorder().getSize()/multiplier - 100;
+
+			boolean unsafe = true;
+			while (unsafe) {
+				int x = maxDistance * (random.nextInt(100) / 100);
+				int z = maxDistance * (random.nextInt(100) / 100);
+				int y = match.getWorld().getHighestBlockYAt(x, z);
+
+				Biome newBiome = match.getWorld().getBiome(x, z);
+				if (excludedBiomes.contains(newBiome)) continue;
+
+				Material newBlock = match.getWorld().getBlockAt(x, y, z).getType();
+				if (excludedBlocks.contains(newBlock)) continue;
+
+				Location newLoc = new Location(match.getWorld(), x, y, z);
+				p.teleport(newLoc);
+
+				if (plugin.CONFIG.SPREAD_RESPECT_TEAMS) teamLocations.put(t, newLoc);
+
+				unsafe = false;
+			}
+		}
+		refresh();
 	}
 
 }

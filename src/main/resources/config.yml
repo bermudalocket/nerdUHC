@@ -42,5 +42,6 @@ teams:
     color: 'DARK_PURPLE'
 
 gamerules:
-  - doDaylightCycle: TRUE
-  - NaturalRegeneration: FALSE
+  - doDaylightCycle: true
+  - NaturalRegeneration: false
+  - doMobSpawning: true

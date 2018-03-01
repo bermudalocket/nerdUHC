@@ -13,19 +13,18 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.modules.UHCGameMode;
 import com.bermudalocket.nerdUHC.modules.UHCLibrary;
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
 public class PersistentListener implements Listener {
 
-	private NerdUHC plugin;
-	private FixSpectatorRunnable fixSpectatorRunnable;
+	private final NerdUHC plugin;
+	private final FixSpectatorRunnable fixSpectatorRunnable;
 
 	public PersistentListener(NerdUHC plugin) {
 		this.plugin = plugin;
-		this.fixSpectatorRunnable = new FixSpectatorRunnable();
+		this.fixSpectatorRunnable = new FixSpectatorRunnable(plugin);
 	}
 	
 	@EventHandler
@@ -34,79 +33,13 @@ public class PersistentListener implements Listener {
 			fixSpectatorRunnable.setState(e.getPlayer(), e.getNewGameMode() == GameMode.SPECTATOR);
 		}
 	}
-
-	@SuppressWarnings("deprecation")
-	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent e) {
-
-		UHCMatch match = plugin.matchHandler.getMatch();
-		Player p = e.getPlayer();
-
-		if (!match.getScoreboardHandler().isPlayerOnBoard(p)) {
-			
-			p.teleport(match.getWorld().getSpawnLocation());
-			UHCLibrary.LIB_WELCOME.rep(p, "%t", match.getGameMode().toString());
-
-			if (match.getMatchState() == UHCMatchState.PREGAME) {
-				
-				match.resetPlayer(p, false);
-				
-				match.getGUI().givePlayerGUIItems(p);
-				if (p.hasPermission("nerduhc.gamemaster")) {
-					match.getGUI().giveGamemasterGUIItems(p);
-				}
-				
-				if (match.getGameMode() == UHCGameMode.SOLO) {
-					UHCLibrary.LIB_SOLO_JOIN.get(p);
-					UHCLibrary.LIB_SPEC.get(p);
-				} else {
-					UHCLibrary.LIB_TEAM_LIST.get(p);
-					UHCLibrary.LIB_TEAM_JOIN.get(p);
-					UHCLibrary.LIB_TEAM_CHAT.get(p);
-					UHCLibrary.LIB_SPEC.get(p);
-				}
-				
-			} else {
-				
-				p.setGameMode(GameMode.SPECTATOR);
-				p.setDisplayName(ChatColor.GRAY + "" + ChatColor.ITALIC + p.getName() + ChatColor.WHITE);
-				UHCLibrary.LIB_IN_PROGRESS.get(p);
-				
-			}
-		} else {
-			Team t = match.getScoreboard().getPlayerTeam(p);
-			p.setPlayerListName(t.getColor() + p.getName());
-			p.setDisplayName(t.getColor() + p.getName() + ChatColor.WHITE);
-			
-			if (match.getMatchState() != UHCMatchState.PREGAME) {
-				BukkitRunnable attemptReconcileDoppelTask = new BukkitRunnable() {
-					@Override
-					public void run() {
-						match.getCombatLogger().reconcileDoppelWithPlayer(p);
-					}
-				};
-				attemptReconcileDoppelTask.runTaskLater(plugin, 1);
-			}
-		}
-		
-		BukkitRunnable setScoreboardTask = new BukkitRunnable() {
-			@Override
-			public void run() {
-				p.setScoreboard(match.getScoreboard());
-				match.getScoreboardHandler().refresh();
-			}
-		};
-		setScoreboardTask.runTaskLater(plugin, 1);
-	}
-
-	@SuppressWarnings("deprecation")
+	
 	@EventHandler
 	public void onPlayerChat(AsyncPlayerChatEvent e) {
-		
 		UHCMatch match = plugin.matchHandler.getMatch();
 		Player p = e.getPlayer();
 		ChatColor color;
-		Team t = match.getScoreboard().getPlayerTeam(p);
+		Team t = match.getScoreboard().getEntryTeam(p.getName());
 		
 		if (t == null) {
 			color = ChatColor.WHITE;
@@ -119,6 +52,46 @@ public class PersistentListener implements Listener {
 		}
 
 		e.setCancelled(true);
+	}
+
+	@EventHandler
+	public void onPlayerJoin(PlayerJoinEvent e) {
+		UHCMatch match = plugin.matchHandler.getMatch();
+		Player p = e.getPlayer();
+
+		// set display name and player list colors
+		Team t = match.getScoreboard().getEntryTeam(p.getName());
+		if (t == null) {
+			handleNewPlayer(p, match);
+		} else {
+			p.setPlayerListName(t.getColor() + p.getName());
+			p.setDisplayName(t.getColor() + p.getName() + ChatColor.WHITE);
+		}
+
+		// run some tasks that need to be run 1 tick after joining
+		BukkitRunnable playerJoinTask = new BukkitRunnable() {
+			@Override
+			public void run() {
+				p.setScoreboard(match.getScoreboard());
+				match.getScoreboardHandler().refresh();
+				match.getCombatLogger().reconcileDoppelWithPlayer(p);
+			}
+		};
+		playerJoinTask.runTaskLater(plugin, 1);
+	}
+	
+	private void handleNewPlayer(Player p, UHCMatch match) {
+		p.teleport(match.getWorld().getSpawnLocation());
+		UHCLibrary.LIB_WELCOME.rep(p, "%t", match.getGameMode().toString());
+		if (match.getMatchState() == UHCMatchState.PREGAME) {
+			match.resetPlayer(p, false);
+			match.getGUI().givePlayerGUIItems(p);
+			UHCLibrary.LIB.welcome(p, match.getGameMode());
+		} else {
+			p.setGameMode(GameMode.SPECTATOR);
+			p.setDisplayName(ChatColor.GRAY + "" + ChatColor.ITALIC + p.getName() + ChatColor.WHITE);
+			UHCLibrary.LIB_IN_PROGRESS.tell(p);
+		}
 	}
 
 }

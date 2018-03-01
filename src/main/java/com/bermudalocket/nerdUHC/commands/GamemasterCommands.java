@@ -9,12 +9,11 @@ import org.bukkit.entity.Player;
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
 import com.bermudalocket.nerdUHC.modules.UHCMatchState;
-import com.bermudalocket.nerdUHC.modules.UHCSound;
 import com.bermudalocket.nerdUHC.modules.UHCLibrary;
 
 public class GamemasterCommands implements CommandExecutor {
 
-	private NerdUHC plugin;
+	private final NerdUHC plugin;
 	
 	public GamemasterCommands(NerdUHC plugin) {
 		this.plugin = plugin;
@@ -26,13 +25,22 @@ public class GamemasterCommands implements CommandExecutor {
 		
 		Player p = (Player) sender;
 		UHCMatch match = plugin.matchHandler.getMatch();
+
+		if (cmd.getName().equalsIgnoreCase("shrinkwb")) {
+			if (match.getWorldBorder().isShrinking()) {
+				match.getWorldBorder().shrink();
+			} else {
+				match.getWorldBorder().freeze();
+			}
+			return true;
+		}
 		
 		if (cmd.getName().equalsIgnoreCase("extendtime")) {
 			if (args.length != 1) return false;
 			
 			try {
 				int sec = Integer.valueOf(args[0]);
-				match.getScoreboardTimer().extend(sec);
+				match.getMatchTimer().extend(sec);
 			} catch (Exception f) {
 				return false;
 			}
@@ -42,10 +50,10 @@ public class GamemasterCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("togglepvp")) {
 			if (plugin.CONFIG.WORLD.getPVP()) {
 				plugin.CONFIG.WORLD.setPVP(false);
-				UHCLibrary.LIB_PVP_DISABLED.get(p);
+				UHCLibrary.LIB_PVP_DISABLED.tell(p);
 			} else {
 				plugin.CONFIG.WORLD.setPVP(true);
-				UHCLibrary.LIB_PVP_ENABLED.get(p);
+				UHCLibrary.LIB_PVP_ENABLED.tell(p);
 			}
 			return true;
 		}
@@ -53,18 +61,7 @@ public class GamemasterCommands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("sb-all")) {
 			for (Player player : Bukkit.getOnlinePlayers()) {
 				player.setScoreboard(match.getScoreboard());
-				UHCLibrary.LIB_SCOREBOARD_ALL_REFRESHED.get(p);
-			}
-			return true;
-		}
-		
-		if (cmd.getName().equalsIgnoreCase("barrier")) {
-			if (args.length == 1 && args[0].equalsIgnoreCase("on")) {
-				match.getBarrier().drawBarrier(true);
-				UHCLibrary.LIB_BARRIER_DRAWN.get(p);
-			} else if (args.length == 1 && args[0].equalsIgnoreCase("off")) {
-				match.getBarrier().drawBarrier(false);
-				UHCLibrary.LIB_BARRIER_REM.get(p);
+				UHCLibrary.LIB_SCOREBOARD_ALL_REFRESHED.tell(p);
 			}
 			return true;
 		}
@@ -76,7 +73,6 @@ public class GamemasterCommands implements CommandExecutor {
 						match.beginMatchStartCountdown();
 					} else {
 						UHCLibrary.LIB_ERR_UHC_RUNNING.err(p);
-						UHCSound.OOPS.playSound(p);
 					}
 					return true;
 				}
@@ -91,19 +87,8 @@ public class GamemasterCommands implements CommandExecutor {
 						plugin.matchHandler.getNewMatch();
 						plugin.matchHandler.getMatch().migratePlayers();
 					} else {
-						UHCLibrary.LIB_ERR_UHC_RUNNING.err(p);
-						UHCSound.OOPS.playSound(p);
+						UHCLibrary.LIB_ERR_NO_UHC_RUNNING.err(p);
 					}
-					return true;
-				}
-			}
-		}
-		
-		if (cmd.getName().equalsIgnoreCase("uhc")) {
-			if (args.length == 1) {
-				if (args[0].equalsIgnoreCase("reload")) {
-					plugin.CONFIG.reload();
-					UHCLibrary.LIB_CONF_RELOADED.get(p);
 					return true;
 				}
 			}

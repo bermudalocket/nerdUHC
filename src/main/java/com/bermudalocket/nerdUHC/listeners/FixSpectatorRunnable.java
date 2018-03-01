@@ -3,16 +3,23 @@ package com.bermudalocket.nerdUHC.listeners;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class FixSpectatorRunnable extends BukkitRunnable {
+import com.bermudalocket.nerdUHC.NerdUHC;
+
+class FixSpectatorRunnable extends BukkitRunnable {
 	
-	Player player;
-	boolean state;
+	private final NerdUHC plugin;
 	
-	public FixSpectatorRunnable() { }
+	private Player player;
+	private boolean state;
+	
+	FixSpectatorRunnable(NerdUHC plugin) {
+		this.plugin = plugin;
+	}
 	
 	public void setState(Player p, boolean state) {
 		this.player = p;
 		this.state = state;
+		this.runTaskLater(plugin, 1);
 	}
 
 	@Override

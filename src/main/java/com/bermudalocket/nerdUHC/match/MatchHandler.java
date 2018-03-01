@@ -5,7 +5,7 @@ import com.bermudalocket.nerdUHC.modules.UHCMatch;
 
 public class MatchHandler {
 
-	private NerdUHC plugin;
+	private final NerdUHC plugin;
 	private UHCMatch match;
 
 	public MatchHandler(NerdUHC plugin) {

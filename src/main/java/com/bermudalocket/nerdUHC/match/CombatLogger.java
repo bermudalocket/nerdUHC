@@ -10,10 +10,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.PlayerInventory;
 
@@ -22,18 +22,18 @@ import com.bermudalocket.nerdUHC.modules.UHCLibrary;
 
 public class CombatLogger {
 
-	private NerdUHC plugin;
+	private final NerdUHC plugin;
 
 	// doppellist<Player UUID, Entity UUID>
-	private HashMap<	UUID, UUID> doppellist = new HashMap<UUID, UUID>();
+	private final HashMap<UUID, UUID> doppellist = new HashMap<>();
 	
 	// tagmap<Player UUID, Long>
-	private HashMap<UUID, Long> tagmap = new HashMap<UUID, Long>();
+	private final HashMap<UUID, Long> tagmap = new HashMap<>();
 	
-	private Set<UUID> deathqueue = new HashSet<UUID>();
-	private Set<UUID> nodroplist = new HashSet<UUID>();
-	private HashMap<UUID, PlayerInventory> invlist = new HashMap<UUID, PlayerInventory>();
-	private HashMap<UUID, Integer> explist = new HashMap<UUID, Integer>();
+	private final Set<UUID> deathqueue = new HashSet<>();
+	private final Set<UUID> nodroplist = new HashSet<>();
+	private final HashMap<UUID, PlayerInventory> invlist = new HashMap<>();
+	private final HashMap<UUID, Integer> explist = new HashMap<>();
 
 	public CombatLogger(NerdUHC plugin) {
 		this.plugin = plugin;
@@ -47,7 +47,7 @@ public class CombatLogger {
 	
 	// DROPS and EXP
 	
-	public void logInventory(Player p) {
+	private void logInventory(Player p) {
 		invlist.put(p.getUniqueId(), p.getInventory());
 		explist.put(p.getUniqueId(), (int) p.getExp());
 	}
@@ -66,7 +66,7 @@ public class CombatLogger {
 		return doppellist.values().contains(e.getUniqueId());
 	}
 
-	public LivingEntity getDoppel(Player p) {
+	private LivingEntity getDoppel(Player p) {
 		UUID d = doppellist.get(p.getUniqueId());
 		for (LivingEntity e : plugin.CONFIG.WORLD.getLivingEntities()) {
 			if (e.getUniqueId().equals(d)) return e;
@@ -89,37 +89,38 @@ public class CombatLogger {
 		Long tagexpires = tagmap.get(p.getUniqueId()) + plugin.CONFIG.PLAYER_COMBAT_TAG_TIME * 1000;
 		return System.currentTimeMillis() < tagexpires;
 	}
+
+	@SuppressWarnings("deprecation")
+	private void callDeathEvent(Player p) {
+		p.setLastDamageCause(new EntityDamageEvent(p, EntityDamageEvent.DamageCause.CUSTOM, 0));
+		Bukkit.getPluginManager().callEvent(new PlayerDeathEvent(p, null, 0, p.getDisplayName() + " thought they could get away with combat logging!"));
+	}
 	
 	public boolean alreadyDroppedInv(Player p) {
 		return nodroplist.contains(p.getUniqueId());
 	}
-	
-	public void removeFromNoDropList(Player p) {
-		nodroplist.remove(p.getUniqueId());
-	}
-	
+
 	public void addToDeathQueue(UUID playeruuid) {
 		deathqueue.add(playeruuid);
 		nodroplist.add(playeruuid);
 	}
 	
 	public void spawnDoppel(Player p) {
+		if (p.isDead() || p.getGameMode() == GameMode.SPECTATOR) {
+			return;
+		}
 		
-		if (p.isDead() || p.getGameMode() == GameMode.SPECTATOR) return;
-		
-		LivingEntity doppel = configuredDoppel(plugin.CONFIG.COMBAT_TAG_DOPPEL, p);
-
+		LivingEntity doppel = configuredDoppel(p);
 		for (Entity e : plugin.CONFIG.WORLD.getNearbyEntities(p.getLocation(), 8, 8, 8)) {
 			if (e instanceof Monster) {
 				((Monster) e).setTarget(doppel);
 			}
 		}
-		
 		doppellist.put(p.getUniqueId(), doppel.getUniqueId());
-		
+		logInventory(p);
 	}
 	
-	private LivingEntity configuredDoppel(EntityType type, Player p) {
+	private LivingEntity configuredDoppel(Player p) {
 		LivingEntity doppel = (LivingEntity) plugin.CONFIG.WORLD.spawnEntity(p.getLocation(), plugin.CONFIG.COMBAT_TAG_DOPPEL);
 		doppel.setAI(false);
 		doppel.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(20.0);
@@ -134,7 +135,7 @@ public class CombatLogger {
 		if (!doppellist.containsKey(p.getUniqueId())) return;
 		
 		if (deathqueue.contains(p.getUniqueId())) {
-			p.setHealth(0);
+			callDeathEvent(p);
 			doppellist.remove(p.getUniqueId());
 			deathqueue.remove(p.getUniqueId());
 			UHCLibrary.LIB_CL_DOPPELDEAD.emph(p);
@@ -148,7 +149,7 @@ public class CombatLogger {
 		}
 		if (doppel.isDead()) {
 			UHCLibrary.LIB_CL_DOPPELDEAD.emph(p);
-			Bukkit.getPluginManager().callEvent(new PlayerDeathEvent(p, null, 0, p.getDisplayName() + " thought they could get away with combat logging!"));
+			callDeathEvent(p);
 		} else {
 			if (p.getHealth() == doppel.getHealth()) {
 				UHCLibrary.LIB_CL_NODMG.emph(p);

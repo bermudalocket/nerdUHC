@@ -6,14 +6,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.modules.UHCMatch;
-import com.bermudalocket.nerdUHC.modules.UHCMatchState;
 
 public class PreMatchListener implements Listener {
 
-	private NerdUHC plugin;
+	private final NerdUHC plugin;
 	
 	public PreMatchListener(NerdUHC plugin) {
 		this.plugin = plugin;
@@ -31,7 +30,14 @@ public class PreMatchListener implements Listener {
 
 	@EventHandler
 	public void onMobSpawn(CreatureSpawnEvent e) {
-		UHCMatch currentmatch = plugin.matchHandler.getMatch();
-		if (currentmatch.getMatchState() == UHCMatchState.PREGAME) e.setCancelled(true);
+		e.setCancelled(true);
 	}
+	
+	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent e) {
+		if (e.getTo().distanceSquared(plugin.CONFIG.WORLD.getSpawnLocation()) > plugin.CONFIG.SPAWN_BARRIER_RADIUS_SQUARED) {
+			e.getPlayer().teleport(e.getFrom());
+		}
+	}
+
 }

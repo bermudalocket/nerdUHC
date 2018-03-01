@@ -1,10 +1,9 @@
 package com.bermudalocket.nerdUHC.modules;
 
+import com.bermudalocket.nerdUHC.gui.GUIHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
@@ -21,29 +20,30 @@ import com.bermudalocket.nerdUHC.listeners.PreMatchListener;
 import com.bermudalocket.nerdUHC.match.MatchStartCountdownTimer;
 import com.bermudalocket.nerdUHC.match.CombatLogger;
 import com.bermudalocket.nerdUHC.scoreboards.ScoreboardHandler;
-import com.bermudalocket.nerdUHC.scoreboards.ScoreboardTimer;
+import com.bermudalocket.nerdUHC.match.MatchTimer;
 
 public class UHCMatch {
 
-	private NerdUHC plugin;
+	private final NerdUHC plugin;
 	private UHCMatchState state;
-	private UHCGameMode mode;
-	private World world;
+	private final UHCGameMode mode;
+	private final World world;
 	private long duration;
+
+	private final UHCWorldBorder worldBorder;
 
 	private Scoreboard scoreboard;
 
-	private ScoreboardHandler scoreboardHandler;
-	private CombatLogger combatLogger;
-	private UHCUtils util;
+	private final ScoreboardHandler scoreboardHandler;
+	private final CombatLogger combatLogger;
 	
-	private UHCInventoryMenu menuGUI;
+	private final GUIHandler menuGUI;
 
-	private PreMatchListener pregameListener;
-	private MatchListener gameListener;
+	private final PreMatchListener pregameListener;
+	private final MatchListener gameListener;
 
-	private MatchStartCountdownTimer matchStartCountdownTimer;
-	private ScoreboardTimer scoreboardTimer;
+	private final MatchStartCountdownTimer matchStartCountdownTimer;
+	private final MatchTimer matchTimer;
 
 	public UHCMatch(NerdUHC plugin) {
 		this.plugin = plugin;
@@ -52,19 +52,23 @@ public class UHCMatch {
 		this.world = plugin.CONFIG.WORLD;
 		this.duration = plugin.CONFIG.MATCH_DURATION * 60;
 
+		this.worldBorder = new UHCWorldBorder(this);
+
 		this.scoreboardHandler = new ScoreboardHandler(plugin, this);
 		this.scoreboardHandler.createScoreboard();
 		
-		scoreboardTimer = new ScoreboardTimer(this, this.duration);
+		matchStartCountdownTimer = new MatchStartCountdownTimer(this);
+		matchTimer = new MatchTimer(this, this.duration);
 		
 		this.combatLogger = new CombatLogger(plugin);
-		this.util = new UHCUtils(plugin, this);
 		
-		this.menuGUI = new UHCInventoryMenu(plugin, this);
+		this.menuGUI = new GUIHandler(plugin, this);
 		plugin.getServer().getPluginManager().registerEvents(menuGUI, plugin);
 
 		pregameListener = new PreMatchListener(plugin);
 		plugin.getServer().getPluginManager().registerEvents(pregameListener, plugin);
+		
+		gameListener = new MatchListener(this);
 	}
 	
 	// ----------------------------------------------------------------
@@ -80,16 +84,12 @@ public class UHCMatch {
 	public ScoreboardHandler getScoreboardHandler() {
 		return scoreboardHandler;
 	}
-
-	public UHCUtils getBarrier() {
-		return util;
+	
+	public MatchTimer getMatchTimer() {
+		return matchTimer;
 	}
 	
-	public ScoreboardTimer getScoreboardTimer() {
-		return scoreboardTimer;
-	}
-	
-	public UHCInventoryMenu getGUI() {
+	public GUIHandler getGUI() {
 		return menuGUI;
 	}
 
@@ -98,6 +98,8 @@ public class UHCMatch {
 	public World getWorld() {
 		return world;
 	}
+
+	public UHCWorldBorder getWorldBorder() { return worldBorder; }
 
 	public Scoreboard getScoreboard() {
 		return scoreboard;
@@ -113,6 +115,10 @@ public class UHCMatch {
 
 	public UHCMatchState getMatchState() {
 		return state;
+	}
+	
+	public void setDuration(int minutes) {
+		this.duration = minutes * 60;
 	}
 	
 	// ----------------------------------------------------------------
@@ -137,99 +143,63 @@ public class UHCMatch {
 		}
 		scoreboardHandler.forceHealthUpdates();
 	}
-	
+
 	// ----------------------------------------------------------------
 
 	public void beginMatchStartCountdown() {
-		HandlerList.unregisterAll(pregameListener);
-		HandlerList.unregisterAll(menuGUI);
-		
-		gameListener = new MatchListener(this);
-		plugin.getServer().getPluginManager().registerEvents(gameListener, plugin);
-		
-		matchStartCountdownTimer = new MatchStartCountdownTimer(this);
-		matchStartCountdownTimer.runTaskTimer(plugin, 1, 20);
+		if (matchStartCountdownTimer.isRunning()) {
+			matchStartCountdownTimer.attemptStop();
+		} else {
+			matchStartCountdownTimer.runTaskTimer(plugin, 1, 20);
+		}
 	}
 	
 	// ----------------------------------------------------------------
 
-	@SuppressWarnings("deprecation")
 	public void beginMatch() {
 		this.state = UHCMatchState.INPROGRESS;
-		matchStartCountdownTimer = null;
+		UHCSound.MATCHSTART.playSound();
+		
+		HandlerList.unregisterAll(pregameListener);
+		HandlerList.unregisterAll(menuGUI);
+		
+		plugin.getServer().getPluginManager().registerEvents(gameListener, plugin);
+
+		plugin.CONFIG.WORLD.setTime(100);
+		plugin.CONFIG.WORLD.setStorm(false);
+		plugin.CONFIG.WORLD.setPVP(false);
 
 		scoreboardHandler.pruneTeams();
+		scoreboardHandler.spreadPlayers();
 
-		String spreadplayers = "spreadplayers " + getWorld().getSpawnLocation().getX();
-		spreadplayers += " " + getWorld().getSpawnLocation().getZ();
-		spreadplayers += " " + plugin.CONFIG.SPREAD_DIST_BTWN_PLAYERS;
-		spreadplayers += " " + plugin.CONFIG.SPREAD_DIST_FROM_SPAWN;
-		spreadplayers += " " + plugin.CONFIG.SPREAD_RESPECT_TEAMS;
-
-		for (Player p : Bukkit.getOnlinePlayers()) {
-			if (scoreboard.getPlayerTeam(p) != null) {
-				spreadplayers += " " + p.getName();
-				resetPlayer(p, true);
-			} else {
-				p.setGameMode(GameMode.SPECTATOR);
-			}
-		}
-
-		plugin.CONFIG.WORLD.setTime(0);
-		plugin.CONFIG.WORLD.setStorm(false);
-		plugin.CONFIG.WORLD.setDifficulty(Difficulty.HARD);
-		plugin.CONFIG.WORLD.setPVP(true);
-
-		plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers);
-
-		UHCSound.MATCHSTART.playSound();
-
-		util.drawBarrier(false);
-
-		scoreboardTimer.runTaskTimer(plugin, 0, 20);
-
-		scoreboardHandler.refresh();
+		matchTimer.runTaskTimer(plugin, 0, 20);
 	}
 	
 	// ----------------------------------------------------------------
 
 	public void beginMatchEndTransition() {
-		if (!scoreboardTimer.isCancelled()) {
-			scoreboardTimer.cancel();
+		if (!matchTimer.isCancelled()) {
+			matchTimer.cancel();
 		}
 		beginDeathmatch();
 	}
 	
 	// ----------------------------------------------------------------
 
-	@SuppressWarnings("deprecation")
-	public void beginDeathmatch() {
+	private void beginDeathmatch() {
 		this.state = UHCMatchState.DEATHMATCH;
+		UHCSound.DEATHMATCHSTART.playSound();
 
-		String spreadplayers = "spreadplayers " + plugin.CONFIG.SPAWN_X;
-		spreadplayers += " " + plugin.CONFIG.SPAWN_Z;
-		spreadplayers += " " + plugin.CONFIG.DEATHMATCH_DIST_BTWN_PLAYERS;
-		spreadplayers += " " + plugin.CONFIG.DEATHMATCH_SPREAD_DIST_FROM_SPAWN;
-		spreadplayers += " " + plugin.CONFIG.SPREAD_RESPECT_TEAMS;
-		spreadplayers += " ";
+		scoreboardHandler.spreadPlayers();
 
-		for (OfflinePlayer op : scoreboard.getPlayers()) {
-			if (op.isOnline()) {
-				spreadplayers += op.getName() + " ";
-			}
-		}
-
-		plugin.getServer().dispatchCommand(plugin.getServer().getConsoleSender(), spreadplayers);
-		
-		Bukkit.getOnlinePlayers().forEach(player -> player.sendTitle(ChatColor.RED + "Deathmatch!", null, 15, 60, 15));
-		
-		scoreboardHandler.refresh();
+		UHCLibrary.DEATHMATCH.sendAsTitle();
 	}
 	
 	// ----------------------------------------------------------------
 	
 	public void transitionToEnd(String winmsg) {
 		this.state = UHCMatchState.END;
+		UHCSound.MATCHEND.playSound();
 		
 		for (Player p : Bukkit.getOnlinePlayers()) {
 			p.sendTitle(winmsg, null, 20, 120, 20);
@@ -248,13 +218,9 @@ public class UHCMatch {
 	// ----------------------------------------------------------------
 	
 	public void endMatch() {
-		if (!scoreboardTimer.isCancelled()) {
-			scoreboardTimer.cancel();
+		if (!matchTimer.isCancelled()) {
+			matchTimer.cancel();
 		}
-		scoreboardTimer = null;
-		scoreboardHandler = null;
-		combatLogger = null;
-		util = null;
 		HandlerList.unregisterAll(gameListener);
 		plugin.matchHandler.getNewMatch();
 		migratePlayers();

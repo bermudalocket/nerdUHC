@@ -1,28 +1,27 @@
 package com.bermudalocket.nerdUHC.modules;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 public enum UHCLibrary {
 	
+	LIB(""),
+	DEATHMATCH("Deathmatch!"),
+
+	// Notices
+	LIB_PVP_ENABLED(ChatColor.RED + "PVP has been enabled!"),
+	LIB_PVP_DISABLED(ChatColor.RED + "PVP has been disabled!"),
+	
 	// Gamemaster Command Messages
-	LIB_UPDATED("Game mode updated!"),
-	LIB_UHC_STOPPED("Stopping the UHC..."),
-	LIB_CONF_RELOADED("Config reloaded!" + ChatColor.GRAY + " This will take effect in the next match."),
-	LIB_FROZEN("Players have been frozen."),
-	LIB_UNFROZEN("Players have been unfrozen."),
-	LIB_BARRIER_DRAWN("Barrier drawn!"),
-	LIB_BARRIER_REM("Barrier removed!"),
 	LIB_SCOREBOARD_REFRESHED("Your scoreboard has been refreshed."),
 	LIB_SCOREBOARD_ALL_REFRESHED("Scoreboard refreshed for all players in this match."),
-	LIB_PVP_ENABLED("PVP has been enabled."),
-	LIB_PVP_DISABLED("PVP has been disabled."),
+	LIB_BORDER_SHRINKING(ChatColor.RED + "The world border has begun to shrink!"),
+	LIB_BORDER_FROZEN(ChatColor.AQUA + "The world border is now frozen."),
 	
 	// Gamemaster Command Errors
-	LIB_ERR_INVALID("Invalid game mode!"),
 	LIB_ERR_UHC_RUNNING("A UHC is already in progress!"),
 	LIB_ERR_NO_UHC_RUNNING("A UHC is not currently running!"),
-	LIB_ERR_STARTED("You can't reload the config while a UHC is in session."),
 	
 	// Pregame Listener
 	LIB_WELCOME("Welcome to nerdUHC. The next round will be a %t round."),
@@ -35,22 +34,25 @@ public enum UHCLibrary {
 	
 	// Player Command Errors
 	LIB_ERR_NOTEAMFORCHAT("You can't chat with your team if you're not on a team!"),
+	LIB_ERR_NOKIT("You can't get a lobby kit if the match has already started!"),
+	LIB_ERR_TEAM_FULL("That team is either full or doesn't exist!"),
+	LIB_ERR_JOIN_SYNTAX("Invalid syntax! Try /join [team]."),
 	
 	// CombatLogger
 	LIB_CL_DOPPELDEAD("You combat logged and your doppel died!"),
 	LIB_CL_DMG("You combat logged and your doppel took %d damage!"),
 	LIB_CL_NODMG("You combat logged but your doppel took no damage. Lucky you!");
 
-	private String s;
-	private static ChatColor base = ChatColor.GOLD;
-	private static ChatColor emph = ChatColor.ITALIC;
-	private static ChatColor err = ChatColor.RED;
+	private final String s;
+	private static final ChatColor base = ChatColor.GOLD;
+	private static final ChatColor emph = ChatColor.ITALIC;
+	private static final ChatColor err = ChatColor.RED;
 	
 	UHCLibrary(String s) {
 		this.s = s;
 	}
 	
-	public void get(Player p) {
+	public void tell(Player p) {
 		p.sendMessage(base + s);
 	}
 	
@@ -65,11 +67,34 @@ public enum UHCLibrary {
 	
 	public void err(Player p) {
 		p.sendMessage(err + s);
+		UHCSound.OOPS.playSound(p);
 	}
 	
 	public void rep(Player p, String find, String replace) {
 		String msg = base + s.replace(find, replace);
 		p.sendMessage(msg);
+	}
+
+	// ---------
+
+	public void broadcast() {
+		Bukkit.getServer().broadcastMessage(s);
+	}
+
+	public void sendAsTitle() {
+		Bukkit.getOnlinePlayers().forEach(p -> p.sendTitle(s, null, 10, 60, 10));
+	}
+	
+	public void welcome(Player p, UHCGameMode uhcgamemode) {
+		if (uhcgamemode == UHCGameMode.SOLO) {
+			LIB_SOLO_JOIN.tell(p);
+			LIB_SPEC.tell(p);
+		} else {
+			LIB_TEAM_LIST.tell(p);
+			LIB_TEAM_JOIN.tell(p);
+			LIB_TEAM_CHAT.tell(p);
+			LIB_SPEC.tell(p);
+		}
 	}
 
 }

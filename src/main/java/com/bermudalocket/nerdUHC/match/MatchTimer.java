@@ -1,27 +1,26 @@
-package com.bermudalocket.nerdUHC.scoreboards;
+package com.bermudalocket.nerdUHC.match;
 
 import java.util.concurrent.TimeUnit;
 
+import com.bermudalocket.nerdUHC.modules.UHCLibrary;
 import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.bermudalocket.nerdUHC.modules.UHCMatch;
 
-public class ScoreboardTimer extends BukkitRunnable {
+@SuppressWarnings("ALL")
+public class MatchTimer extends BukkitRunnable {
 
-	private UHCMatch match;
-
+	private final UHCMatch match;
 	private long duration;
-	private long h;
-	private long m;
-	private long s;
-	
-	private String title;
-	private ChatColor color = ChatColor.WHITE;
+
+	// tasks
+	private boolean taskEnablePVP = false;
+	private boolean taskWorldBorderShrink = false;
 	
 	// -------------------------------------------------------------------------------
 
-	public ScoreboardTimer(UHCMatch match, long duration) {
+	public MatchTimer(UHCMatch match, long duration) {
 		this.match = match;
 		this.duration = duration;
 	}
@@ -32,33 +31,41 @@ public class ScoreboardTimer extends BukkitRunnable {
 		duration += sec;
 	}
 	
-	public void setDuration(int sec) {
-		this.duration = sec * 60;
-	}
+	// -------------------------------------------------------------------------------
 
 	@Override
 	public void run() {
 
-		if (this.isCancelled())
-			return;
-
 		duration--;
 
-		if (duration == 0 || duration < 0) {
-			match.beginMatchEndTransition();
+		if (!taskWorldBorderShrink && duration <= 60*60) {
+			match.getWorldBorder().shrink();
+			taskWorldBorderShrink = true;
 		}
 
-		h = TimeUnit.SECONDS.toHours(duration);
-		m = TimeUnit.SECONDS.toMinutes(duration) - 60 * h;
-		s = duration - 60 * m - 60 * 60 * h;
+		if (!taskEnablePVP && match.getWorld().getTime() < 100) {
+			UHCLibrary.LIB_PVP_ENABLED.sendAsTitle();
+			match.getWorld().setPVP(true);
+			taskEnablePVP = true;
+		}
 
-		if ((duration / 60) < 5) {
+		if (duration <= 0) {
+			match.beginMatchEndTransition();
+			this.cancel();
+		}
+
+		long h = TimeUnit.SECONDS.toHours(duration);
+		long m = TimeUnit.SECONDS.toMinutes(duration) - 60 * h;
+		long s = duration - 60 * m - 60 * 60 * h;
+
+		ChatColor color;
+		if (duration < 5*60) {
 			color = ChatColor.RED;
 		} else {
 			color = ChatColor.WHITE;
 		}
 
-		title = null;
+		String title = null;
 
 		switch (match.getMatchState()) {
 		case DEATHMATCH:
