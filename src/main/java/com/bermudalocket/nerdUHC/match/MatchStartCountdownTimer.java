@@ -1,5 +1,6 @@
 package com.bermudalocket.nerdUHC.match;
 
+import com.bermudalocket.nerdUHC.NerdUHC;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -22,6 +23,19 @@ public class MatchStartCountdownTimer extends BukkitRunnable {
 	public boolean isRunning() {
 		return isRunning;
 	}
+
+	public void start() {
+		isRunning = true;
+		this.runTaskTimer(NerdUHC.plugin, 1, 20);
+	}
+
+	public void pause() {
+		isRunning = false;
+	}
+
+	public void resume() {
+		isRunning = true;
+	}
 	
 	private void tick(int i) {
 		for (Player p : Bukkit.getOnlinePlayers()) {
@@ -31,7 +45,7 @@ public class MatchStartCountdownTimer extends BukkitRunnable {
 	}
 
 	public void run() {
-		isRunning = true;
+		if (!isRunning) return;
 		
 		if (i == 0) {
 			match.beginMatch();
@@ -41,14 +55,4 @@ public class MatchStartCountdownTimer extends BukkitRunnable {
 		}
 		i--;
 	}
-	
-	public void attemptStop() {
-		if (isRunning) {
-			if (!this.isCancelled()) {
-				this.cancel();
-				i = 10;
-			}
-		}
-	}
-
 }

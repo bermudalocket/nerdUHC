@@ -2,34 +2,30 @@ package com.bermudalocket.nerdUHC.gui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Random;
 
-import com.bermudalocket.nerdUHC.modules.UHCGameMode;
-import com.bermudalocket.nerdUHC.modules.UHCMatch;
-import com.bermudalocket.nerdUHC.modules.UHCMatchState;
-import com.bermudalocket.nerdUHC.modules.UHCSound;
+import com.bermudalocket.nerdUHC.modules.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Difficulty;
 import org.bukkit.DyeColor;
-import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.Wool;
 import org.bukkit.scoreboard.Team;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 
-@SuppressWarnings("StringEquality")
 public class GUIHandler implements Listener {
 
 	private final NerdUHC plugin;
@@ -40,41 +36,47 @@ public class GUIHandler implements Listener {
 	private static Inventory difficultyGUI;
 	private static Inventory friendlyfireGUI;
 	
-	private final ItemStack joinateam = new ItemStack(Material.IRON_HELMET, 1);
+	private final ItemStack joinTeam = new ItemStack(Material.STONE_SWORD, 1);
 	private final ItemStack spectate = new ItemStack(Material.EYE_OF_ENDER, 1);
-	private final ItemStack teamlist = new ItemStack(Material.BOOK, 1);
-	private final ItemStack randomteam = new ItemStack(Material.CHEST, 1);
+	private final ItemStack infoBook = new ItemStack(Material.WRITTEN_BOOK, 1);
+	private final ItemStack randomTeam = new ItemStack(Material.CHEST, 1);
 	
-	private final ItemStack setduration = new ItemStack(Material.WATCH, 1);
-	private final ItemStack setdifficulty = new ItemStack(Material.DIAMOND_SWORD, 1);
-	private final ItemStack setfriendlyfire = new ItemStack(Material.BARRIER, 1);
-	private final ItemStack startmatch = new ItemStack(Material.NETHER_STAR, 1);
+	private final ItemStack setDuration = new ItemStack(Material.WATCH, 1);
+	private final ItemStack setDifficulty = new ItemStack(Material.DIAMOND_SWORD, 1);
+	private final ItemStack setFriendlyFire = new ItemStack(Material.BARRIER, 1);
+	private final ItemStack startMatch = new ItemStack(Material.NETHER_STAR, 1);
 	
-	private final HashMap<ItemStack, Team> stackmap = new HashMap<>();
-	private final ArrayList<Team> teamList = new ArrayList<>();
+	private final HashMap<ItemStack, Team> stackMap = new HashMap<>();
 	
-	public GUIHandler(NerdUHC plugin, UHCMatch match) {
-		this.plugin = plugin;
+	public GUIHandler(UHCMatch match) {
+		this.plugin = NerdUHC.plugin;
 		this.match = match;
-		
 		build();
 		teamsToItems();
 	}
+
+	public void startListening() {
+		plugin.getServer().getPluginManager().registerEvents(this, plugin);
+	}
+
+	public void stopListening() {
+		HandlerList.unregisterAll(this);
+	}
 	
 	public void givePlayerGUIItems(Player p) {	
-		p.getInventory().setItem(0, joinateam);
+		p.getInventory().setItem(0, joinTeam);
 		p.getInventory().setItem(1, spectate);
-		p.getInventory().setItem(2, teamlist);
+		p.getInventory().setItem(2, infoBook);
 		if (p.hasPermission("nerduhc.gamemaster")) {
 			giveGamemasterGUIItems(p);
 		}
 	}
 	
 	private void giveGamemasterGUIItems(Player p) {
-		p.getInventory().setItem(4, startmatch);
-		p.getInventory().setItem(6, setduration);
-		p.getInventory().setItem(7, setdifficulty);
-		p.getInventory().setItem(8, setfriendlyfire);
+		p.getInventory().setItem(4, startMatch);
+		p.getInventory().setItem(6, setDuration);
+		p.getInventory().setItem(7, setDifficulty);
+		p.getInventory().setItem(8, setFriendlyFire);
 	}
 	
 	private void build() {
@@ -85,29 +87,48 @@ public class GUIHandler implements Listener {
 		
 		// player items
 		
-		ItemMeta joinateammeta = joinateam.getItemMeta();
+		ItemMeta joinateammeta = joinTeam.getItemMeta();
 		joinateammeta.setDisplayName("Join a team");
-		joinateam.setItemMeta(joinateammeta);
+		joinTeam.setItemMeta(joinateammeta);
 		
 		ItemMeta spectatemeta = spectate.getItemMeta();
 		spectatemeta.setDisplayName("Spectate");
 		spectate.setItemMeta(spectatemeta);
+
+		BookMeta infoBookMeta = (BookMeta) infoBook.getItemMeta();
+		infoBookMeta.setTitle("NerdUHC Quick Start Guide");
+		String page1 = String.format("%sWelcome to NerdUHC!%s \n \n" +
+				"If this is your first time playing, there are a few things to keep in mind... \n" +
+				"-%s %syour health will not regenerate naturally%s%s! \n" +
+				"- food is still necessary, but it will not heal you. \n" +
+				"- the %sNether%s and %sThe End%s are open.",
+				ChatColor.BOLD, ChatColor.RESET, ChatColor.BOLD, ChatColor.RED, ChatColor.RESET, ChatColor.BLACK,
+				ChatColor.RED, ChatColor.BLACK, ChatColor.DARK_PURPLE, ChatColor.BLACK);
+		String page2 = String.format("- you can use %s/t [msg]%s to chat with your team. \n \n" +
+				"- don't be a chicken and log out during combat, that's fowl play! %sA vulnerable chicken with" +
+				" your name, XP, and inventory will spawn in your place%s!",
+				ChatColor.GOLD, ChatColor.BLACK, ChatColor.DARK_RED, ChatColor.BLACK);
+		String page3 = String.format("- try crafting a %scompass or clock%s; they actually do something here! " +
+				"Just keep in mind there is a %s10 second%s cooldown on them. \n \n" +
+				"- last but not least, Ghasts will not drop %sghast tears%s! I hear they'll give you some gold instead...",
+				ChatColor.DARK_BLUE, ChatColor.BLACK, ChatColor.BOLD, ChatColor.RESET, ChatColor.AQUA, ChatColor.BLACK);
+				
+		infoBookMeta.addPage(page1);
+		infoBookMeta.addPage(page2);
+		infoBookMeta.addPage(page3);
+		infoBook.setItemMeta(infoBookMeta);
 		
-		ItemMeta teamlistmeta = teamlist.getItemMeta();
-		teamlistmeta.setDisplayName("Team list");
-		teamlist.setItemMeta(teamlistmeta);
-		
-		ItemMeta randomteammeta = randomteam.getItemMeta();
+		ItemMeta randomteammeta = randomTeam.getItemMeta();
 		randomteammeta.setDisplayName("Random");
-		randomteam.setItemMeta(randomteammeta);
+		randomTeam.setItemMeta(randomteammeta);
 		
 		// gamemaster items
 		// duration
 		
-		ItemMeta setdurationmeta = setduration.getItemMeta();
+		ItemMeta setdurationmeta = setDuration.getItemMeta();
 		setdurationmeta.setDisplayName("Duration");
 		setdurationmeta.addEnchant(Enchantment.KNOCKBACK, 1, true);
-		setduration.setItemMeta(setdurationmeta);
+		setDuration.setItemMeta(setdurationmeta);
 		
 		ItemStack thirty = new ItemStack(Material.COAL, 1);
 		ItemMeta thirtymeta = thirty.getItemMeta();
@@ -140,10 +161,10 @@ public class GUIHandler implements Listener {
 		
 		// difficulty
 		
-		ItemMeta setdifficultymeta = setdifficulty.getItemMeta();
+		ItemMeta setdifficultymeta = setDifficulty.getItemMeta();
 		setdifficultymeta.setDisplayName("Difficulty");
 		setdifficultymeta.addEnchant(Enchantment.KNOCKBACK, 1, true);
-		setdifficulty.setItemMeta(setdifficultymeta);
+		setDifficulty.setItemMeta(setdifficultymeta);
 		
 		ItemStack peaceful = new Wool(DyeColor.LIGHT_BLUE).toItemStack(1);
 		ItemMeta pm = peaceful.getItemMeta();
@@ -176,10 +197,10 @@ public class GUIHandler implements Listener {
 		
 		// friendly fire
 		
-		ItemMeta setfriendlyfiremeta = setfriendlyfire.getItemMeta();
+		ItemMeta setfriendlyfiremeta = setFriendlyFire.getItemMeta();
 		setfriendlyfiremeta.setDisplayName("Friendly Fire");
 		setfriendlyfiremeta.addEnchant(Enchantment.KNOCKBACK, 1, true);
-		setfriendlyfire.setItemMeta(setfriendlyfiremeta);
+		setFriendlyFire.setItemMeta(setfriendlyfiremeta);
 		
 		ItemStack ffon = new ItemStack(Material.DIAMOND_SWORD, 1);
 		ItemMeta om = ffon.getItemMeta();
@@ -195,10 +216,10 @@ public class GUIHandler implements Listener {
 		friendlyfireGUI.addItem(ffoff);
 		
 		// start match
-		ItemMeta startmatchmeta = startmatch.getItemMeta();
+		ItemMeta startmatchmeta = startMatch.getItemMeta();
 		startmatchmeta.setDisplayName("Start match!");
 		startmatchmeta.addEnchant(Enchantment.KNOCKBACK, 1, true);
-		startmatch.setItemMeta(startmatchmeta);
+		startMatch.setItemMeta(startmatchmeta);
 	}
 	
 	private void teamsToItems() {
@@ -287,7 +308,7 @@ public class GUIHandler implements Listener {
 			m = i.getItemMeta();
 			m.setDisplayName(t.getDisplayName());
 			
-			lore.add(ChatColor.WHITE + "Players: " + t.getSize() + "/" + plugin.CONFIG.MAX_TEAM_SIZE);
+			lore.add(ChatColor.WHITE + "Players: " + t.getSize() + "/" + plugin.config.MAX_TEAM_SIZE);
 			lore.add(" " + ChatColor.RESET);
 			for (String s : t.getEntries()) {
 				lore.add(ChatColor.WHITE + "" + s);
@@ -298,10 +319,10 @@ public class GUIHandler implements Listener {
 			
 			teamGUI.addItem(i);
 			
-			stackmap.put(i, t);
+			stackMap.put(i, t);
 		}
 		
-		teamGUI.addItem(randomteam);
+		teamGUI.addItem(randomTeam);
 		
 	}
 	
@@ -322,50 +343,38 @@ public class GUIHandler implements Listener {
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent e) {
 		
-		if (e.getItem() == null) {
+		if (e.getItem() == null || !e.getItem().getItemMeta().hasDisplayName()) {
 			return;
 		}
 		
 		Player p = e.getPlayer();
 		String s = e.getItem().getItemMeta().getDisplayName();
 		Boolean gm = p.hasPermission("nerduhc.gamemaster");
-
-		switch (s) {
-			case "Join a team":
-				p.openInventory(teamGUI);
-				break;
-			case "Spectate":
-				if (match.getScoreboard().getEntryTeam(p.getName()) != null)
-					match.getScoreboard().getEntryTeam(p.getName()).removeEntry(p.getName());
-				p.setGameMode(GameMode.SPECTATOR);
-				p.setAllowFlight(true);
-				p.setFlying(true);
-				UHCSound.JOINTEAM.playSound(p);
-				p.sendMessage(ChatColor.GOLD + "You are now spectating this match.");
-				p.sendMessage(ChatColor.GRAY + "" + ChatColor.ITALIC + "Run /join [team] if you change your mind before the match starts.");
-				match.getScoreboardHandler().refresh();
-				refreshItemGUI();
-				break;
-			case "Team list":
-				if (match.getGameMode() == UHCGameMode.TEAM) {
-					match.getScoreboard().getTeams().forEach(t -> p.sendMessage(t.getDisplayName() + ChatColor.WHITE + "(" + t.getSize() + "/" + plugin.CONFIG.MAX_TEAM_SIZE + ")"));
-					UHCSound.DING.playSound(p);
-				}
-				break;
-			case "Duration":
-				if (gm) p.openInventory(durationGUI);
-				break;
-			case "Start match!":
-				if (gm && match.getMatchState().equals(UHCMatchState.PREGAME)) {
-					match.beginMatchStartCountdown();
-				}
-				break;
-			case "Difficulty":
-				if (gm) p.openInventory(difficultyGUI);
-				break;
-			case "Friendly Fire":
-				if (gm) p.openInventory(friendlyfireGUI);
-				break;
+		
+		if (e.getItem().getType().equals(Material.WRITTEN_BOOK)) {
+			BookMeta bookMeta = (BookMeta) e.getItem().getItemMeta();
+			s = bookMeta.getDisplayName();
+		}
+		
+		if (s.equals("Join a team")) {
+			p.openInventory(teamGUI);
+		} else if (s.equals("Spectate")) {
+			match.getScoreboardHandler().makeSpectator(p);
+			refreshItemGUI();
+		} else if (s.equals("NerdUHC Quick Start Guide")) {
+			// do nothing
+		} else if (s.equals("Duration")) {
+			if (gm) p.openInventory(durationGUI);
+		} else if (s.equals("Start match!")) {
+			if (gm && match.getMatchState().equals(UHCMatchState.PREGAME)) {
+				match.beginMatchStartCountdown();
+			}
+		} else if (s.equals("Difficulty")) {
+			if (gm) p.openInventory(difficultyGUI);
+		} else if (s.equals("Friendly Fire")) {
+			if (gm) p.openInventory(friendlyfireGUI);
+		} else {
+			p.getInventory().remove(e.getItem());
 		}
 		e.setCancelled(true);
 	}
@@ -389,57 +398,36 @@ public class GUIHandler implements Listener {
 			if (i.isSimilar(new Wool(DyeColor.ORANGE).toItemStack(1))) s = "Medium";
 			if (i.isSimilar(new Wool(DyeColor.RED).toItemStack(1))) s = "Hard";
 		}
-		if (s == "") return;
+		if (s.equals("")) return;
 		
 		// do stuff
 		
-		if (e.getInventory().getName() == teamGUI.getName()) {	
+		if (e.getInventory().getName().equals(teamGUI.getName())) {
 			
 			// selecting a team?
 			
-			if (stackmap.containsKey(i)) {
-				Team t = stackmap.get(i);
-				if (t.getSize() < plugin.CONFIG.MAX_TEAM_SIZE) {
+			if (stackMap.containsKey(i)) {
+				Team t = stackMap.get(i);
+				if (t.getSize() < plugin.config.MAX_TEAM_SIZE) {
 					match.getScoreboardHandler().addPlayerToTeam(p, t.getName());
 					p.closeInventory();
 					refreshItemGUI();
 				} else {
-					p.sendMessage(ChatColor.RED + "That team is full!");
-					UHCSound.OOPS.playSound(p);
+					UHCLibrary.LIB_ERR_TEAM_FULL.err(p);
 				}
-			} else if (s == "Random") {
-				Boolean foundTeam = false;
-				
-				teamList.clear();
-				teamList.addAll(match.getScoreboard().getTeams());
-				
-				while (!foundTeam) {
-					Random randInt = new Random();
-					Integer j = randInt.nextInt(teamList.size());
+			} else if (s.equals("Random")) {
 
-					Team t = teamList.get(j);
-					String teamName = t.getName();
+				// Joining a random team?
 
-					if (t.getSize() < plugin.CONFIG.MAX_TEAM_SIZE) {
-						match.getScoreboardHandler().addPlayerToTeam(p, teamName);
-						p.closeInventory();
-						refreshItemGUI();
-						foundTeam = true;
-					} else {
-						teamList.remove((int) j);
-					}
-					
-					if (teamList.size() == 0) {
-						p.sendMessage(ChatColor.RED + "Sorry, no teams are available to join.");
-						foundTeam = true;
-					}
-				}
+				match.getScoreboardHandler().addPlayerRandomTeam(p);
+				p.closeInventory();
+				refreshItemGUI();
 				
 			} else {
 				e.getInventory().remove(i);
 			}
 			
-		} else if (e.getInventory().getName() == durationGUI.getName()) {
+		} else if (e.getInventory().getName().equals(durationGUI.getName())) {
 			
 			// changing match duration?
 
@@ -463,7 +451,7 @@ public class GUIHandler implements Listener {
 			p.sendMessage(ChatColor.GOLD + "Duration set to " + s);
 			p.closeInventory();
 			
-		} else if (e.getInventory().getName() == difficultyGUI.getName()) {
+		} else if (e.getInventory().getName().equals(difficultyGUI.getName())) {
 			
 			// changing world difficulty?
 			
@@ -474,18 +462,18 @@ public class GUIHandler implements Listener {
 			p.sendMessage(ChatColor.GOLD + "Difficulty set to " + s);
 			p.closeInventory();
 			
-		} else if (e.getInventory().getName() == friendlyfireGUI.getName()) {
+		} else if (e.getInventory().getName().equals(friendlyfireGUI.getName())) {
 			
 			// changing friendly fire state?
 			
 			if (i.getType() != Material.DIAMOND_SWORD && i.getType() != Material.SHIELD) return; // that's not right
 			
 			for (Team t : match.getScoreboard().getTeams()) {
-				t.setAllowFriendlyFire(s == "Enabled");
+				t.setAllowFriendlyFire(s.equals("Enabled"));
 			}
 			
 			UHCSound.DING.playSound(p);
-			p.sendMessage(ChatColor.GOLD + "Friendly fire is now " + ((s == "Enabled") ? "enabled" : "disabled"));
+			p.sendMessage(ChatColor.GOLD + "Friendly fire is now " + ((s.equals("Enabled")) ? "enabled" : "disabled"));
 			p.closeInventory();
 			
 		}

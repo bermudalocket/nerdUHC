@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -16,6 +19,9 @@ public class Configuration {
 	private final NerdUHC plugin;
 
 	public World WORLD;
+	public int SPAWN_X;
+	public int SPAWN_Y;
+	public int SPAWN_Z;
 	public int MATCH_DURATION;
 	public int MAX_TEAM_SIZE;
 	public UHCGameMode UHC_GAME_MODE;
@@ -28,18 +34,24 @@ public class Configuration {
 
 	private List<Map<?, ?>> rawteamlist = new ArrayList<>();
 
-	public Configuration(NerdUHC plugin) {
-		this.plugin = plugin;
+	public Configuration() {
+		plugin = NerdUHC.plugin;
 		plugin.saveDefaultConfig();
+		reload();
 	}
 
-	public void reload() {
+	private void reload() {
 		plugin.reloadConfig();
 		FileConfiguration config = plugin.getConfig();
 
 		WORLD = Bukkit.getWorld(config.getString("world-name", "world"));
 		if (WORLD == null) plugin.getLogger().info(ChatColor.RED + "World specified in config is invalid, and a default world named \"world\" could not be found.");
-		WORLD.setDifficulty(Difficulty.HARD);
+		SPAWN_X = config.getInt("spawn-x", 0);
+		SPAWN_Y = config.getInt("spawn-y", 65);
+		SPAWN_Z = config.getInt("spawn-z", 0);
+		WORLD.setSpawnLocation(new Location(WORLD, SPAWN_X, SPAWN_Y, SPAWN_Z));
+		WORLD.setKeepSpawnInMemory(false);
+		WORLD.setSpawnFlags(false, false);
 
 		String getgamemode = config.getString("uhc-game-mode", "SOLO");
 		if (isValidGameMode(getgamemode)) {
@@ -54,21 +66,6 @@ public class Configuration {
 			MATCH_DURATION = 180;
 			plugin.getLogger().info(ChatColor.RED + "Invalid match duration specified. Must be an integer greater than 0. Defaulting to 180 minutes.");
 		}
-
-		int SPAWN_X = config.getInt("spawn-x", 0);
-		int SPAWN_Y = config.getInt("spawn-y", 65);
-		int SPAWN_Z = config.getInt("spawn-z", 0);
-		if (SPAWN_X > WORLD.getWorldBorder().getSize()/2) {
-			plugin.getLogger().info(ChatColor.RED + "SPAWN_X coordinate is outside world border. Are you sure?");
-		}
-		if (SPAWN_Y > 255 || SPAWN_Y < 0) {
-			plugin.getLogger().info(ChatColor.RED + "SPAWN_Y coordinate is either above 255 or below 0. Are you sure?");
-		}
-		if (SPAWN_Z > WORLD.getWorldBorder().getSize()/2) {
-			plugin.getLogger().info(ChatColor.RED + "SPAWN_Z coordinate is outside world border. Are you sure?");
-		}
-		
-		WORLD.setSpawnLocation(SPAWN_X, SPAWN_Y, SPAWN_Z);
 
 		int SPAWN_BARRIER_RADIUS = config.getInt("spawn-barrier-radius", 6);
 		if (SPAWN_BARRIER_RADIUS < 0) {
@@ -100,7 +97,7 @@ public class Configuration {
 		SPREAD_RESPECT_TEAMS = config.getBoolean("spread-respect-teams", true);
 
 		GAMERULES = config.getMapList("gamerules");
-		
+
 		BukkitRunnable setGameRulesTask = new BukkitRunnable() {
 			@Override
 			public void run() {

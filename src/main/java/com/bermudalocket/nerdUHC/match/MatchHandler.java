@@ -8,8 +8,8 @@ public class MatchHandler {
 	private final NerdUHC plugin;
 	private UHCMatch match;
 
-	public MatchHandler(NerdUHC plugin) {
-		this.plugin = plugin;
+	public MatchHandler() {
+		this.plugin = NerdUHC.plugin;
 		getNewMatch();
 	}
 	

@@ -7,10 +7,7 @@ import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Scoreboard;
 
@@ -18,9 +15,9 @@ import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.listeners.MatchListener;
 import com.bermudalocket.nerdUHC.listeners.PreMatchListener;
 import com.bermudalocket.nerdUHC.match.MatchStartCountdownTimer;
-import com.bermudalocket.nerdUHC.match.CombatLogger;
 import com.bermudalocket.nerdUHC.scoreboards.ScoreboardHandler;
 import com.bermudalocket.nerdUHC.match.MatchTimer;
+import org.bukkit.scoreboard.Team;
 
 public class UHCMatch {
 
@@ -35,51 +32,42 @@ public class UHCMatch {
 	private Scoreboard scoreboard;
 
 	private final ScoreboardHandler scoreboardHandler;
-	private final CombatLogger combatLogger;
 	
-	private final GUIHandler menuGUI;
+	private final GUIHandler guiHandler;
 
-	private final PreMatchListener pregameListener;
-	private final MatchListener gameListener;
+	private final PreMatchListener prematchListener;
+	private final MatchListener matchListener;
 
 	private final MatchStartCountdownTimer matchStartCountdownTimer;
 	private final MatchTimer matchTimer;
 
 	public UHCMatch(NerdUHC plugin) {
 		this.plugin = plugin;
+
+		// match properties
 		this.state = UHCMatchState.PREGAME;
-		this.mode = plugin.CONFIG.UHC_GAME_MODE;
-		this.world = plugin.CONFIG.WORLD;
-		this.duration = plugin.CONFIG.MATCH_DURATION * 60;
+		this.mode = plugin.config.UHC_GAME_MODE;
+		this.world = plugin.config.WORLD;
+		this.duration = plugin.config.MATCH_DURATION * 60;
 
+		// tools
 		this.worldBorder = new UHCWorldBorder(this);
+		this.scoreboardHandler = new ScoreboardHandler(this);
+		this.guiHandler = new GUIHandler(this);
 
-		this.scoreboardHandler = new ScoreboardHandler(plugin, this);
-		this.scoreboardHandler.createScoreboard();
-		
-		matchStartCountdownTimer = new MatchStartCountdownTimer(this);
-		matchTimer = new MatchTimer(this, this.duration);
-		
-		this.combatLogger = new CombatLogger(plugin);
-		
-		this.menuGUI = new GUIHandler(plugin, this);
-		plugin.getServer().getPluginManager().registerEvents(menuGUI, plugin);
+		// timers
+		this.matchStartCountdownTimer = new MatchStartCountdownTimer(this);
+		this.matchTimer = new MatchTimer(this, this.duration);
 
-		pregameListener = new PreMatchListener(plugin);
-		plugin.getServer().getPluginManager().registerEvents(pregameListener, plugin);
-		
-		gameListener = new MatchListener(this);
+		// listeners
+		this.prematchListener = new PreMatchListener(plugin);
+		this.matchListener = new MatchListener(this);
+
+		guiHandler.startListening();
+		prematchListener.startListening();
 	}
 	
 	// ----------------------------------------------------------------
-	
-	public NerdUHC getPlugin() {
-		return plugin;
-	}
-
-	public CombatLogger getCombatLogger() {
-		return combatLogger;
-	}
 	
 	public ScoreboardHandler getScoreboardHandler() {
 		return scoreboardHandler;
@@ -90,7 +78,7 @@ public class UHCMatch {
 	}
 	
 	public GUIHandler getGUI() {
-		return menuGUI;
+		return guiHandler;
 	}
 
 	// ----------------------------------------------------------------
@@ -99,7 +87,9 @@ public class UHCMatch {
 		return world;
 	}
 
-	public UHCWorldBorder getWorldBorder() { return worldBorder; }
+	public UHCWorldBorder getWorldBorder() {
+		return worldBorder;
+	}
 
 	public Scoreboard getScoreboard() {
 		return scoreboard;
@@ -125,32 +115,33 @@ public class UHCMatch {
 	
 	public void migratePlayers() {
 		Bukkit.getOnlinePlayers().forEach(player -> {
-			resetPlayer(player, false);
+			resetPlayer(player);
 			player.setScoreboard(scoreboard);
 			Bukkit.getPluginManager().callEvent(new PlayerJoinEvent(player, null));
 		});
-		plugin.matchHandler.getMatch().getScoreboardHandler().refresh();
+		scoreboardHandler.refresh();
 	}
 	
-	public void resetPlayer(Player p, boolean givedmgresist) {
+	public void resetPlayer(Player p) {
 		p.setGameMode(GameMode.SURVIVAL);
 		p.setHealth(p.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue());
 		p.setSaturation(20);
 		p.getInventory().clear();
 		p.setExp(0);
-		if (givedmgresist) {
-			p.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 20 * 20, 100, true));
-		}
-		scoreboardHandler.forceHealthUpdates();
+		scoreboardHandler.refresh();
 	}
 
 	// ----------------------------------------------------------------
 
 	public void beginMatchStartCountdown() {
 		if (matchStartCountdownTimer.isRunning()) {
-			matchStartCountdownTimer.attemptStop();
+			matchStartCountdownTimer.pause();
 		} else {
-			matchStartCountdownTimer.runTaskTimer(plugin, 1, 20);
+			try {
+				matchStartCountdownTimer.start();
+			} catch (IllegalStateException e) {
+				matchStartCountdownTimer.resume();
+			}
 		}
 	}
 	
@@ -158,43 +149,48 @@ public class UHCMatch {
 
 	public void beginMatch() {
 		this.state = UHCMatchState.INPROGRESS;
-		UHCSound.MATCHSTART.playSound();
 		
-		HandlerList.unregisterAll(pregameListener);
-		HandlerList.unregisterAll(menuGUI);
+		prematchListener.stopListening();
+		guiHandler.stopListening();
 		
-		plugin.getServer().getPluginManager().registerEvents(gameListener, plugin);
+		matchListener.startListening();
 
-		plugin.CONFIG.WORLD.setTime(100);
-		plugin.CONFIG.WORLD.setStorm(false);
-		plugin.CONFIG.WORLD.setPVP(false);
+		world.setTime(100);
+		world.setStorm(false);
+		world.setPVP(false);
 
 		scoreboardHandler.pruneTeams();
 		scoreboardHandler.spreadPlayers();
+		UHCSound.MATCHSTART.playSound();
 
 		matchTimer.runTaskTimer(plugin, 0, 20);
 	}
 	
 	// ----------------------------------------------------------------
 
-	public void beginMatchEndTransition() {
-		if (!matchTimer.isCancelled()) {
-			matchTimer.cancel();
-		}
-		beginDeathmatch();
+	public void beginDeathmatch() {
+		this.state = UHCMatchState.DEATHMATCH;
+		UHCLibrary.DEATHMATCH.sendAsTitle();
+		UHCSound.DEATHMATCHSTART.playSound();
+		scoreboardHandler.spreadPlayers();
 	}
 	
 	// ----------------------------------------------------------------
 
-	private void beginDeathmatch() {
-		this.state = UHCMatchState.DEATHMATCH;
-		UHCSound.DEATHMATCHSTART.playSound();
-
-		scoreboardHandler.spreadPlayers();
-
-		UHCLibrary.DEATHMATCH.sendAsTitle();
+	public void checkForMatchEnd() {
+		if (mode == UHCGameMode.SOLO) {
+			if (scoreboard.getEntries().size() == 1) {
+				String lastPlayer = scoreboard.getEntries().toArray()[0].toString();
+				transitionToEnd(lastPlayer + " wins!");
+			}
+		} else if (mode == UHCGameMode.TEAM) {
+			if (scoreboard.getTeams().size() == 1) {
+				Team lastteam = (Team) scoreboard.getTeams().toArray()[0];
+				transitionToEnd("The " + lastteam.getDisplayName() + " win!");
+			}
+		}
 	}
-	
+
 	// ----------------------------------------------------------------
 	
 	public void transitionToEnd(String winmsg) {
@@ -221,9 +217,9 @@ public class UHCMatch {
 		if (!matchTimer.isCancelled()) {
 			matchTimer.cancel();
 		}
-		HandlerList.unregisterAll(gameListener);
+		matchListener.stopListening();
 		plugin.matchHandler.getNewMatch();
-		migratePlayers();
+		plugin.matchHandler.getMatch().migratePlayers();
 	}
 
 }
