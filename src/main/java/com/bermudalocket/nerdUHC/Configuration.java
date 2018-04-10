@@ -12,9 +12,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import com.bermudalocket.nerdUHC.modules.UHCGameMode;
+import com.bermudalocket.nerdUHC.match.MatchMode;
 
 public class Configuration {
+
+	public int MAX_TEAM_SIZE;
+	public boolean USE_SCOREBOARD;
+
+	//
 
 	private final NerdUHC plugin;
 
@@ -23,8 +28,7 @@ public class Configuration {
 	public int SPAWN_Y;
 	public int SPAWN_Z;
 	public int MATCH_DURATION;
-	public int MAX_TEAM_SIZE;
-	public UHCGameMode UHC_GAME_MODE;
+	public MatchMode UHC_GAME_MODE;
 	public int PLAYER_COMBAT_TAG_TIME;
 	public EntityType COMBAT_TAG_DOPPEL;
 	public int SPAWN_BARRIER_RADIUS_SQUARED;
@@ -35,14 +39,20 @@ public class Configuration {
 	private List<Map<?, ?>> rawteamlist = new ArrayList<>();
 
 	public Configuration() {
-		plugin = NerdUHC.plugin;
+		plugin = NerdUHC.PLUGIN;
 		plugin.saveDefaultConfig();
 		reload();
 	}
 
 	private void reload() {
-		plugin.reloadConfig();
-		FileConfiguration config = plugin.getConfig();
+		NerdUHC.PLUGIN.reloadConfig();
+		FileConfiguration config = NerdUHC.PLUGIN.getConfig();
+
+		USE_SCOREBOARD = config.getBoolean("use-scoreboard");
+
+		NerdUHC.TEAM_HANDLER.load(config);
+
+		//
 
 		WORLD = Bukkit.getWorld(config.getString("world-name", "world"));
 		if (WORLD == null) plugin.getLogger().info(ChatColor.RED + "World specified in config is invalid, and a default world named \"world\" could not be found.");
@@ -55,9 +65,9 @@ public class Configuration {
 
 		String getgamemode = config.getString("uhc-game-mode", "SOLO");
 		if (isValidGameMode(getgamemode)) {
-			UHC_GAME_MODE = UHCGameMode.valueOf(getgamemode);
+			UHC_GAME_MODE = MatchMode.valueOf(getgamemode);
 		} else {
-			UHC_GAME_MODE = UHCGameMode.SOLO;
+			UHC_GAME_MODE = MatchMode.SOLO;
 			plugin.getLogger().info(ChatColor.RED + "Invalid UHC Game Mode specified. Defaulting to SOLO.");
 		}
 
@@ -116,7 +126,7 @@ public class Configuration {
 
 	private boolean isValidGameMode(String gameMode) {
 		try {
-			UHCGameMode.valueOf(gameMode);
+			MatchMode.valueOf(gameMode);
 			return true;
 		} catch (Exception f) {
 			return false;

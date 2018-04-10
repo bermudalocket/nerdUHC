@@ -1,24 +1,25 @@
 package com.bermudalocket.nerdUHC.match;
 
-import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.modules.UHCMatch;
+public class MatchHandler implements java.io.Serializable {
 
-public class MatchHandler {
+	private static final long serialVersionUID = 1L;
 
-	private final NerdUHC plugin;
-	private UHCMatch match;
+	private Match _match;
 
 	public MatchHandler() {
-		this.plugin = NerdUHC.plugin;
 		getNewMatch();
 	}
 	
 	public void getNewMatch() {
-		match = new UHCMatch(plugin);
+		_match = new Match();
 	}
 	
-	public UHCMatch getMatch() {
-		return match;
+	public Match getMatch() {
+		return _match;
+	}
+
+	public void load(MatchHandler matchHandler) {
+		_match = matchHandler.getMatch();
 	}
 	
 }

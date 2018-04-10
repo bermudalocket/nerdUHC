@@ -7,11 +7,9 @@ import com.bermudalocket.nerdUHC.modules.UHCSound;
 import org.bukkit.ChatColor;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import com.bermudalocket.nerdUHC.modules.UHCMatch;
-
 public class MatchTimer extends BukkitRunnable {
 
-	private final UHCMatch match;
+	private final Match match;
 	private long duration;
 
 	// tasks
@@ -20,7 +18,7 @@ public class MatchTimer extends BukkitRunnable {
 	
 	// -------------------------------------------------------------------------------
 
-	public MatchTimer(UHCMatch match, long duration) {
+	public MatchTimer(Match match, long duration) {
 		this.match = match;
 		this.duration = duration;
 	}

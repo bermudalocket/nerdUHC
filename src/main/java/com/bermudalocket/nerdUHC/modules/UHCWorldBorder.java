@@ -1,5 +1,6 @@
 package com.bermudalocket.nerdUHC.modules;
 
+import com.bermudalocket.nerdUHC.match.Match;
 import org.bukkit.WorldBorder;
 
 public class UHCWorldBorder {
@@ -9,7 +10,7 @@ public class UHCWorldBorder {
 	private boolean isShrinking = false;
 	private int shrinkRate = 0;
 
-	UHCWorldBorder(UHCMatch match) {
+	public UHCWorldBorder(Match match) {
 		this.worldBorder = match.getWorld().getWorldBorder();
 		worldBorder.setSize(3500);
 	}

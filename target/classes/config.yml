@@ -1,0 +1,47 @@
+world-name: world
+uhc-game-mode: TEAM
+match-duration: 180
+
+spawn-x: 0
+spawn-y: 65
+spawn-z: 0
+
+spawn-barrier-radius: 6
+spawn-barrier-block-name: BARRIER
+
+spread-distance-between-players: 200
+spread-distance-from-spawn: 201
+spread-respect-teams: TRUE
+
+let-players-pick-teams: TRUE
+force-even-teams: TRUE
+max-team-size: 3
+alive-team-name: ALIVE
+dead-team-name: DEAD
+allow-friendly-fire: FALSE
+
+player-combat-tag-time-in-sec: 30
+combat-tag-doppel: CHICKEN
+
+do-deathmatch: TRUE
+deathmatch-distance-between-players: 20
+deathmatch-distance-from-spawn: 100
+
+teams:
+  - name: 'Sapphlings'
+    color: 'RED'
+  - name: 'Guardians'
+    color: 'GOLD'
+  - name: 'Blazes'
+    color: 'YELLOW'
+  - name: 'Creepers'
+    color: 'GREEN'
+  - name: 'Vexes'
+    color: 'BLUE'
+  - name: 'Endermen'
+    color: 'DARK_PURPLE'
+
+gamerules:
+  - doDaylightCycle: true
+  - NaturalRegeneration: false
+  - doMobSpawning: true

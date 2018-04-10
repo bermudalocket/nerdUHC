@@ -6,17 +6,16 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import com.bermudalocket.nerdUHC.modules.UHCMatch;
 import com.bermudalocket.nerdUHC.modules.UHCSound;
 
 public class MatchStartCountdownTimer extends BukkitRunnable {
 	
-	private final UHCMatch match;
+	private final Match match;
 	
 	private boolean isRunning = false;
 	private int i = 10;
 	
-	public MatchStartCountdownTimer(UHCMatch match) {
+	public MatchStartCountdownTimer(Match match) {
 		this.match = match;
 	}
 	
@@ -26,7 +25,7 @@ public class MatchStartCountdownTimer extends BukkitRunnable {
 
 	public void start() {
 		isRunning = true;
-		this.runTaskTimer(NerdUHC.plugin, 1, 20);
+		this.runTaskTimer(NerdUHC.PLUGIN, 1, 20);
 	}
 
 	public void pause() {

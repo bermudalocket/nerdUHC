@@ -3,6 +3,8 @@ package com.bermudalocket.nerdUHC.gui;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.bermudalocket.nerdUHC.match.Match;
+import com.bermudalocket.nerdUHC.match.MatchState;
 import com.bermudalocket.nerdUHC.modules.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -29,7 +31,7 @@ import com.bermudalocket.nerdUHC.NerdUHC;
 public class GUIHandler implements Listener {
 
 	private final NerdUHC plugin;
-	private final UHCMatch match;
+	private final Match match;
 	
 	private static Inventory teamGUI;
 	private static Inventory durationGUI;
@@ -48,8 +50,8 @@ public class GUIHandler implements Listener {
 	
 	private final HashMap<ItemStack, Team> stackMap = new HashMap<>();
 	
-	public GUIHandler(UHCMatch match) {
-		this.plugin = NerdUHC.plugin;
+	public GUIHandler(Match match) {
+		this.plugin = NerdUHC.PLUGIN;
 		this.match = match;
 		build();
 		teamsToItems();
@@ -366,7 +368,7 @@ public class GUIHandler implements Listener {
 		} else if (s.equals("Duration")) {
 			if (gm) p.openInventory(durationGUI);
 		} else if (s.equals("Start match!")) {
-			if (gm && match.getMatchState().equals(UHCMatchState.PREGAME)) {
+			if (gm && match.getMatchState().equals(MatchState.PREGAME)) {
 				match.beginMatchStartCountdown();
 			}
 		} else if (s.equals("Difficulty")) {

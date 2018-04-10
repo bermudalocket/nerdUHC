@@ -1,6 +1,6 @@
 package com.bermudalocket.nerdUHC.commands;
 
-import com.bermudalocket.nerdUHC.modules.UHCGameMode;
+import com.bermudalocket.nerdUHC.match.MatchMode;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -10,8 +10,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.modules.UHCMatch;
-import com.bermudalocket.nerdUHC.modules.UHCMatchState;
+import com.bermudalocket.nerdUHC.match.Match;
+import com.bermudalocket.nerdUHC.match.MatchState;
 import com.bermudalocket.nerdUHC.modules.UHCLibrary;
 import org.bukkit.scoreboard.Team;
 
@@ -22,7 +22,7 @@ public class Commands implements CommandExecutor {
 	// -------------------------------------------------------------------------------
 	
 	public Commands() {
-		this.plugin = NerdUHC.plugin;
+		this.plugin = NerdUHC.PLUGIN;
 
 		// player commands
 		plugin.getCommand("join").setExecutor(this);
@@ -45,14 +45,14 @@ public class Commands implements CommandExecutor {
 		
 		if (!(sender instanceof Player)) return false;
 		Player p = (Player) sender;
-		UHCMatch match = plugin.matchHandler.getMatch();
+		Match match = plugin.matchHandler.getMatch();
 
 		// -------------------------------------------------------------------------------
 		// player commands
 		// -------------------------------------------------------------------------------
 
 		if (cmd.getName().equalsIgnoreCase("kit")) {
-			if (match.getMatchState() == UHCMatchState.PREGAME) {
+			if (match.getMatchState() == MatchState.PREGAME) {
 				p.getInventory().clear();
 				match.getGUI().givePlayerGUIItems(p);
 			} else {
@@ -114,7 +114,7 @@ public class Commands implements CommandExecutor {
 		}
 
 		if (cmd.getName().equalsIgnoreCase("teamlist")) {
-			if (match.getGameMode() == UHCGameMode.TEAM) {
+			if (match.getGameMode() == MatchMode.TEAM) {
 				match.getScoreboard().getTeams().forEach(t -> sender.sendMessage(t.getDisplayName() + ChatColor.WHITE + "(" + t.getSize() + "/" + plugin.config.MAX_TEAM_SIZE + ")"));
 			}
 			return true;
@@ -167,7 +167,7 @@ public class Commands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("uhc")) {
 			if (args.length == 1) {
 				if (args[0].equalsIgnoreCase("start")) {
-					if (match.getMatchState().equals(UHCMatchState.PREGAME)) {
+					if (match.getMatchState().equals(MatchState.PREGAME)) {
 						match.beginMatchStartCountdown();
 					} else {
 						UHCLibrary.LIB_ERR_UHC_RUNNING.err(p);
@@ -180,7 +180,7 @@ public class Commands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("uhc")) {
 			if (args.length == 1) {
 				if (args[0].equalsIgnoreCase("stop")) {
-					if (match.getMatchState() != UHCMatchState.PREGAME) {
+					if (match.getMatchState() != MatchState.PREGAME) {
 						match.endMatch();
 					} else {
 						UHCLibrary.LIB_ERR_NO_UHC_RUNNING.err(p);
