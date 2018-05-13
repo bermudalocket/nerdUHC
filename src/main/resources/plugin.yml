@@ -24,19 +24,9 @@ commands:
     usage: /t [msg]
     permission: nerduhc.basic
     permission-message: You don't have permission to do that.
-  sb:
-    description: Refresh your scoreboard
-    usage: /sb
-    permission: nerduhc.basic
-    permission-message: You don't have permission to do that.
   sb-all:
     description: Refresh scoreboard for all players in match
     usage: /sb-all
-    permission: nerduhc.gamemaster
-    permission-message: You don't have permission to do that.
-  togglepvp:
-    description: Toggle PVP
-    usage: /togglepvp
     permission: nerduhc.gamemaster
     permission-message: You don't have permission to do that.
   fixme:
@@ -49,18 +39,13 @@ commands:
     usage: /kit
     permission: nerduhc.basic
     permission-message: You don't have permission to do that.
-  extendtime:
-    description: Extends the current match duration by n seconds
-    usage: /extendtime [n]
-    permission: nerduhc.gamemaster
-    permission-message: You don't have permission to do that.
   teamlist:
     description: List the current UHC teams.
     usage: /teamlist
     permission: nerduhc.basic
     permission-message: You don't have permission to do that.
-  shrinkwb:
-    description: Toggle between a shrinking or frozen world border. Freeze stops world border in its place.
-    usage: /shrinkwb
-    permission: nerduhc.gamemaster
+  rules:
+    description: Prints a list of rules and tips to chat.
+    usage: /rules
+    permission: nerduhc.basic
     permission-message: You don't have permission to do that.

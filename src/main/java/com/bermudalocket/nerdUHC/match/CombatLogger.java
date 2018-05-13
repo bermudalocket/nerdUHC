@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.bermudalocket.nerdUHC.Configuration;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.World;
@@ -17,58 +18,53 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.PlayerInventory;
 
-import com.bermudalocket.nerdUHC.NerdUHC;
-import com.bermudalocket.nerdUHC.modules.UHCLibrary;
+import com.bermudalocket.nerdUHC.util.UHCLibrary;
 
-public class CombatLogger implements java.io.Serializable {
+import static com.bermudalocket.nerdUHC.NerdUHC.MATCH_HANDLER;
 
-	private final HashMap<UUID, UUID> _playerUuidToDoppelUuidMap = new HashMap<>();
+public class CombatLogger {
 
-	private final HashMap<UUID, Long> _playerUuidToTagTimeMap = new HashMap<>();
-
-	private final Set<UUID> _deathQueueSet = new HashSet<>();
-
-	private final HashMap<UUID, PlayerInventory> _playerUuidToInventoryMap = new HashMap<>();
-
-	private final HashMap<UUID, Integer> _playerUuidToExpMap = new HashMap<>();
-
-	// ----------------------------------------------------------------
+	private final HashMap<UUID, UUID> doppellist = new HashMap<>();
+	private final HashMap<UUID, Long> tagmap = new HashMap<>();
+	private final Set<UUID> deathqueue = new HashSet<>();
+	private final HashMap<UUID, PlayerInventory> invlist = new HashMap<>();
+	private final HashMap<UUID, Integer> explist = new HashMap<>();
 
 	public void combatLog(Player p) {
-		_playerUuidToTagTimeMap.put(p.getUniqueId(), System.currentTimeMillis());
+		tagmap.put(p.getUniqueId(), System.currentTimeMillis());
 	}
-	
+
 	private void logInventory(Player p) {
-		_playerUuidToInventoryMap.put(p.getUniqueId(), p.getInventory());
-		_playerUuidToExpMap.put(p.getUniqueId(), (int) p.getExp());
+		invlist.put(p.getUniqueId(), p.getInventory());
+		explist.put(p.getUniqueId(), (int) p.getExp());
 	}
 	
 	public PlayerInventory getInventory(UUID uuid) {
-		return _playerUuidToInventoryMap.get(uuid);
+		return invlist.get(uuid);
 	}
 	
 	public Integer getExp(UUID uuid) {
-		return _playerUuidToExpMap.get(uuid);
+		return explist.get(uuid);
 	}
 
 	// ----------------------------------------------------------------
 
 	public boolean isDoppel(Entity e) {
-		return _playerUuidToDoppelUuidMap.values().contains(e.getUniqueId());
+		return doppellist.values().contains(e.getUniqueId());
 	}
 
 	private LivingEntity getDoppel(Player p) {
-		UUID doppelUuid = _playerUuidToDoppelUuidMap.get(p.getUniqueId());
-		World world = NerdUHC.MATCH_HANDLER.getMatch().getWorld();
+		UUID doppelUUID = doppellist.get(p.getUniqueId());
+		World world = MATCH_HANDLER.getMatch().getWorld();
 		for (LivingEntity e : world.getLivingEntities()) {
-			if (e.getUniqueId().equals(doppelUuid)) return e;
+			if (e.getUniqueId().equals(doppelUUID)) return e;
 		}
 		return null;
 	}
 	
 	public UUID getPlayerFromDoppel(Entity e) {
-		for (Map.Entry<UUID, UUID> entry : _playerUuidToDoppelUuidMap.entrySet()) {
-			if (entry.getValue() == e.getUniqueId()) {
+		for (Map.Entry<UUID, UUID> entry : doppellist.entrySet()) {
+			if (entry.getValue().equals(e.getUniqueId())) {
 				return entry.getKey();
 			}
 		}
@@ -76,10 +72,10 @@ public class CombatLogger implements java.io.Serializable {
 	}
 
 	public boolean isPlayerTagged(Player p) {
-		if (!_playerUuidToTagTimeMap.containsKey(p.getUniqueId())) return false;
+		if (!tagmap.containsKey(p.getUniqueId())) return false;
 		
-		Long tagexpires = _playerUuidToTagTimeMap.get(p.getUniqueId()) + NerdUHC.CONFIG.PLAYER_COMBAT_TAG_TIME * 1000;
-		return System.currentTimeMillis() < tagexpires;
+		Long tagExpires = tagmap.get(p.getUniqueId()) + Configuration.PLAYER_COMBAT_TAG_TIME * 1000;
+		return System.currentTimeMillis() < tagExpires;
 	}
 
 	private void callDeathEvent(Player p) {
@@ -87,24 +83,24 @@ public class CombatLogger implements java.io.Serializable {
 	}
 
 	public void addToDeathQueue(UUID playeruuid) {
-		_deathQueueSet.add(playeruuid);
+		deathqueue.add(playeruuid);
 	}
 	
 	public void spawnDoppel(Player p) {
 		if (p.isDead() || p.getGameMode() == GameMode.SPECTATOR) return;
-		World world = NerdUHC.MATCH_HANDLER.getMatch().getWorld();
+		World world = MATCH_HANDLER.getMatch().getWorld();
 
 		LivingEntity doppel = configuredDoppel(p);
 		for (Entity e : world.getNearbyEntities(p.getLocation(), 8, 8, 8)) {
 			if (e instanceof Monster) ((Monster) e).setTarget(doppel);
 		}
-		_playerUuidToDoppelUuidMap.put(p.getUniqueId(), doppel.getUniqueId());
+		doppellist.put(p.getUniqueId(), doppel.getUniqueId());
 		logInventory(p);
 	}
 	
 	private LivingEntity configuredDoppel(Player p) {
-		World world = NerdUHC.MATCH_HANDLER.getMatch().getWorld();
-		LivingEntity doppel = (LivingEntity) world.spawnEntity(p.getLocation(), NerdUHC.CONFIG.COMBAT_TAG_DOPPEL);
+		World world = MATCH_HANDLER.getMatch().getWorld();
+		LivingEntity doppel = (LivingEntity) world.spawnEntity(p.getLocation(), Configuration.COMBAT_TAG_DOPPEL);
 		doppel.setAI(false);
 		doppel.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(20.0);
 		doppel.setHealth(p.getHealth());
@@ -114,17 +110,17 @@ public class CombatLogger implements java.io.Serializable {
 	}
 
 	public void reconcileDoppelWithPlayer(Player p) {
-		if (!_playerUuidToDoppelUuidMap.containsKey(p.getUniqueId())) return;
-		if (_deathQueueSet.contains(p.getUniqueId())) {
+		if (!doppellist.containsKey(p.getUniqueId())) return;
+		if (deathqueue.contains(p.getUniqueId())) {
 			callDeathEvent(p);
-			_playerUuidToDoppelUuidMap.remove(p.getUniqueId());
-			_deathQueueSet.remove(p.getUniqueId());
+			doppellist.remove(p.getUniqueId());
+			deathqueue.remove(p.getUniqueId());
 			UHCLibrary.LIB_CL_DOPPELDEAD.tell(p);
 			return;
 		}
 		LivingEntity doppel = getDoppel(p);
 		if (doppel == null) {
-			_playerUuidToDoppelUuidMap.remove(p.getUniqueId());
+			doppellist.remove(p.getUniqueId());
 			return;
 		}
 		if (doppel.isDead()) {
@@ -140,7 +136,7 @@ public class CombatLogger implements java.io.Serializable {
 			}
 			doppel.remove();
 		}
-		_playerUuidToDoppelUuidMap.remove(p.getUniqueId());
+		doppellist.remove(p.getUniqueId());
 	}
 
 }

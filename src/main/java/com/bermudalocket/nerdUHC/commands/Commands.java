@@ -1,6 +1,7 @@
 package com.bermudalocket.nerdUHC.commands;
 
-import com.bermudalocket.nerdUHC.match.MatchMode;
+import com.bermudalocket.nerdUHC.Configuration;
+import com.bermudalocket.nerdUHC.util.MatchMode;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -11,32 +12,28 @@ import org.bukkit.entity.Player;
 
 import com.bermudalocket.nerdUHC.NerdUHC;
 import com.bermudalocket.nerdUHC.match.Match;
-import com.bermudalocket.nerdUHC.match.MatchState;
-import com.bermudalocket.nerdUHC.modules.UHCLibrary;
+import com.bermudalocket.nerdUHC.util.MatchState;
+import com.bermudalocket.nerdUHC.util.UHCLibrary;
 import org.bukkit.scoreboard.Team;
+
+import static com.bermudalocket.nerdUHC.NerdUHC.GUI_HANDLER;
+import static com.bermudalocket.nerdUHC.NerdUHC.MATCH_HANDLER;
+import static com.bermudalocket.nerdUHC.NerdUHC.SCOREBOARD_HANDLER;
 
 public class Commands implements CommandExecutor {
 
-	private final NerdUHC plugin;
-
-	// -------------------------------------------------------------------------------
-	
 	public Commands() {
-		this.plugin = NerdUHC.PLUGIN;
-
 		// player commands
-		plugin.getCommand("join").setExecutor(this);
-		plugin.getCommand("t").setExecutor(this);
-		plugin.getCommand("teamlist").setExecutor(this);
-		plugin.getCommand("fixme").setExecutor(this);
-		plugin.getCommand("sb").setExecutor(this);
-		plugin.getCommand("kit").setExecutor(this);
+		NerdUHC.PLUGIN.getCommand("join").setExecutor(this);
+		NerdUHC.PLUGIN.getCommand("t").setExecutor(this);
+		NerdUHC.PLUGIN.getCommand("teamlist").setExecutor(this);
+		NerdUHC.PLUGIN.getCommand("fixme").setExecutor(this);
+		NerdUHC.PLUGIN.getCommand("kit").setExecutor(this);
+		NerdUHC.PLUGIN.getCommand("rules").setExecutor(this);
 
 		// gamemaster commands
-		plugin.getCommand("uhc").setExecutor(this);
-		plugin.getCommand("sb-all").setExecutor(this);
-		plugin.getCommand("togglepvp").setExecutor(this);
-		plugin.getCommand("extendtime").setExecutor(this);
+		NerdUHC.PLUGIN.getCommand("uhc").setExecutor(this);
+		NerdUHC.PLUGIN.getCommand("sb-all").setExecutor(this);
 	}
 
 	// -------------------------------------------------------------------------------
@@ -44,49 +41,50 @@ public class Commands implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		
 		if (!(sender instanceof Player)) return false;
-		Player p = (Player) sender;
-		Match match = plugin.matchHandler.getMatch();
+		Player player = (Player) sender;
+		Match match = MATCH_HANDLER.getMatch();
 
 		// -------------------------------------------------------------------------------
 		// player commands
 		// -------------------------------------------------------------------------------
 
-		if (cmd.getName().equalsIgnoreCase("kit")) {
-			if (match.getMatchState() == MatchState.PREGAME) {
-				p.getInventory().clear();
-				match.getGUI().givePlayerGUIItems(p);
-			} else {
-				UHCLibrary.LIB_ERR_NOKIT.err(p);
+		if (cmd.getName().equalsIgnoreCase("rules")) {
+			for (String string : Configuration.RULES) {
+				player.sendMessage(string);
 			}
 			return true;
 		}
 
-		if (cmd.getName().equalsIgnoreCase("sb")) {
-			p.setScoreboard(match.getScoreboard());
-			UHCLibrary.LIB_SCOREBOARD_REFRESHED.tell(p);
+		if (cmd.getName().equalsIgnoreCase("kit")) {
+			if (match.inState(MatchState.PREGAME)) {
+				player.getInventory().clear();
+				GUI_HANDLER.givePlayerGUIItems(player);
+			} else {
+				UHCLibrary.LIB_ERR_NOKIT.err(player);
+			}
 			return true;
 		}
 
 		if (cmd.getName().equalsIgnoreCase("fixme")) {
-			if (p.getGameMode() == GameMode.SPECTATOR) {
-				p.setAllowFlight(true);
-				p.setFlying(true);
-				p.teleport(match.getWorld().getSpawnLocation());
+			if (player.getGameMode() == GameMode.SPECTATOR) {
+				player.setAllowFlight(true);
+				player.setFlying(true);
+				player.teleport(match.getWorld().getSpawnLocation());
 			}
 			return true;
 		}
 
 		if (cmd.getName().equalsIgnoreCase("t")) {
-			Team t = match.getScoreboard().getEntryTeam(p.getName());
+			Team t = SCOREBOARD_HANDLER.getTeamByPlayer(player);
 			if (t == null) {
-				UHCLibrary.LIB_ERR_NOTEAMFORCHAT.err(p);
+				UHCLibrary.LIB_ERR_NOTEAMFORCHAT.err(player);
 				return true;
 			}
 			StringBuilder msg = new StringBuilder();
 			msg.append("[");
 			msg.append(t.getDisplayName());
 			msg.append("] <");
-			msg.append(p.getName());
+			msg.append(player.getName());
 			msg.append("> ");
 			for (String arg : args) {
 				msg.append(arg).append(" ");
@@ -102,20 +100,21 @@ public class Commands implements CommandExecutor {
 		if (cmd.getName().equalsIgnoreCase("join")) {
 			if (args.length == 1) {
 				String team = args[0].toUpperCase();
-				if (match.getScoreboardHandler().teamIsJoinable(match, team)) {
-					match.getScoreboardHandler().addPlayerToTeam(p, team);
+				if (SCOREBOARD_HANDLER.teamIsJoinable(team)) {
+					SCOREBOARD_HANDLER.addPlayerToTeam(player, team);
 				} else {
-					UHCLibrary.LIB_ERR_TEAM_FULL.err(p);
+					UHCLibrary.LIB_ERR_TEAM_FULL.err(player);
 				}
 			} else {
-				UHCLibrary.LIB_ERR_JOIN_SYNTAX.err(p);
+				UHCLibrary.LIB_ERR_JOIN_SYNTAX.err(player);
 			}
 			return true;
 		}
 
 		if (cmd.getName().equalsIgnoreCase("teamlist")) {
 			if (match.getGameMode() == MatchMode.TEAM) {
-				match.getScoreboard().getTeams().forEach(t -> sender.sendMessage(t.getDisplayName() + ChatColor.WHITE + "(" + t.getSize() + "/" + plugin.config.MAX_TEAM_SIZE + ")"));
+				SCOREBOARD_HANDLER.getRegisteredTeams().forEach(t ->
+						sender.sendMessage(t.getDisplayName() + ChatColor.WHITE + "(" + t.getSize() + "/" + Configuration.MAX_TEAM_SIZE + ")"));
 			}
 			return true;
 		}
@@ -123,43 +122,11 @@ public class Commands implements CommandExecutor {
 		// -------------------------------------------------------------------------------
 		// gamemaster commands
 		// -------------------------------------------------------------------------------
-
-		if (cmd.getName().equalsIgnoreCase("shrinkwb")) {
-			if (match.getWorldBorder().isShrinking()) {
-				match.getWorldBorder().shrink();
-			} else {
-				match.getWorldBorder().freeze();
-			}
-			return true;
-		}
-		
-		if (cmd.getName().equalsIgnoreCase("extendtime")) {
-			if (args.length != 1) return false;
-			
-			try {
-				int sec = Integer.valueOf(args[0]);
-				match.getMatchTimer().extend(sec);
-			} catch (Exception f) {
-				return false;
-			}
-			return true;
-		}
-		
-		if (cmd.getName().equalsIgnoreCase("togglepvp")) {
-			if (match.getWorld().getPVP()) {
-				match.getWorld().setPVP(false);
-				UHCLibrary.LIB_PVP_DISABLED.tell(p);
-			} else {
-				match.getWorld().setPVP(true);
-				UHCLibrary.LIB_PVP_ENABLED.tell(p);
-			}
-			return true;
-		}
 		
 		if (cmd.getName().equalsIgnoreCase("sb-all")) {
-			for (Player player : Bukkit.getOnlinePlayers()) {
-				player.setScoreboard(match.getScoreboard());
-				UHCLibrary.LIB_SCOREBOARD_ALL_REFRESHED.tell(p);
+			for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+				SCOREBOARD_HANDLER.setPlayerBoard(onlinePlayer);
+				UHCLibrary.LIB_SCOREBOARD_ALL_REFRESHED.tell(player);
 			}
 			return true;
 		}
@@ -168,9 +135,9 @@ public class Commands implements CommandExecutor {
 			if (args.length == 1) {
 				if (args[0].equalsIgnoreCase("start")) {
 					if (match.getMatchState().equals(MatchState.PREGAME)) {
-						match.beginMatchStartCountdown();
+						match.startCountdown();
 					} else {
-						UHCLibrary.LIB_ERR_UHC_RUNNING.err(p);
+						UHCLibrary.LIB_ERR_UHC_RUNNING.err(player);
 					}
 					return true;
 				}
@@ -181,9 +148,9 @@ public class Commands implements CommandExecutor {
 			if (args.length == 1) {
 				if (args[0].equalsIgnoreCase("stop")) {
 					if (match.getMatchState() != MatchState.PREGAME) {
-						match.endMatch();
+						match.transitionToEnd("Match ending early...");
 					} else {
-						UHCLibrary.LIB_ERR_NO_UHC_RUNNING.err(p);
+						UHCLibrary.LIB_ERR_NO_UHC_RUNNING.err(player);
 					}
 					return true;
 				}
@@ -191,7 +158,6 @@ public class Commands implements CommandExecutor {
 		}
 
 		return false;
-		
 	}
 	
 }

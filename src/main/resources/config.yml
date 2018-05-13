@@ -1,6 +1,18 @@
+debug: TRUE
+
 world-name: world
 uhc-game-mode: TEAM
 match-duration: 180
+
+rules:
+  - "&oWelcome to nerdUHC!"
+  - "&7There are a few things of which you should be aware:"
+  - "1) &7health does &oNOT&r&7 naturally regenerate."
+  - "2) &7there are &4no protections&7 on chests, furnaces, etc."
+  - "3) &7Ghasts love UHCs so much that they've stopped crying! &l&bGhast Tears&r&7 are unavailable."
+  - "4) &7logging out during combat &nwill not save you&r&7. Keep an eye out for &6chickens&7..."
+  - "5) &7PVP will enable approximately after &5Night 1&7."
+  - "&7Most importantly, &lhave fun&r&7!"
 
 spawn-x: 0
 spawn-y: 65

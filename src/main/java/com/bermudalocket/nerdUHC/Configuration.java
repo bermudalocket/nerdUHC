@@ -1,9 +1,11 @@
 package com.bermudalocket.nerdUHC;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 
+import com.bermudalocket.nerdUHC.util.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -12,35 +14,40 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import com.bermudalocket.nerdUHC.match.MatchMode;
+import com.bermudalocket.nerdUHC.util.MatchMode;
 
 public class Configuration {
 
-	public int MAX_TEAM_SIZE;
-	public boolean USE_SCOREBOARD;
+    public static boolean DO_DEBUG;
 
-	//
+	public static World WORLD;
 
-	private final NerdUHC plugin;
+	public static int WORLD_BORDER;
 
-	public World WORLD;
-	public int SPAWN_X;
-	public int SPAWN_Y;
-	public int SPAWN_Z;
-	public int MATCH_DURATION;
-	public MatchMode UHC_GAME_MODE;
-	public int PLAYER_COMBAT_TAG_TIME;
-	public EntityType COMBAT_TAG_DOPPEL;
-	public int SPAWN_BARRIER_RADIUS_SQUARED;
-	public boolean SPREAD_RESPECT_TEAMS;
-	private List<Map<?, ?>> GAMERULES = new ArrayList<>();
-	public boolean ALLOW_FRIENDLY_FIRE;
+	public static int MATCH_DURATION;
 
-	private List<Map<?, ?>> rawteamlist = new ArrayList<>();
+	public static int MAX_TEAM_SIZE;
+
+	public static MatchMode UHC_GAME_MODE;
+
+	public static int PLAYER_COMBAT_TAG_TIME;
+
+	public static EntityType COMBAT_TAG_DOPPEL;
+
+	public static int SPAWN_BARRIER_RADIUS_SQUARED;
+
+	public static boolean SPREAD_RESPECT_TEAMS;
+
+	public static boolean ALLOW_FRIENDLY_FIRE;
+
+	private static List<Map<?, ?>> GAMERULES = new ArrayList<>();
+
+	public static List<Map<?, ?>> RAW_TEAM_LIST = new ArrayList<>();
+
+	public static LinkedHashSet<String> RULES = new LinkedHashSet<>();
 
 	public Configuration() {
-		plugin = NerdUHC.PLUGIN;
-		plugin.saveDefaultConfig();
+		NerdUHC.PLUGIN.saveDefaultConfig();
 		reload();
 	}
 
@@ -48,60 +55,61 @@ public class Configuration {
 		NerdUHC.PLUGIN.reloadConfig();
 		FileConfiguration config = NerdUHC.PLUGIN.getConfig();
 
-		USE_SCOREBOARD = config.getBoolean("use-scoreboard");
-
-		NerdUHC.TEAM_HANDLER.load(config);
-
-		//
+		DO_DEBUG = config.getBoolean("debug", false);
 
 		WORLD = Bukkit.getWorld(config.getString("world-name", "world"));
-		if (WORLD == null) plugin.getLogger().info(ChatColor.RED + "World specified in config is invalid, and a default world named \"world\" could not be found.");
-		SPAWN_X = config.getInt("spawn-x", 0);
-		SPAWN_Y = config.getInt("spawn-y", 65);
-		SPAWN_Z = config.getInt("spawn-z", 0);
-		WORLD.setSpawnLocation(new Location(WORLD, SPAWN_X, SPAWN_Y, SPAWN_Z));
-		WORLD.setKeepSpawnInMemory(false);
-		WORLD.setSpawnFlags(false, false);
+		if (WORLD == null) NerdUHC.PLUGIN.getLogger().info(ChatColor.RED + "World specified in CONFIG is invalid, and a default world named \"world\" could not be found.");
 
-		String getgamemode = config.getString("uhc-game-mode", "SOLO");
-		if (isValidGameMode(getgamemode)) {
-			UHC_GAME_MODE = MatchMode.valueOf(getgamemode);
+		WORLD_BORDER = config.getInt("world-border", 2500);
+		WORLD.getWorldBorder().setSize(WORLD_BORDER);
+
+		int spawnX = config.getInt("spawn-x", 0);
+		int spawnY = config.getInt("spawn-y", 65);
+		int spawnZ = config.getInt("spawn-z", 0);
+		WORLD.setSpawnLocation(new Location(WORLD, spawnX, spawnY, spawnZ));
+
+		WORLD.setKeepSpawnInMemory(false);
+		WORLD.getWorldBorder().setCenter(WORLD.getSpawnLocation());
+
+		String tryMode = config.getString("uhc-game-mode", "SOLO");
+		if (isValidGameMode(tryMode)) {
+			UHC_GAME_MODE = MatchMode.valueOf(tryMode);
 		} else {
 			UHC_GAME_MODE = MatchMode.SOLO;
-			plugin.getLogger().info(ChatColor.RED + "Invalid UHC Game Mode specified. Defaulting to SOLO.");
+			NerdUHC.PLUGIN.getLogger().info(ChatColor.RED + "Invalid UHC Game Mode specified. Defaulting to SOLO.");
 		}
 
 		MATCH_DURATION = config.getInt("match-duration-in-minutes", 180);
 		if (MATCH_DURATION == 0 || MATCH_DURATION < 0) {
 			MATCH_DURATION = 180;
-			plugin.getLogger().info(ChatColor.RED + "Invalid match duration specified. Must be an integer greater than 0. Defaulting to 180 minutes.");
+			NerdUHC.PLUGIN.getLogger().info(ChatColor.RED + "Invalid match duration specified. Must be an integer greater than 0. Defaulting to 180 minutes.");
 		}
 
 		int SPAWN_BARRIER_RADIUS = config.getInt("spawn-barrier-radius", 6);
 		if (SPAWN_BARRIER_RADIUS < 0) {
 			SPAWN_BARRIER_RADIUS = 6;
-			plugin.getLogger().info(ChatColor.RED + "Spawn barrier radius is negative. Defaulting to 6.");
+			NerdUHC.PLUGIN.getLogger().info(ChatColor.RED + "Spawn barrier radius is negative. Defaulting to 6.");
 		}
 		SPAWN_BARRIER_RADIUS_SQUARED = SPAWN_BARRIER_RADIUS * SPAWN_BARRIER_RADIUS;
 		
 		MAX_TEAM_SIZE = config.getInt("max-team-size", 3);
 		if (MAX_TEAM_SIZE == 0 || MAX_TEAM_SIZE < 0) {
 			MAX_TEAM_SIZE = 3;
-			plugin.getLogger().info(ChatColor.RED + "Value of MAX_TEAM_SIZE is either 0 or negative! Must be a positive integer. Defaulting to 3.");
+			NerdUHC.PLUGIN.getLogger().info(ChatColor.RED + "Value of MAX_TEAM_SIZE is either 0 or negative! Must be a positive integer. Defaulting to 3.");
 		}
 		
 		ALLOW_FRIENDLY_FIRE = config.getBoolean("allow-friendly-fire", false);
 
 		PLAYER_COMBAT_TAG_TIME = config.getInt("player-combat-tag-time-in-sec", 30);
 		if (PLAYER_COMBAT_TAG_TIME < 0) {
-			plugin.getLogger().info(ChatColor.RED + "Value of PLAYER_COMBAT_TAG_TIME is invalid! Must be a positive integer or 0. Defaulting to 30.");
+			NerdUHC.PLUGIN.getLogger().info(ChatColor.RED + "Value of PLAYER_COMBAT_TAG_TIME is invalid! Must be a positive integer or 0. Defaulting to 30.");
 		}
 		
 		try {
 			COMBAT_TAG_DOPPEL = EntityType.valueOf(config.getString("combat-tag-doppel"));
 		} catch (Exception f) {
 			COMBAT_TAG_DOPPEL = EntityType.CHICKEN;
-			plugin.getLogger().info(ChatColor.RED + "Value of COMBAT_TAG_DOPPEL in config is invalid! Must be an ENTITYTYPE. Defaulting to CHICKEN. See Bukkit.EntityType for more info.");
+			NerdUHC.PLUGIN.getLogger().info(ChatColor.RED + "Value of COMBAT_TAG_DOPPEL in CONFIG is invalid! Must be an ENTITYTYPE. Defaulting to CHICKEN. See Bukkit.EntityType for more info.");
 		}
 		
 		SPREAD_RESPECT_TEAMS = config.getBoolean("spread-respect-teams", true);
@@ -115,13 +123,16 @@ public class Configuration {
 					String rule = gamerule.keySet().toArray()[0].toString();
 					String value = gamerule.values().toArray()[0].toString();
 					WORLD.setGameRuleValue(rule, value);
-					plugin.getLogger().info("CONFIG: game rule " + rule + " set to value " + value);
 				});
 			}
 		};
-		setGameRulesTask.runTaskLater(plugin, 1);
+		setGameRulesTask.runTaskLater(NerdUHC.PLUGIN, 1);
 		
-		rawteamlist = config.getMapList("teams");
+		RAW_TEAM_LIST = config.getMapList("teams");
+
+		for (String string : config.getStringList("rules")) {
+			RULES.add(ChatColor.translateAlternateColorCodes(Util.COLORCHAR, string));
+		}
 	}
 
 	private boolean isValidGameMode(String gameMode) {
@@ -131,10 +142,6 @@ public class Configuration {
 		} catch (Exception f) {
 			return false;
 		}
-	}
-
-	public List<Map<?, ?>> getRawTeamList() {
-		return rawteamlist;
 	}
 
 }

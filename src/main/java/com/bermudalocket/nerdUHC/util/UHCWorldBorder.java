@@ -1,4 +1,4 @@
-package com.bermudalocket.nerdUHC.modules;
+package com.bermudalocket.nerdUHC.util;
 
 import com.bermudalocket.nerdUHC.match.Match;
 import org.bukkit.WorldBorder;

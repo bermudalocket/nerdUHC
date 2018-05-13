@@ -1,10 +1,10 @@
-package com.bermudalocket.nerdUHC.modules;
+package com.bermudalocket.nerdUHC.util;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
-public enum UHCSound {
+public enum UHCSounds {
 	
 	DING(Sound.BLOCK_NOTE_CHIME),
 	OOPS(Sound.ENTITY_ITEM_BREAK),
@@ -13,16 +13,13 @@ public enum UHCSound {
 	MATCHSTART(Sound.ENTITY_WITHER_SPAWN),
 	MATCHEND(Sound.ENTITY_ENDERDRAGON_DEATH),
 	DEATHMATCHSTART(Sound.ENTITY_WITHER_SPAWN),
+	PVP_ENABLED(Sound.ENTITY_ENDERDRAGON_GROWL),
 	PLAYERDEATH(Sound.ENTITY_LIGHTNING_THUNDER);
 	
 	private final Sound s;
 	
-	UHCSound(Sound s) { 
+	UHCSounds(Sound s) {
 		this.s = s;
-	}
-	
-	public Sound sound() {
-		return s;
 	}
 
 	public void playSound(Player p) {

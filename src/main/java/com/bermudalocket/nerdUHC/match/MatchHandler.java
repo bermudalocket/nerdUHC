@@ -1,25 +1,19 @@
 package com.bermudalocket.nerdUHC.match;
 
-public class MatchHandler implements java.io.Serializable {
+public class MatchHandler {
 
-	private static final long serialVersionUID = 1L;
-
-	private Match _match;
+	private Match match;
 
 	public MatchHandler() {
 		getNewMatch();
 	}
 	
 	public void getNewMatch() {
-		_match = new Match();
+		match = new Match();
 	}
 	
 	public Match getMatch() {
-		return _match;
-	}
-
-	public void load(MatchHandler matchHandler) {
-		_match = matchHandler.getMatch();
+		return match;
 	}
 	
 }

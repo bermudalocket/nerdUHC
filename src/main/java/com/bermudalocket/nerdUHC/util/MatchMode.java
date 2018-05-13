@@ -1,4 +1,4 @@
-package com.bermudalocket.nerdUHC.match;
+package com.bermudalocket.nerdUHC.util;
 
 public enum MatchMode {
 
