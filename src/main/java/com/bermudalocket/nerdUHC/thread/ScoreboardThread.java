@@ -13,7 +13,7 @@ public class ScoreboardThread extends AbstractThread {
 
     public ScoreboardThread(Match abstractMatch) {
         super(abstractMatch);
-        _duration = _match.getDuration()*60;
+        _duration = _match.getDuration() * 60;
     }
 
     @Override

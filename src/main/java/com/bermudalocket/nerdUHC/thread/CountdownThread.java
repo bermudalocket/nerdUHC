@@ -22,7 +22,7 @@ public class CountdownThread extends AbstractThread {
         }
 
         NerdUHC.PLUGIN.getServer().getOnlinePlayers().forEach(p ->
-            p.sendTitle(ChatColor.RED + "The UHC starts in", _countFrom + " seconds", 10, 20, 10)
+                p.sendTitle(ChatColor.RED + "The UHC starts in", _countFrom + " seconds", 10, 20, 10)
         );
         UHCSounds.TIMERTICK.playSound();
         _countFrom--;
